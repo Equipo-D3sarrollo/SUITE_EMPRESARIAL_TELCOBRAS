@@ -1,0 +1,12 @@
+# Configuración local de Claude Code (hooks con rutas de cada equipo)
+.claude/settings.local.json
+
+# Grafo de graphify (se regenera)
+graphify-out/
+
+# Dependencias y builds
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
