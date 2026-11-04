@@ -56,7 +56,7 @@
 | BP | `blueprint_t_cnico_y_arquitectura_suite_empresarial_telcobras.md` | "4.8.2-Enterprise-Release", sin fecha | Capas C4, matriz de 5 zonas por módulo, SQL inicial, flujo RADIAN, seguridad, roadmap de 12 semanas |
 | LIB | `listado_tecnolog_as_y_librer_as_frontend_suite_telcobras.md` | sin fecha | Stack frontend, clases del layout, librerías, tokens, `package.json` |
 | GUIA | `prompt_gu_a_para_claude_code_replicaci_n_suite_telcobras.md` | sin fecha | Comandos de instalación, layout en TSX, store Zustand, mapa de 10 módulos, reglas visuales |
-| STITCH | `stitch_telcobras_enterprise_suite_demo/` | 23 pantallas únicas + DESIGN.md + 4 imágenes | Diseño visual de cada pantalla y design system "Telco Enterprise Core" |
+| STITCH | `stitch_telcobras_enterprise_suite_demo/` (**eliminada del repositorio el 4-nov-2026** por decisión del arquitecto; su contenido quedó resumido en §4, §12 y §18-A) | 23 pantallas únicas + DESIGN.md + 4 imágenes | Diseño visual de cada pantalla y design system "Telco Enterprise Core" |
 | CAPT | `screenshot_20261103_*` | 3-nov-2026 23:36 y 23:59 | Prototipo del dashboard (canvas) con las zonas anotadas a mano por el usuario |
 | MARCA | Manual de marca Telcobras 2026 (resumen interno) | 2026 | Colores, tipografía, logo y eslogan oficiales |
 | AUD | Auditoría web de tecnologías del 4-nov-2026 | 5 categorías | Estado actual de versiones, licencias y normas. **Sin verificación cruzada**: confirmar antes de convertirla en ADR |
@@ -898,7 +898,7 @@ Severidad: C = crítica, A = alta, M = media. Los hallazgos con fuente AUD está
 | H-25 | M | Zona 4: barra de 48 px (BP) vs franja de tarjetas de conectores (Stitch/CAPT) | BP §3; CAPT | D-05 |
 | H-26 | M | El patrón de la GUIA (módulo solo en zustand) rompe los deep links | GUIA §4; AUD | La URL es la fuente de verdad |
 | H-27 | M | Make no aparece en BP, LIB, GUIA ni Stitch, aunque es temporal y está [ACORDADO] | PDF §27 | Incluirlo en la Runtime Layer |
-| H-28 | M | `navigation_flow/code.html` duplica el login; no hay flujo de navegación real | Stitch | Pedirlo de nuevo o borrarlo |
+| H-28 | M | `navigation_flow/code.html` duplica el login; no hay flujo de navegación real | Stitch | Cerrado: la carpeta de Stitch se eliminó |
 
 **Vacíos de especificación (resumen):**
 - ORM y migraciones.
@@ -1033,7 +1033,7 @@ docs/
 
 ## 18. Anexos
 
-**A. Inventario de piezas de Stitch** (23 únicas; las que tienen ficha detallada están en el scratchpad de la auditoría):
+**A. Inventario de piezas de Stitch** (23 únicas). La carpeta se eliminó el 4-nov-2026; este inventario y §4 y §12 son el único registro que queda. La referencia visual vigente es la paleta y las reglas de §12.4.1, no los colores de Stitch:
 
 | Carpeta | Módulo |
 |---|---|
@@ -1062,7 +1062,7 @@ docs/
 - OWASP API Security Top 10.
 - SIC y Ley 1581 de 2012.
 
-**C. Fuentes:** `docs/Arquitectura/` (sin modificar).
+**C. Fuentes:** `docs/Arquitectura/` (PDF, blueprint, listado y guía). La carpeta de Stitch se eliminó el 4-nov-2026.
 
 ---
 
