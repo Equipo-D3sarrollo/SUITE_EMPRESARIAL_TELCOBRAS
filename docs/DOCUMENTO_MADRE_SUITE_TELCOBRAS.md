@@ -40,6 +40,8 @@
   5. Analítica, planes, panel global y piloto.
   6. Agentes propios.
 
+> **Pendientes:** todo lo que este documento aún no define está en [`docs/PENDIENTES.md`](PENDIENTES.md).
+
 ## Tabla de contenido
 
 0. Control del documento · 1. Visión y principios · 2. Activos existentes · 3. Mapa de módulos · 4. Especificación funcional · 5. Arquitectura técnica · 6. Stack consolidado · 7. Modelo de datos · 8. Seguridad y cumplimiento · 9. Infraestructura · 10. Integraciones · 11. Reglas de ingeniería y para Claude Code · 12. Frontend y UX · 13. Hallazgos · 14. Decisiones pendientes · 15. Ruta de abordaje · 16. Estructura documental · 17. Glosario · 18. Anexos · 19. Rendimiento, escalabilidad y calidad
