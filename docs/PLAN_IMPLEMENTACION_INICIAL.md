@@ -33,7 +33,7 @@ Aprobadas por el arquitecto el 4-nov-2026 y **redactadas** en `docs/decisions/` 
 | ADR-011 | D-15/D-16/D-17/D-20/D-21: RADIAN solo recepción; Odoo 19/20 con JSON-2; módulo 06 como catálogo gobernado; analítica separada; LeadGen se revisa primero |
 
 **Diferidas por decisión del arquitecto (4-nov-2026):** se resuelven más adelante y no frenan el arranque.
-- **ADR-005 (D-07 ORM):** sale de la prueba de 0.3.
+- ✅ **ADR-005 (D-07 ORM):** resuelto el 5-nov-2026 con la prueba de 0.3: Drizzle.
 - **D-13:** el proveedor y la región del VPS.
 - **D-14:** la figura ante la DIAN. El arquitecto lo averigua; bloquea la etapa 4.
 - **D-18 y D-19:** se deciden más adelante.

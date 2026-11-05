@@ -22,8 +22,7 @@
   - Para registrar eventos por terceros hace falta ser proveedor tecnológico (PT), tener un mandato o tener software habilitado (H-13).
   - El diseñador n8n para clientes exige licencia Enterprise (H-05).
   - Next 14.2.5 tiene un CVE crítico (H-14).
-- **Decisiones (estado al 4-nov-2026):** 20 cerradas por el arquitecto (§14), registradas como ADR en `docs/decisions/`. Siguen abiertas:
-  - D-07 (ORM), que se resuelve con la prueba de concepto de RLS de la etapa 0;
+- **Decisiones (estado al 4-nov-2026):** 21 cerradas (D-07 por la prueba de RLS) (§14), registradas como ADR en `docs/decisions/`. Siguen abiertas:
   - el proveedor y la región del VPS (D-13);
   - D-14, la figura ante la DIAN, que el arquitecto está averiguando;
   - el inventario de Odoo (D-16);
@@ -536,7 +535,7 @@ Columnas: lo que dicen las fuentes, el estado verificado por AUD (4-nov-2026, si
 | Backend | PDF: NestJS [PROPUESTA]; BP: NestJS/Fastify | NestJS 12.x (ESM) | NestJS sobre Fastify, monolito modular |
 | Python | BP: FastAPI; PDF: solo donde ya existe | FastAPI 0.16x | Lo define la inspección de LeadGen y RADIAN |
 | Base de datos | PDF: PostgreSQL [PROPUESTA fuerte]; BP: 16 | 18 estable (EOL 2030) | **PostgreSQL 18** |
-| ORM y migraciones | ninguna | — | POC con RLS (D-07): Drizzle, Prisma o Kysely |
+| ORM y migraciones | ninguna | drizzle-orm 0.45.4 (prueba del 5-nov-2026) | **[DECIDIDO D-07]** Drizzle + drizzle-kit (ADR-005) |
 | Caché y cola | BP: Redis Cluster + BullMQ; PDF: cola pendiente; Stitch: Celery+RabbitMQ [CONFLICTO] | Redis 8 (AGPL/RSAL/SSPL), Valkey 9 (BSD); BullMQ 6.x tiene SDK Python | **[DECIDIDO D-10]** Una instancia de Valkey + BullMQ + outbox |
 | Objetos | BP: MinIO/S3; PDF: pendiente | **MinIO Community archivado (25-abr-2026)** [H-10] | **[DECIDIDO D-11]** S3 gestionado vía API S3; en local, un contenedor S3-compatible |
 | Tiempo real | BP: WebSocket; gRPC-Web | — | SSE o WebSocket (Socket.IO 4.8) |
@@ -944,7 +943,7 @@ Severidad: C = crítica, A = alta, M = media. Los hallazgos con fuente AUD está
 | D-04 | Identidad visual de la UI | Paleta de marca · derivada de la marca · paleta actual #0A66C2 | **DECIDIDO (4-nov-2026): paleta oficial ESTRICTA, solo 6 colores** (ver §12.4.1). Verde primario #88BD4C, azul secundario #2491CC, amarillo de acento #F3CB35, gris #888D91, blanco y negro. Prohibidos otros tonos. Se descarta #0A66C2. **D-04b:** única excepción, rojo #C62828 solo para errores. **D-04c:** Poppins en toda la UI | Arquitecto | ✅ Cerrada |
 | D-05 | Iconos y Zona 4 | lucide · Material Symbols; barra de 48 px · franja de tarjetas | **DECIDIDO (4-nov-2026): solo lucide-react** (strokeWidth 1.75 o 2; los logos de terceros con SVG oficiales). **Zona 4 = barra fija de 48 px** con indicadores; al hacer clic se despliega el detalle por conector (tarjetas del prototipo) | Arquitecto | ✅ Cerrada |
 | D-06 | Estilo arquitectónico | Monolito modular · microservicios | **DECIDIDO (4-nov-2026): monolito modular NestJS** con un módulo por dominio y fronteras estrictas. LeadGen y RADIAN (Python) quedan como servicios aparte, detrás de contratos. REST + OpenAPI; sin gRPC ni Kubernetes | Arquitecto | ✅ Cerrada |
-| D-07 | ORM y migraciones | Drizzle · Prisma · Kysely · TypeORM | Se decide con la prueba de concepto de RLS (PLAN §0.3) | Arquitecto | Etapa 0 |
+| D-07 | ORM y migraciones | Drizzle · Prisma · Kysely · TypeORM | **DECIDIDO (5-nov-2026) por la prueba de RLS: Drizzle ORM + drizzle-kit.** Pasó las 7 pruebas de aislamiento con PostgreSQL 18 (ADR-005, `poc/rls/`) | Prueba de RLS | ✅ Cerrada |
 | D-08 | Multi-tenancy | RLS en esquema compartido · esquema por tenant | **DECIDIDO (4-nov-2026): tablas compartidas + RLS.** `organization_id NOT NULL` en todo, membresías usuario–organización, reglas de §7.4. Se descarta el esquema por tenant | Arquitecto | ✅ Cerrada |
 | D-09 | Identidad | Better Auth · Keycloak · gestionado (Auth0/Clerk/WorkOS); modelo de sesión; MFA; un solo flujo de registro | **DECIDIDO (4-nov-2026): Better Auth embebido en NestJS.** Acceso **sin contraseña**: Google Workspace (OIDC) o correo + **passkey**, con 2FA por **TOTP** (app). SSO corporativo (Okta/Entra) se agrega después por organización. Sesión en cookie httpOnly; límites de intentos por cuenta; suplantación del superadmin auditada. Se descartan el OTP por correo como factor y la contraseña | Arquitecto | ✅ Cerrada |
 | D-10 | Cola y eventos | BullMQ + Valkey + outbox · pg-boss · RabbitMQ | **DECIDIDO (4-nov-2026): BullMQ + Valkey (instancia única) + outbox en PostgreSQL** y consumidores idempotentes. Se descartan Redis Cluster, RabbitMQ y Celery | Arquitecto | ✅ Cerrada |

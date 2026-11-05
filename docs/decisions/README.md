@@ -1,6 +1,6 @@
 # Registro de decisiones de arquitectura (ADR)
 
-Las decisiones vienen del documento madre §14. ADR-005 (ORM y migraciones) se escribe cuando termine la prueba de concepto de RLS (plan §0.3).
+Las decisiones vienen del documento madre §14. ADR-005 se decidió con la prueba de concepto de RLS (`poc/rls/`).
 
 - [ADR-001](ADR-001-fuentes.md) — Resolución de conflictos entre fuentes
 - [ADR-002](ADR-002-estilo-arquitectonico.md) — Monolito modular NestJS
@@ -12,4 +12,4 @@ Las decisiones vienen del documento madre §14. ADR-005 (ORM y migraciones) se e
 - [ADR-009](ADR-009-datos-e-infraestructura.md) — Cola, archivos y secretos
 - [ADR-010](ADR-010-hosting-y-disponibilidad.md) — VPS con Docker Compose y meta de 99,5 %
 - [ADR-011](ADR-011-alcance-funcional.md) — RADIAN, Odoo, automatización, analítica y LeadGen
-- ADR-005 — ORM y migraciones (pendiente de la prueba de RLS)
+- [ADR-005](ADR-005-orm.md) — Drizzle ORM para acceso a datos y migraciones

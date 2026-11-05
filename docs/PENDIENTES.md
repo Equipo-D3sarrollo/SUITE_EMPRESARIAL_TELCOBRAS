@@ -12,7 +12,6 @@
 
 | ID | Qué falta decidir | Quién | Bloquea |
 |---|---|---|---|
-| D-07 | ORM y migraciones (Drizzle, Prisma o Kysely) → ADR-005 | Prueba de RLS (plan §0.3) | Etapa 1 (modelo de datos) |
 | D-13 | Proveedor y región del VPS y del S3; transferencia internacional (Ley 1581) si quedan fuera de Colombia | Gerencia + arquitecto | Producción (etapa 5) |
 | D-14 | Figura ante la DIAN: PT tercero, mandato (evento 043), habilitación propia o solo descarga | Arquitecto + contabilidad/legal | Etapa 4 (RADIAN) |
 | D-16 | Versión exacta, edición y hosting de Odoo; si su RADIAN nativo duplica el módulo | Arquitecto | Etapa 3 (conector Odoo) |
@@ -72,7 +71,7 @@ La carpeta se eliminó el 4-nov-2026. Solo 6 pantallas tuvieron ficha detallada 
 
 | Qué | Estado |
 |---|---|
-| Docker Desktop (WSL2) | No instalado; lo instala el usuario |
-| pnpm | No instalado; `corepack enable pnpm` |
+| Docker Desktop (WSL2) | ✅ Instalado (Docker 29.9.2, Compose v5.6.1) |
+| pnpm | ✅ Instalado (12.16.1) |
 | `CLAUDE.md` de graphify | Sin commit: menciona un grafo que aún no existe |
 | Grafo de graphify | Se genera cuando haya código |
