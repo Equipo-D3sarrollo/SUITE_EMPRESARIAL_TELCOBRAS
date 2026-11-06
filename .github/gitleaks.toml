@@ -1,0 +1,8 @@
+# Reglas por defecto de gitleaks y una sola excepción: las claves de ejemplo de .env.example,
+# que en base64 empiezan por "dev-only-" (ZGV2LW9ubHkt). Cualquier otra clave sigue fallando.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Claves de ejemplo solo para desarrollo"
+regexes = ['''^ZGV2LW9ubHkt''']

@@ -10,3 +10,12 @@ dist/
 .env
 .env.*
 !.env.example
+
+# Resultados de pruebas, cobertura y auditorías
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Cachés de herramientas
+*.tsbuildinfo

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": ["**/src/generated/**", "**/routeTree.gen.ts"],
+  "workspaces": {
+    ".": {
+      "entry": ["tools/*.mjs"],
+      "project": ["tools/*.mjs"]
+    },
+    "apps/api": {
+      "entry": ["src/main.ts", "src/database/seed.ts"]
+    },
+    "apps/web": {
+      "project": ["src/**/*.{ts,tsx,css}", "e2e/**/*.ts"]
+    },
+    "packages/ui": {
+      "project": ["src/**/*.{ts,tsx,css}"]
+    }
+  }
+}

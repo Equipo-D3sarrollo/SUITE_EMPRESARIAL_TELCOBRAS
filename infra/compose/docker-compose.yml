@@ -1,0 +1,82 @@
+# Servicios locales de desarrollo. Uso desde la raíz: pnpm infra:up
+# Los valores por defecto coinciden con .env.example; se cambian exportando las mismas variables
+# o con --env-file .env. Los puertos se publican solo en 127.0.0.1.
+name: telcobras
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
+      POSTGRES_DB: telcobras
+      APP_OWNER_PASSWORD: ${APP_OWNER_PASSWORD:-app_owner_dev}
+      APP_USER_PASSWORD: ${APP_USER_PASSWORD:-app_user_dev}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker: se monta el directorio padre.
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # Por TCP: durante la inicialización el servidor temporal solo escucha en el socket Unix.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d telcobras"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:9
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  s3:
+    image: chrislusf/seaweedfs:4.50
+    # "mini" levanta master, volumen, filer y la pasarela S3 en un solo proceso, y crea el bucket al iniciar.
+    command: ["mini", "-dir=/data", "-bucket=${S3_BUCKET:-telcobras-dev}"]
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-telcobras_dev}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-telcobras_dev_secret}
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      # Sano solo cuando la pasarela S3 responde y el bucket ya existe.
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO /dev/null http://127.0.0.1:8333/healthz && echo s3.bucket.list | weed shell -master=127.0.0.1:9333 2>/dev/null | grep -q '${S3_BUCKET:-telcobras-dev}'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.33.0
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  valkey-data:
+  s3-data:

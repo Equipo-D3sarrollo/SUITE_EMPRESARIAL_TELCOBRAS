@@ -1,0 +1,4 @@
+# LF en todos los archivos de texto: Biome formatea con LF y el equipo trabaja en Windows.
+* text=auto eol=lf
+*.woff2 binary
+*.png binary

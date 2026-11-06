@@ -1,0 +1,17 @@
+# Contexto de construcción (raíz del repo). Nunca entran secretos (.env) ni artefactos locales.
+**/node_modules
+**/dist
+**/coverage
+**/playwright-report
+**/test-results
+**/.lighthouseci
+**/*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.git
+.github
+.claude
+docs
+poc
+graphify-out

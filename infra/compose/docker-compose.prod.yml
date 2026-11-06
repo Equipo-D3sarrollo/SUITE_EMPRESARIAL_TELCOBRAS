@@ -1,0 +1,125 @@
+# Ejemplo de despliegue en un VPS (ADR-010): Caddy + SPA (web), API, migraciones, PostgreSQL y Valkey.
+# El S3 y el SMTP son servicios gestionados externos (ADR-009): solo llegan sus variables.
+# Sin secretos en este archivo: todo llega por un .env fuera de Git. Uso desde la raíz del repo:
+#   docker compose -f infra/compose/docker-compose.prod.yml --env-file .env.prod up -d --build --wait
+# Las contraseñas que van dentro de DATABASE_URL deben ir codificadas para URL (sin @ : / sin escapar).
+name: telcobras-prod
+
+x-service: &service
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "5"
+
+services:
+  web:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    image: telcobras-web:${IMAGE_TAG:-latest}
+    environment:
+      # URL pública, p. ej. https://suite.telcobras.com: Caddy obtiene y renueva el certificado.
+      SITE_ADDRESS: ${PUBLIC_URL:?Falta PUBLIC_URL}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    <<: *service
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+    image: telcobras-api:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_ORIGIN: ${PUBLIC_URL:?Falta PUBLIC_URL}
+      BETTER_AUTH_URL: ${PUBLIC_URL:?Falta PUBLIC_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Falta BETTER_AUTH_SECRET}
+      DATABASE_URL: postgres://app_user:${APP_USER_PASSWORD:?Falta APP_USER_PASSWORD}@postgres:5432/telcobras
+      VALKEY_URL: redis://valkey:6379
+      S3_ENDPOINT: ${S3_ENDPOINT:?Falta S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:?Falta S3_REGION}
+      S3_BUCKET: ${S3_BUCKET:?Falta S3_BUCKET}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?Falta S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?Falta S3_SECRET_ACCESS_KEY}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+      SMTP_HOST: ${SMTP_HOST:?Falta SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_SECURE: ${SMTP_SECURE:-true}
+      SMTP_USER: ${SMTP_USER:?Falta SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Falta SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM:?Falta MAIL_FROM}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      CREDENTIALS_MASTER_KEY: ${CREDENTIALS_MASTER_KEY:?Falta CREDENTIALS_MASTER_KEY}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-telcobras-api}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
+
+  # Aplica las migraciones pendientes con app_owner y termina; la API arranca después.
+  migrate:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+      target: migrate
+    image: telcobras-api-migrate:${IMAGE_TAG:-latest}
+    environment:
+      DATABASE_OWNER_URL: postgres://app_owner:${APP_OWNER_PASSWORD:?Falta APP_OWNER_PASSWORD}@postgres:5432/telcobras
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  postgres:
+    <<: *service
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
+      POSTGRES_DB: telcobras
+      APP_OWNER_PASSWORD: ${APP_OWNER_PASSWORD:?Falta APP_OWNER_PASSWORD}
+      APP_USER_PASSWORD: ${APP_USER_PASSWORD:?Falta APP_USER_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d telcobras"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  valkey:
+    <<: *service
+    image: valkey/valkey:9
+    # Persistencia AOF: las sesiones de Better Auth viven aquí y no se pierden al reiniciar.
+    command: ["valkey-server", "--appendonly", "yes"]
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  caddy-data:
+  caddy-config:
+  postgres-data:
+  valkey-data:

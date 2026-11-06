@@ -1,0 +1,44 @@
+# Proxy de entrada (ADR-010, doc madre §19): sirve la SPA y reenvía /api a la API.
+# SITE_ADDRESS: dominio público (p. ej. https://suite.telcobras.com, con HTTPS automático) o :80 sin TLS.
+{$SITE_ADDRESS::80} {
+	root * /srv
+	# Respuestas dinámicas (API, index.html). Caddy no trae codificador br: brotli llega con los
+	# archivos precomprimidos que genera la imagen (file_server precompressed).
+	encode zstd gzip
+	header -Server
+
+	handle /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		header {
+			Strict-Transport-Security "max-age=31536000"
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "DENY"
+			Referrer-Policy "strict-origin-when-cross-origin"
+			Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+			Cross-Origin-Opener-Policy "same-origin"
+			# Sin orígenes de terceros. style-src lleva 'unsafe-inline' porque Radix inyecta un <style> para bloquear el scroll de los modales.
+			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		}
+
+		# Assets con hash en el nombre: inmutables. Un asset inexistente da 404 sin caché larga.
+		handle /assets/* {
+			@exists file
+			header @exists Cache-Control "public, max-age=31536000, immutable"
+			file_server {
+				precompressed br gzip
+			}
+		}
+
+		# index.html y las rutas de la SPA (/iniciar-sesion, /app/...): siempre se revalidan.
+		handle {
+			header Cache-Control "no-cache"
+			try_files {path} /index.html
+			file_server {
+				precompressed br gzip
+			}
+		}
+	}
+}

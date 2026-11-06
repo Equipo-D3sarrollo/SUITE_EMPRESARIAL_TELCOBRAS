@@ -1,0 +1,129 @@
+/*
+ * Tokens del design system Telcobras para Tailwind v4 (documento madre §12.4.1 y §19.1, ADR-007).
+ * La app lo importa después de Tailwind:
+ *   @import 'tailwindcss';
+ *   @import '@telcobras/ui/theme.css';
+ */
+
+/* Poppins local: solo 400, 500 y 600, subset latino, font-display: swap. */
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("../../node_modules/@fontsource/poppins/files/poppins-latin-400-normal.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("../../node_modules/@fontsource/poppins/files/poppins-latin-500-normal.woff2")
+    format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("../../node_modules/@fontsource/poppins/files/poppins-latin-600-normal.woff2")
+    format("woff2");
+}
+
+/* La app solo escanea su propia carpeta: hay que registrar las clases de los componentes de este paquete. */
+@source "..";
+
+@theme {
+  /* Paleta oficial. Se desactiva la de Tailwind para que no se pueda usar ningún otro color. */
+  --color-*: initial;
+  --color-tb-verde: #88bd4c;
+  --color-tb-azul: #2491cc;
+  --color-tb-amarillo: #f3cb35;
+  --color-tb-gris: #888d91;
+  --color-tb-blanco: #ffffff;
+  --color-tb-negro: #000000;
+  /* Solo errores, estados críticos y acciones destructivas; siempre con icono y texto. */
+  --color-tb-error: #c62828;
+
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  /* Escala corta para pantallas con datos densos: nada por debajo de 12 px. */
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+
+  /* Dos radios: sm para controles (4 px) y lg para tarjetas y superficies flotantes (8 px). rounded-full queda para badges y avatares. */
+  --radius-*: initial;
+  --radius-sm: 0.25rem;
+  --radius-lg: 0.5rem;
+
+  /* Sombras neutras, solo con el negro. */
+  --shadow-*: initial;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px 0 rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 12px 32px -4px rgb(0 0 0 / 0.16);
+
+  /* Fade de 0,15 s del documento madre §12.1 (opacidad 0→1, y 4→0). */
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-accordion-down: accordion-down 150ms ease-out;
+  --animate-accordion-up: accordion-up 150ms ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+@layer base {
+  /* Tailwind usa currentColor por defecto: los bordes sin color explícito quedan en gris. */
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    border-color: var(--color-tb-gris);
+  }
+
+  body {
+    background-color: var(--color-tb-blanco);
+    color: var(--color-tb-negro);
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}

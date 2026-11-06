@@ -1,0 +1,26 @@
+name: Servicios y base de datos
+description: >-
+  Levanta los servicios de infra/compose igual que en local (PostgreSQL 18 con init.sql, Valkey, S3 y Mailpit),
+  exporta las variables de .env.example y aplica migraciones y semillas.
+
+runs:
+  using: composite
+  steps:
+    - name: Servicios de Compose
+      shell: bash
+      run: pnpm infra:up
+    - name: Variables de .env.example
+      shell: bash
+      # NODE_ENV queda fuera: el build usa production y cada paso de pruebas fija el suyo.
+      run: |
+        node --input-type=module <<'EOF'
+        import { appendFileSync, readFileSync } from 'node:fs';
+        import { parseEnv } from 'node:util';
+        const { NODE_ENV, ...env } = parseEnv(readFileSync('.env.example', 'utf8'));
+        appendFileSync(process.env.GITHUB_ENV, Object.entries(env).map(([k, v]) => `${k}=${v}\n`).join(''));
+        EOF
+    - name: Migraciones y semillas
+      shell: bash
+      run: |
+        pnpm db:migrate
+        pnpm db:seed

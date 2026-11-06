@@ -75,5 +75,5 @@ La carpeta se eliminó el 4-nov-2026. Solo 6 pantallas tuvieron ficha detallada 
 |---|---|
 | Docker Desktop (WSL2) | ✅ Instalado (Docker 29.9.2, Compose v5.6.1) |
 | pnpm | ✅ Instalado (12.16.1) |
-| `CLAUDE.md` de graphify | Sin commit: menciona un grafo que aún no existe |
-| Grafo de graphify | Se genera cuando haya código |
+| `CLAUDE.md` de graphify | Sin commit (archivo de instrucciones del proyecto) |
+| Grafo de graphify | ✅ Generado en `graphify-out/` tras iniciar la implementación |

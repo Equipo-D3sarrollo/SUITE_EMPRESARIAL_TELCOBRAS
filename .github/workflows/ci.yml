@@ -1,0 +1,183 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint y formato (Biome)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm exec biome ci .
+
+  typecheck:
+    name: Tipos (TypeScript)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm typecheck
+
+  palette:
+    name: Paleta oficial
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Los scripts de tools/ solo usan Node: no hace falta instalar dependencias.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Pruebas de los scripts de tools/
+        run: node --test "tools/*.test.mjs"
+      - name: Colores fuera de la paleta
+        run: node tools/check-palette.mjs
+
+  knip:
+    name: Código y dependencias sin uso (knip)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm knip
+
+  test:
+    name: Pruebas (incluye aislamiento RLS)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/services
+      - run: pnpm test
+      - name: Generar el contrato OpenAPI
+        run: pnpm --filter @telcobras/api openapi:export
+        env:
+          NODE_ENV: test
+      - name: Publicar el contrato OpenAPI
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: openapi
+          path: packages/contracts/openapi/openapi.json
+          if-no-files-found: error
+
+  build:
+    name: Build y presupuesto de carga
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm check:bundle
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/services
+      - run: pnpm build
+      - name: Instalar Chromium para Playwright
+        run: pnpm --filter @telcobras/web exec playwright install --with-deps chromium
+      - name: Levantar la API (con sesión de prueba) y el preview de la web
+        run: |
+          NODE_ENV=test ENABLE_TEST_AUTH=1 WEB_ORIGIN=http://localhost:4173 BETTER_AUTH_URL=http://localhost:4173 \
+            nohup pnpm --filter @telcobras/api start > api.log 2>&1 &
+          nohup pnpm --filter @telcobras/web preview --port 4173 --strictPort > web.log 2>&1 &
+          curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors \
+            http://localhost:3000/api/v1/health
+          curl --fail --silent --show-error --retry 30 --retry-delay 2 --retry-all-errors \
+            --output /dev/null http://localhost:4173/
+      - run: pnpm test:e2e
+        env:
+          E2E_BASE_URL: http://localhost:4173
+      - name: Guardar reporte y logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-report
+          path: |
+            apps/web/playwright-report
+            api.log
+            web.log
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse CI (móvil, Slow 4G, CPU 4x)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm --filter @telcobras/web build
+      # Configuración y presupuestos en apps/web/lighthouserc.json.
+      - run: pnpm --filter @telcobras/web lhci
+      - name: Guardar reportes de Lighthouse
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse
+          path: apps/web/.lighthouseci
+          include-hidden-files: true
+          retention-days: 14
+
+  images:
+    name: Imágenes Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: docker build --file infra/docker/api.Dockerfile --tag telcobras-api:ci .
+      - run: docker build --file infra/docker/web.Dockerfile --tag telcobras-web:ci .
+
+  gitleaks:
+    name: Secretos (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # Binario oficial en contenedor: la acción de gitleaks exige licencia en repos de organizaciones.
+      - name: Escanear todo el historial
+        run: >-
+          docker run --rm --volume "$PWD:/repo:ro"
+          ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+          git /repo --config /repo/.github/gitleaks.toml --redact --verbose

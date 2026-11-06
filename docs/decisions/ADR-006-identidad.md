@@ -13,3 +13,6 @@ Better Auth embebido en NestJS. Acceso sin contraseña: Google Workspace (OIDC) 
 
 ## Consecuencias
 Se retiran de los diseños la contraseña, el "Magic Code" y el código por correo.
+
+La columna nullable `accounts.password` se conserva porque Better Auth la requiere en su modelo de cuenta.
+El acceso por correo y contraseña permanece deshabilitado y esta columna no se escribe.
