@@ -6,6 +6,8 @@
 | Base | `docs/DOCUMENTO_MADRE_SUITE_TELCOBRAS.md` v1.1 |
 | Uso | Lista única de lo que **no** está definido o hecho al iniciar la construcción. Cuando un punto se resuelve, se marca aquí y se actualiza el documento madre o el ADR correspondiente |
 
+**Especificación de la etapa 2:** [`docs/etapas/ETAPA_2_ESPECIFICACION.md`](etapas/ETAPA_2_ESPECIFICACION.md) (decisiones E2-1 a E2-13).
+
 **Lo que sí está definido** (no se repite aquí): visión, 12 módulos, decisiones D-01–D-06, D-08–D-13, D-15–D-17 y D-20–D-24 (ADR-001 a ADR-011), paleta y tipografía, layout de 5 zonas, modelo de datos conceptual, reglas de seguridad, requisitos de rendimiento (§19) y ruta por etapas (§15).
 
 ## 1. Decisiones diferidas
@@ -37,10 +39,10 @@
 | Sidebar colapsable a 64 px | Mejora posterior; 256 px fijo | Posterior |
 | Router, formularios y cliente API del frontend | Sin elegir | Al montar la etapa 1 |
 | Lint y formato (ESLint/Prettier o Biome) | Sin elegir | Etapa 1 |
-| Tiempo real: SSE o WebSocket, autenticación, reconexión | Sin elegir | Etapa 2 |
-| Bus de eventos: sobre, DLQ, retención | Solo principios (outbox, idempotencia) | Etapa 2 |
-| Búsqueda (Ctrl+K global, deduplicación de leads) | Sin definir | Etapa 2 |
-| UI de notificaciones (más allá de la campana) | Sin diseño | Etapa 2 |
+| Tiempo real: SSE o WebSocket, autenticación, reconexión | ✅ Resuelto: SSE (E2-4, `docs/etapas/ETAPA_2_ESPECIFICACION.md`) | Etapa 2 |
+| Bus de eventos: sobre, DLQ, retención | ✅ Resuelto: E2-13 (outbox + BullMQ + mensajes fallidos) | Etapa 2 |
+| Búsqueda (Ctrl+K global, deduplicación de leads) | ✅ Resuelto: E2-6 y E2-3 | Etapa 2 |
+| UI de notificaciones (más allá de la campana) | ✅ Resuelto: E2-5 (campana, bandeja, correo, preferencias) | Etapa 2 |
 | Consentimiento y lista de supresión unificada (correo y WhatsApp, Ley 2300) | Sin definir | Etapa 3 |
 | Dominios de envío por organización (SPF, DKIM, DMARC) y proveedor de correo | Sin definir | Etapa 3 |
 | Retención legal de XML/PDF de facturas y de la auditoría | Sin definir | Antes de la etapa 4 |
