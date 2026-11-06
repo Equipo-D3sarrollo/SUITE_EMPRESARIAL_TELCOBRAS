@@ -25,12 +25,13 @@ Aprobadas por el arquitecto el 4-nov-2026 y **redactadas** en `docs/decisions/` 
 | ADR-002 | D-06: monolito modular NestJS; LeadGen y RADIAN como servicios Python aparte; REST + OpenAPI |
 | ADR-003 | D-02/D-03: SPA React + Vite + TS, Tailwind v4, shadcn con Radix |
 | ADR-004 | D-08: tablas compartidas + RLS, `organization_id`, membresías |
-| ADR-006 | D-09: Better Auth; Google o correo + passkey, con TOTP; sin contraseñas |
+| ADR-006 | D-09: Better Auth; Google o correo + passkey, con TOTP; sin contraseñas. **Reemplazado parcialmente por ADR-012** |
 | ADR-007 | D-04/D-05: paleta oficial de 6 colores + rojo solo para errores; Poppins; lucide; Zona 4 de 48 px expandible |
 | ADR-008 | D-22/D-23/D-24: código en inglés y UI en español; monorepo pnpm; Node LTS |
 | ADR-009 | D-10/D-11/D-12: BullMQ + Valkey + outbox; S3 gestionado; cifrado envolvente |
 | ADR-010 | D-13: VPS con Docker Compose; disponibilidad del piloto 99,5 % |
 | ADR-011 | D-15/D-16/D-17/D-20/D-21: RADIAN solo recepción; Odoo 19/20 con JSON-2; módulo 06 como catálogo gobernado; analítica separada; LeadGen se revisa primero |
+| ADR-012 | D-09 (6-nov-2026): Google o código de 6 dígitos por correo (10 min, 5 intentos), con TOTP; sin passkeys, sin enlace mágico y sin contraseñas |
 
 **Diferidas por decisión del arquitecto (4-nov-2026):** se resuelven más adelante y no frenan el arranque.
 - ✅ **ADR-005 (D-07 ORM):** resuelto el 5-nov-2026 con la prueba de 0.3: Drizzle.

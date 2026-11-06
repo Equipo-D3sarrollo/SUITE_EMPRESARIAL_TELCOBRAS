@@ -33,8 +33,10 @@ pnpm dev
 ```
 
 La aplicación web queda en `http://localhost:5173`; la API en `http://localhost:3000/api/v1`.
-La documentación OpenAPI queda en `http://localhost:3000/api/v1/docs`. Mailpit, para revisar
-enlaces de verificación, queda en `http://localhost:8025`.
+La documentación OpenAPI queda en `http://localhost:3000/api/v1/docs`. Mailpit, para leer
+los códigos de acceso y las invitaciones, queda en `http://localhost:8025`. Para entrar en
+local, escribe tu correo en `/registro` o en `/iniciar-sesion` y copia el código de 6 dígitos que
+llega a Mailpit; vence a los 10 minutos.
 
 Los valores de `.env.example` son únicamente para desarrollo local. La configuración de Google es
 opcional; SMTP local usa Mailpit. No uses las credenciales de ejemplo en otros entornos.

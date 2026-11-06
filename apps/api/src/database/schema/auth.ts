@@ -6,7 +6,7 @@ import { createdAt, id, nullableTimestamp, updatedAt } from './columns.js';
 // organizaciones por memberships, así que no llevan organization_id ni RLS.
 // Las sesiones y los valores de verificación viven en Valkey (secondaryStorage), no aquí.
 // La columna account.password es requerida por el esquema de Better Auth, pero no se configura ni se llena:
-// el acceso es solo con passkey o Google.
+// el acceso es solo con código de un solo uso enviado al correo o con Google.
 
 export const users = appSchema.table('users', {
   id: id(),
@@ -40,26 +40,6 @@ export const accounts = appSchema.table(
     updatedAt: updatedAt(),
   },
   (t) => [index('accounts_user_id_idx').on(t.userId)],
-);
-
-export const passkeys = appSchema.table(
-  'passkeys',
-  {
-    id: id(),
-    name: text('name'),
-    publicKey: text('public_key').notNull(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    credentialID: text('credential_id').notNull().unique('passkeys_credential_id_key'),
-    counter: integer('counter').notNull(),
-    deviceType: text('device_type').notNull(),
-    backedUp: boolean('backed_up').notNull(),
-    transports: text('transports'),
-    aaguid: text('aaguid'),
-    createdAt: createdAt(),
-  },
-  (t) => [index('passkeys_user_id_idx').on(t.userId)],
 );
 
 /** Secreto TOTP y códigos de respaldo (Better Auth los guarda cifrados). */

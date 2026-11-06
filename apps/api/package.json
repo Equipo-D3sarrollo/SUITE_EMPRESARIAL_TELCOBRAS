@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1162.0",
-    "@better-auth/passkey": "catalog:",
     "@fastify/cookie": "^11.1.5",
     "@fastify/helmet": "^13.2.0",
     "@fastify/static": "^10.1.10",

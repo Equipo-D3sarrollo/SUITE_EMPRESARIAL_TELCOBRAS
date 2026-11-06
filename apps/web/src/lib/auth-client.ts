@@ -1,17 +1,24 @@
-import { passkeyClient } from '@better-auth/passkey/client';
 import { createAuthClient } from 'better-auth/client';
-import { magicLinkClient, twoFactorClient } from 'better-auth/client/plugins';
+import { emailOTPClient, twoFactorClient } from 'better-auth/client/plugins';
 
 /**
- * Cliente de Better Auth (ADR-006): Google o correo + passkey, con TOTP. Sin contraseñas.
- * El enlace por correo solo se usa para verificar el correo al registrarse. La sesión va en cookie httpOnly.
+ * Cliente de Better Auth (ADR-006, ADR-012): Google o correo + código de un solo uso (OTP) enviado por
+ * correo, con TOTP opcional como segundo factor. Sin contraseñas, sin passkeys ni enlace mágico. La sesión
+ * va en cookie httpOnly.
  */
 export const authClient = createAuthClient({
   plugins: [
-    passkeyClient(),
-    magicLinkClient(),
-    // Recarga la página de login en el paso TOTP: así funciona igual tras un redirect de Google.
-    twoFactorClient({ twoFactorPage: '/iniciar-sesion?paso=totp' }),
+    emailOTPClient(),
+    twoFactorClient({
+      // Si la cuenta tiene TOTP, el login con código no abre sesión: se recarga /iniciar-sesion en el paso TOTP
+      // conservando el destino (?redirect), que la ruta vuelve a validar.
+      onTwoFactorRedirect: () => {
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        window.location.assign(
+          `/iniciar-sesion?${new URLSearchParams({ paso: 'totp', ...(redirect && { redirect }) })}`,
+        );
+      },
+    }),
   ],
 });
 

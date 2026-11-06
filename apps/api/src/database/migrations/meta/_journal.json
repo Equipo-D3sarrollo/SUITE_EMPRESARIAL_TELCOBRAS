@@ -29,6 +29,13 @@
       "when": 1793990123111,
       "tag": "0003_better_auth_account_password",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793998356924,
+      "tag": "0004_drop_passkeys",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,6 @@ engineStrict: true
 # Versiones compartidas por varios paquetes: se cambian aquí una sola vez.
 # pnpm solo instala versiones con más de 24 h publicadas (minimumReleaseAge por defecto): no se agregan excepciones.
 catalog:
-  "@better-auth/passkey": 1.7.17
   "@testing-library/dom": ^10.4.2
   "@testing-library/jest-dom": ^7.0.1
   "@testing-library/react": ^16.3.3

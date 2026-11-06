@@ -185,7 +185,10 @@ export const t = {
       description:
         'Gestión comercial, documental y de integraciones para tu empresa, en un solo lugar.',
       features: [
-        { title: 'Acceso sin contraseña', description: 'Con passkey o tu cuenta de Google.' },
+        {
+          title: 'Acceso sin contraseña',
+          description: 'Con un código que te llega al correo o con tu cuenta de Google.',
+        },
         {
           title: 'Datos aislados por empresa',
           description: 'Cada organización ve solo su información.',
@@ -199,13 +202,34 @@ export const t = {
     invalidEmail: 'Escribe un correo válido.',
     login: {
       title: 'Iniciar sesión en Suite Telcobras',
-      description: 'Ingresa a tu espacio de trabajo con tu passkey o tu cuenta de Google.',
+      description:
+        'Ingresa a tu espacio de trabajo con un código que te enviamos al correo o con tu cuenta de Google.',
       google: 'Continuar con Google Workspace',
-      passkey: 'Iniciar sesión con passkey',
-      passkeyHint: 'Tu navegador te pedirá la huella, el rostro o el PIN de este dispositivo.',
+      sendCode: 'Enviarme un código',
+      submitCode: 'Iniciar sesión',
       error: 'No pudimos iniciar tu sesión. Intenta de nuevo.',
       noAccount: '¿Tu empresa es nueva en Telcobras?',
       createAccount: 'Crea una cuenta',
+    },
+    code: {
+      title: 'Revisa tu correo',
+      sent: (email: string) => `Enviamos un código de 6 dígitos a ${email}.`,
+      resent: (email: string) => `Te enviamos un código nuevo a ${email}. El anterior ya no sirve.`,
+      label: 'Código de acceso',
+      hint: 'Vence en 10 minutos. Si no lo ves, revisa la carpeta de spam.',
+      invalidFormat: 'El código debe tener 6 dígitos.',
+      resend: 'Reenviar código',
+      useAnotherEmail: 'Usar otro correo',
+      errors: {
+        invalid: 'El código no es correcto. Revísalo e intenta de nuevo.',
+        expired: 'El código venció. Pide uno nuevo con «Reenviar código».',
+        tooManyAttempts: 'Hiciste demasiados intentos. Pide un código nuevo con «Reenviar código».',
+        accountNotFound:
+          'No hay una cuenta con este correo. Si tu empresa es nueva, crea una cuenta.',
+        rateLimited: 'Hiciste demasiadas solicitudes. Espera un minuto e intenta de nuevo.',
+        send: 'No pudimos enviar el código a tu correo. Intenta de nuevo.',
+        verify: 'No pudimos verificar el código. Intenta de nuevo.',
+      },
     },
     totp: {
       title: 'Verificación en dos pasos',
@@ -221,20 +245,11 @@ export const t = {
       google: 'Registrarse con Google',
       nameLabel: 'Nombre completo',
       invalidName: 'Escribe tu nombre (mínimo 2 caracteres).',
-      submit: 'Verificar mi correo',
-      error: 'No pudimos enviar el correo de verificación. Intenta de nuevo.',
+      submit: 'Enviarme un código',
+      submitCode: 'Crear cuenta',
       haveAccount: '¿Ya tienes cuenta?',
       signIn: 'Iniciar sesión',
-      checkEmailTitle: 'Revisa tu correo',
-      checkEmailDescription: (email: string) =>
-        `Enviamos un enlace de verificación a ${email}. Ábrelo en este dispositivo para continuar.`,
-      useAnotherEmail: 'Usar otro correo',
-      passkeyTitle: 'Crea tu passkey',
-      passkeyDescription:
-        'Tu correo quedó verificado. Con la passkey entrarás con la huella, el rostro o el PIN de este dispositivo.',
-      passkeySubmit: 'Crear passkey',
-      passkeyError: 'No se pudo crear la passkey. Intenta de nuevo.',
-      steps: { verify: '1. Verifica tu correo', passkey: '2. Crea tu passkey' },
+      steps: { details: '1. Tus datos', code: '2. Código del correo' },
     },
     invitation: {
       title: 'Te invitaron a Suite Telcobras',

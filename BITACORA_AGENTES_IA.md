@@ -42,9 +42,9 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-06 15:15, hora de Colombia (UTC-05:00) |
+| Corte de este estado | 2026-11-06 16:40, hora de Colombia (UTC-05:00) |
 | Etapa | **Etapa 1 — Fundaciones, en curso** |
-| Punto alcanzado | Autenticación, organizaciones, permisos iniciales y endpoints de invitación están implementados. |
+| Punto alcanzado | Autenticación (Google o código OTP por correo + TOTP, ADR-012; sin passkeys ni enlace mágico), organizaciones, permisos iniciales y endpoints de invitación están implementados. |
 | Próximo foco | Administración de miembros y roles en la interfaz, seguida de E2E autenticado y verificaciones de salida. |
 | Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
 | Commit | No se creó ningún commit en las intervenciones registradas aquí. |
@@ -121,6 +121,30 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-06 16:40 (UTC-05:00) — Claude Code (Opus 5.5)
+
+- **Etapa y objetivo:** Etapa 1; por decisión del usuario, reemplazar passkey y enlace mágico por
+  código OTP por correo. Antes: diagnóstico del enlace mágico (no se reprodujo el fallo; el clic del
+  usuario no llegó a la API) y borrado de todas las organizaciones de la base local.
+- **Resultado:** plugin `emailOTP` (6 dígitos, 10 min, 5 intentos, guardado cifrado); TOTP exigido
+  también en `/sign-in/email-otp` mediante `requireTwoFactorOnEmailOtp` (revisar al actualizar
+  Better Auth); el login con un correo sin cuenta responde `ACCOUNT_NOT_FOUND` y no crea cuentas sin
+  nombre. Web con paso de código compartido (`otp-step.tsx`). ADR-012 reemplaza parcialmente ADR-006.
+- **Cambios:** `apps/api/src/auth/auth.module.ts`, schema y migración `0004_drop_passkeys.sql`,
+  `apps/api/test/auth-email-otp.test.ts`, `apps/web/src/lib/auth-client.ts`,
+  `apps/web/src/features/auth/{otp-step,login-page,register-page}.tsx`, `registro.tsx`, i18n,
+  `package.json` de api/web, `pnpm-workspace.yaml`, lockfile, docs (ADR-006, ADR-012, README,
+  plan, documento madre, pendientes).
+- **Validaciones:** `pnpm typecheck`, `pnpm test` (api 44, web 21, ui 19, contracts 17),
+  `pnpm build`, `check:bundle`, `check:palette`, `openapi:export` pasaron. `pnpm lint` falla solo
+  por 4 archivos preexistentes ajenos; `pnpm knip` falla por dependencias sin uso preexistentes.
+  Prueba en navegador (Edge, Playwright, Mailpit): registro → código → `/onboarding`; login →
+  código incorrecto rechazado → código correcto → `/app`.
+- **Pendientes/bloqueos:** Google no exige TOTP (registrado en `docs/PENDIENTES.md`, antes de
+  habilitar Google en producción). Siguen los pendientes de cierre de Etapa 1.
+- **Siguiente paso exacto:** administración de miembros y roles en `apps/web/src/features/`.
+- **Git:** sin commit. La base local no tiene organizaciones (el seed las recrea si se ejecuta).
 
 ### 2026-11-06 15:15 (UTC-05:00) — Copilot en VS Code
 

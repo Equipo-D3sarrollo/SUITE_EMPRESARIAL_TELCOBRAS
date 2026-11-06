@@ -2,78 +2,83 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useSearch } from '@tanstack/react-router';
 import { Button, Field, Input } from '@telcobras/ui';
-import { KeyRound, MailCheck } from 'lucide-react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { t } from '@/i18n/es-CO';
-import { authClient } from '@/lib/auth-client';
 import { AuthLayout } from './auth-layout';
 import { FormError } from './form-error';
 import { GoogleSignIn } from './google-sign-in';
+import { emailSchema, OtpStep, sendCodeErrorMessage, sendSignInCode } from './otp-step';
 import { useEnterApp } from './use-enter-app';
 
-/** /registro: Google, o correo → enlace de verificación → passkey. Sin contraseña (ADR-006). */
+const registerSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: emailSchema,
+});
+
+type RegisterValues = z.infer<typeof registerSchema>;
+
+/**
+ * /registro: Google, o nombre + correo → código de 6 dígitos por correo. Al verificar el código, la API crea
+ * la cuenta (con el correo ya verificado) y abre la sesión. Sin contraseña (ADR-006).
+ */
 export function RegisterPage() {
-  const { redirect, paso } = useSearch({ from: '/registro' });
+  const { redirect } = useSearch({ from: '/registro' });
+  const enterApp = useEnterApp();
+  const [values, setValues] = useState<RegisterValues>({ name: '', email: '' });
+  const [codeSent, setCodeSent] = useState(false);
+
   return (
     <AuthLayout>
       <div className="flex flex-col gap-6">
         <ol className="flex gap-4 text-xs">
-          <li aria-current={paso ? undefined : 'step'} className="aria-[current]:font-semibold">
-            {t.auth.register.steps.verify}
+          <li aria-current={codeSent ? undefined : 'step'} className="aria-[current]:font-semibold">
+            {t.auth.register.steps.details}
           </li>
-          <li aria-current={paso ? 'step' : undefined} className="aria-[current]:font-semibold">
-            {t.auth.register.steps.passkey}
+          <li aria-current={codeSent ? 'step' : undefined} className="aria-[current]:font-semibold">
+            {t.auth.register.steps.code}
           </li>
         </ol>
-        {paso === 'passkey' ? (
-          <PasskeyStep redirect={redirect} />
+        {codeSent ? (
+          <OtpStep
+            email={values.email}
+            name={values.name}
+            submitLabel={t.auth.register.submitCode}
+            onSignedIn={() => enterApp(redirect ?? '/onboarding')}
+            onChangeEmail={() => setCodeSent(false)}
+          />
         ) : (
-          <EmailStep redirect={redirect} />
+          <DetailsStep
+            redirect={redirect}
+            defaultValues={values}
+            onCodeSent={(sent) => {
+              setValues(sent);
+              setCodeSent(true);
+            }}
+          />
         )}
       </div>
     </AuthLayout>
   );
 }
 
-const registerSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  email: z.string().trim().toLowerCase().pipe(z.email().max(254)),
-});
+type DetailsStepProps = {
+  redirect: string | undefined;
+  defaultValues: RegisterValues;
+  onCodeSent: (values: RegisterValues) => void;
+};
 
-function EmailStep({ redirect }: { redirect: string | undefined }) {
-  const form = useForm({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { name: '', email: '' },
-  });
+function DetailsStep({ redirect, defaultValues, onCodeSent }: DetailsStepProps) {
+  const form = useForm({ resolver: zodResolver(registerSchema), defaultValues });
   const { errors } = form.formState;
-  const verifyEmail = useMutation({
-    mutationFn: async ({ name, email }: z.infer<typeof registerSchema>) => {
-      // El enlace del correo abre la sesión y vuelve aquí, al paso de la passkey.
-      const callbackURL = `/registro?${new URLSearchParams({ paso: 'passkey', ...(redirect && { redirect }) })}`;
-      const { error } = await authClient.signIn.magicLink({
-        name,
-        email,
-        callbackURL,
-        newUserCallbackURL: callbackURL,
-      });
-      if (error) throw error;
-      return email;
+  const sendCode = useMutation({
+    mutationFn: async (values: RegisterValues) => {
+      await sendSignInCode(values.email);
+      return values;
     },
+    onSuccess: onCodeSent,
   });
-
-  if (verifyEmail.isSuccess) {
-    return (
-      <div role="status" className="flex flex-col items-start gap-4">
-        <MailCheck aria-hidden="true" className="size-10 text-tb-azul" />
-        <h1 className="font-semibold text-2xl">{t.auth.register.checkEmailTitle}</h1>
-        <p className="text-sm">{t.auth.register.checkEmailDescription(verifyEmail.data)}</p>
-        <Button variant="secondary" onClick={() => verifyEmail.reset()}>
-          {t.auth.register.useAnotherEmail}
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -85,7 +90,7 @@ function EmailStep({ redirect }: { redirect: string | undefined }) {
       <form
         noValidate
         className="flex flex-col gap-4"
-        onSubmit={form.handleSubmit((values) => verifyEmail.mutate(values))}
+        onSubmit={form.handleSubmit((values) => sendCode.mutate(values))}
       >
         <Field label={t.auth.register.nameLabel} error={errors.name && t.auth.register.invalidName}>
           <Input autoComplete="name" {...form.register('name')} />
@@ -98,8 +103,8 @@ function EmailStep({ redirect }: { redirect: string | undefined }) {
             {...form.register('email')}
           />
         </Field>
-        {verifyEmail.isError && <FormError>{t.auth.register.error}</FormError>}
-        <Button type="submit" disabled={verifyEmail.isPending}>
+        {sendCode.isError && <FormError>{sendCodeErrorMessage(sendCode.error)}</FormError>}
+        <Button type="submit" disabled={sendCode.isPending}>
           {t.auth.register.submit}
         </Button>
       </form>
@@ -113,31 +118,6 @@ function EmailStep({ redirect }: { redirect: string | undefined }) {
           {t.auth.register.signIn}
         </Link>
       </p>
-    </>
-  );
-}
-
-function PasskeyStep({ redirect }: { redirect: string | undefined }) {
-  const enterApp = useEnterApp();
-  const createPasskey = useMutation({
-    mutationFn: async () => {
-      const { error } = await authClient.passkey.addPasskey();
-      if (error) throw error;
-    },
-    onSuccess: () => enterApp(redirect ?? '/onboarding'),
-  });
-
-  return (
-    <>
-      <header className="flex flex-col gap-2">
-        <h1 className="font-semibold text-2xl">{t.auth.register.passkeyTitle}</h1>
-        <p className="text-sm">{t.auth.register.passkeyDescription}</p>
-      </header>
-      {createPasskey.isError && <FormError>{t.auth.register.passkeyError}</FormError>}
-      <Button disabled={createPasskey.isPending} onClick={() => createPasskey.mutate()}>
-        <KeyRound aria-hidden="true" />
-        {t.auth.register.passkeySubmit}
-      </Button>
     </>
   );
 }

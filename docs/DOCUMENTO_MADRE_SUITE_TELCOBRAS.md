@@ -213,6 +213,7 @@ Este documento manda sobre las fuentes originales. Cada cambio de decisión se r
 - **Autenticación (funcional):**
   - **Funciones:** inicio y cierre de sesión, recuperación, sesiones, renovación de tokens, verificación de identidad y control de acceso.
   - **[DECIDIDO D-09]** Better Auth, sin contraseña: Google o correo + passkey, con TOTP (§8). La "recuperación de contraseña" del PDF §4.3 se reemplaza por la recuperación de acceso (nueva passkey verificada por correo y TOTP).
+  - **[CAMBIO 6-nov-2026, ADR-012]** El correo + passkey se reemplaza por un código de 6 dígitos enviado por correo; TOTP sigue como segundo factor. Ya no hay flujo de recuperación aparte: se entra de nuevo con un código.
 - **RBAC (PDF §4.4):**
   - **Roles de ejemplo:** Superadministrador Telcobras, Administrador de empresa, Gerente, Comercial, Administrativo, Contador, Operador y Usuario básico.
   - Los roles son **configurables**, no nombres fijos.
@@ -618,6 +619,7 @@ Columnas: lo que dicen las fuentes, el estado verificado por AUD (4-nov-2026, si
   - El PDF §29.6 prohíbe tener dos sistemas de autenticación.
   - **AUD (NIST SP 800-63B-4):** el OTP por correo no sirve como autenticador fuera de banda, los límites van por cuenta y no solo por IP, y no se imponen reglas de composición de contraseña.
   - **Decisión:** Better Auth embebido; Google OIDC o correo + passkey; TOTP; sesión en cookie httpOnly; límites de intentos por cuenta. Sin contraseñas ni OTP por correo como factor.
+  - **Cambio (6-nov-2026, ADR-012):** el passkey y el enlace mágico se retiran. Se entra con Google o con un código de 6 dígitos por correo (10 min, 5 intentos, guardado con hash), con TOTP como segundo factor. Se acepta que el código por correo no cumple NIST SP 800-63B; las mitigaciones están en ADR-012.
 - **Roles:** PDF (8, configurables) vs BP capa 2 (Super-Admin, Director Ops, DIAN Auditor, NOC) vs BP SQL (5) [CONFLICTO H-07].
 - **Credenciales (PDF §23.3):** nunca en el frontend, en archivos públicos, en Git, en logs ni en texto plano en tablas. El BP pide AES-256 y Vault/KMS para las API keys de OpenAI, los tokens de WhatsApp y los secretos de Odoo (D-12).
 - **Agentes (PDF §23.4–23.5):**
@@ -859,6 +861,7 @@ Todas las cifras son [EJEMPLO].
   - Test de conectividad.
 - **Onboarding simplificado:** "Personaliza tu espacio de trabajo", con el tamaño de la empresa (1–10 … 200+) y "Completar más tarde".
 - **[DECIDIDO D-09]** Un solo flujo: Google o correo + passkey, con TOTP. Se retiran de los diseños la contraseña, el "Magic Code" y el código por correo. SAML/Okta queda para después.
+- **[CAMBIO 6-nov-2026, ADR-012]** El flujo por correo pasa a ser un código de 6 dígitos (registro e inicio de sesión) y se retira la passkey. La contraseña sigue fuera.
 
 ### 12.6 Responsive y accesibilidad
 
@@ -945,7 +948,7 @@ Severidad: C = crítica, A = alta, M = media. Los hallazgos con fuente AUD está
 | D-06 | Estilo arquitectónico | Monolito modular · microservicios | **DECIDIDO (4-nov-2026): monolito modular NestJS** con un módulo por dominio y fronteras estrictas. LeadGen y RADIAN (Python) quedan como servicios aparte, detrás de contratos. REST + OpenAPI; sin gRPC ni Kubernetes | Arquitecto | ✅ Cerrada |
 | D-07 | ORM y migraciones | Drizzle · Prisma · Kysely · TypeORM | **DECIDIDO (5-nov-2026) por la prueba de RLS: Drizzle ORM + drizzle-kit.** Pasó las 7 pruebas de aislamiento con PostgreSQL 18 (ADR-005, `poc/rls/`) | Prueba de RLS | ✅ Cerrada |
 | D-08 | Multi-tenancy | RLS en esquema compartido · esquema por tenant | **DECIDIDO (4-nov-2026): tablas compartidas + RLS.** `organization_id NOT NULL` en todo, membresías usuario–organización, reglas de §7.4. Se descarta el esquema por tenant | Arquitecto | ✅ Cerrada |
-| D-09 | Identidad | Better Auth · Keycloak · gestionado (Auth0/Clerk/WorkOS); modelo de sesión; MFA; un solo flujo de registro | **DECIDIDO (4-nov-2026): Better Auth embebido en NestJS.** Acceso **sin contraseña**: Google Workspace (OIDC) o correo + **passkey**, con 2FA por **TOTP** (app). SSO corporativo (Okta/Entra) se agrega después por organización. Sesión en cookie httpOnly; límites de intentos por cuenta; suplantación del superadmin auditada. Se descartan el OTP por correo como factor y la contraseña | Arquitecto | ✅ Cerrada |
+| D-09 | Identidad | Better Auth · Keycloak · gestionado (Auth0/Clerk/WorkOS); modelo de sesión; MFA; un solo flujo de registro | **DECIDIDO (4-nov-2026): Better Auth embebido en NestJS.** Acceso **sin contraseña**: Google Workspace (OIDC) o correo + **passkey**, con 2FA por **TOTP** (app). SSO corporativo (Okta/Entra) se agrega después por organización. Sesión en cookie httpOnly; límites de intentos por cuenta; suplantación del superadmin auditada. Se descartan el OTP por correo como factor y la contraseña. **Cambio (6-nov-2026, ADR-012):** la passkey y el enlace mágico se reemplazan por un código de 6 dígitos por correo (10 min, 5 intentos); TOTP se mantiene | Arquitecto | ✅ Cerrada |
 | D-10 | Cola y eventos | BullMQ + Valkey + outbox · pg-boss · RabbitMQ | **DECIDIDO (4-nov-2026): BullMQ + Valkey (instancia única) + outbox en PostgreSQL** y consumidores idempotentes. Se descartan Redis Cluster, RabbitMQ y Celery | Arquitecto | ✅ Cerrada |
 | D-11 | Almacenamiento de objetos | S3/R2 gestionado · SeaweedFS | **DECIDIDO (4-nov-2026): S3 gestionado** (R2, S3 o equivalente) a través de la API S3, con versionado. En local se emula con un contenedor S3-compatible. Se descarta MinIO. Proveedor exacto, junto con D-13 | Arquitecto | ✅ Cerrada |
 | D-12 | Secretos | Vault · OpenBao · KMS + cifrado envolvente | **DECIDIDO (4-nov-2026): cifrado envolvente en la app** (AES-256-GCM en PostgreSQL) con la llave maestra fuera de la base de datos (variable protegida del servidor al inicio; OpenBao o KMS después). Se descarta Vault por ahora | Arquitecto | ✅ Cerrada |

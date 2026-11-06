@@ -8,7 +8,7 @@
 
 **Especificación de la etapa 2:** [`docs/etapas/ETAPA_2_ESPECIFICACION.md`](etapas/ETAPA_2_ESPECIFICACION.md) (decisiones E2-1 a E2-13).
 
-**Lo que sí está definido** (no se repite aquí): visión, 12 módulos, decisiones D-01–D-06, D-08–D-13, D-15–D-17 y D-20–D-24 (ADR-001 a ADR-011), paleta y tipografía, layout de 5 zonas, modelo de datos conceptual, reglas de seguridad, requisitos de rendimiento (§19) y ruta por etapas (§15).
+**Lo que sí está definido** (no se repite aquí): visión, 12 módulos, decisiones D-01–D-06, D-08–D-13, D-15–D-17 y D-20–D-24 (ADR-001 a ADR-012), paleta y tipografía, layout de 5 zonas, modelo de datos conceptual, reglas de seguridad, requisitos de rendimiento (§19) y ruta por etapas (§15).
 
 ## 1. Decisiones diferidas
 
@@ -49,6 +49,11 @@
 | Certificados digitales por organización (custodia, vencimientos, XAdES-EPES) | Depende de D-14 | Etapa 4 |
 | Calendario de días hábiles y festivos de Colombia | Sin definir | Etapa 4 |
 | SSO corporativo (Okta/Entra) por organización | Diferido por D-09 | Posterior |
+| TOTP obligatorio para administradores de organización y superadministradores | Sin implementar; hoy es opcional para todos (ADR-012) | Antes del piloto |
+| Exigir TOTP también al entrar con Google: hoy quien tiene TOTP activo entra con Google sin el segundo factor, porque el hook de Better Auth solo cubre el código por correo y el callback de OAuth es una navegación (hay que redirigir a `/iniciar-sesion?paso=totp`) | Sin implementar; decidir si se corrige o si se acepta porque Google Workspace aplica su propia verificación (ADR-012) | Antes de habilitar Google en producción |
+| Límite de envíos de códigos de acceso por cuenta y por hora; confirmar el límite por IP de Better Auth en producción (hoy 3 por minuto, solo activo en producción) | Sin definir (ADR-012) | Antes del piloto |
+| Duración de la sesión (hoy 7 días por defecto de Better Auth) y una más corta para administradores | Sin definir (ADR-012) | Antes del piloto |
+| Restablecimiento del TOTP por un administrador cuando la persona perdió la app y los códigos de respaldo | Sin definir (ADR-012) | Antes del piloto |
 | Suplantación del superadmin: duración, aviso, quién autoriza | Solo el principio (auditada) | Etapa 5 |
 | Facturación electrónica de la propia suite | Sin definir | Etapa 5 |
 | Herramienta de analítica (réplica, vistas, almacén) | Sin definir (D-20 cubre el alcance) | Etapa 5 |
