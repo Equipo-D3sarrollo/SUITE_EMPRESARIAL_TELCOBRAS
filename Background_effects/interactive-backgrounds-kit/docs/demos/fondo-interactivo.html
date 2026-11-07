@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fondo de puntos interactivo</title>
+<style>
+:root{--bg:#f6f7fb;--fg:#14172b;--dot:#5b6cff;--line:91,108,255;--card:rgba(255,255,255,.8);--bd:rgba(20,23,43,.15);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d1a;--fg:#eef0ff;--dot:#7f8cff;--line:127,140,255;--card:rgba(20,23,43,.75);--bd:rgba(238,240,255,.18);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0d1a;--fg:#eef0ff;--dot:#7f8cff;--line:127,140,255;--card:rgba(20,23,43,.75);--bd:rgba(238,240,255,.18);color-scheme:dark}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;position:relative}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+main{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none}
+h1{font-size:clamp(1.8rem,5vw,3.2rem);margin:0 0 .5rem}
+p{margin:0 0 1.2rem;max-width:34rem;opacity:.8;line-height:1.5}
+.tabs{display:flex;gap:8px;pointer-events:auto;background:var(--card);border:1px solid var(--bd);padding:6px;border-radius:999px;backdrop-filter:blur(8px)}
+button{font:inherit;color:var(--fg);background:transparent;border:0;padding:8px 16px;border-radius:999px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--dot);color:#fff}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<main>
+  <h1>Particles / Dot Grid</h1>
+  <p>Mueve el mouse (o el dedo) sobre la pantalla. Cambia entre los dos estilos más comunes de este efecto.</p>
+  <div class="tabs">
+    <button id="b1" aria-pressed="true">Dot grid (malla)</button>
+    <button id="b2" aria-pressed="false">Constellation (red)</button>
+  </div>
+</main>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H,dpr,mode='grid',mouse={x:-999,y:-999},dots=[],parts=[];
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function init(){
+  dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  dots=[];const s=30;
+  for(let x=s/2;x<W;x+=s)for(let y=s/2;y<H;y+=s)dots.push({ox:x,oy:y,x,y});
+  const n=Math.min(110,Math.floor(W*H/14000));
+  parts=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.6,vy:(Math.random()-.5)*.6}));
+}
+function grid(){
+  const R=140,dot=css('--dot');ctx.fillStyle=dot;
+  for(const d of dots){
+    const dx=d.ox-mouse.x,dy=d.oy-mouse.y,dist=Math.hypot(dx,dy);
+    let tx=d.ox,ty=d.oy,k=0;
+    if(dist<R){k=1-dist/R;const f=k*38;tx+=dx/(dist||1)*f;ty+=dy/(dist||1)*f}
+    d.x+=(tx-d.x)*.15;d.y+=(ty-d.y)*.15;
+    ctx.globalAlpha=.25+k*.75;
+    ctx.beginPath();ctx.arc(d.x,d.y,1.4+k*2.6,0,6.283);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function net(){
+  const L=130,dot=css('--dot'),rgb=css('--line');ctx.fillStyle=dot;
+  for(const p of parts){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+    const dx=p.x-mouse.x,dy=p.y-mouse.y,d=Math.hypot(dx,dy);
+    if(d<110){p.x+=dx/(d||1)*1.6;p.y+=dy/(d||1)*1.6}
+    ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(p.x,p.y,2,0,6.283);ctx.fill();
+  }
+  for(let i=0;i<parts.length;i++){
+    const a=parts[i];
+    for(let j=i+1;j<parts.length;j++){
+      const b=parts[j],d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<L){ctx.strokeStyle='rgba('+rgb+','+(1-d/L)*.6+')';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+    }
+    const dm=Math.hypot(a.x-mouse.x,a.y-mouse.y);
+    if(dm<170){ctx.strokeStyle='rgba('+rgb+','+(1-dm/170)*.8+')';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke()}
+  }
+  ctx.globalAlpha=1;
+}
+function loop(){ctx.clearRect(0,0,W,H);mode==='grid'?grid():net();requestAnimationFrame(loop)}
+addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+addEventListener('pointerleave',()=>{mouse.x=mouse.y=-999});
+addEventListener('resize',init);
+function set(m){mode=m;b1.setAttribute('aria-pressed',m==='grid');b2.setAttribute('aria-pressed',m==='net')}
+b1.onclick=()=>set('grid');b2.onclick=()=>set('net');
+init();loop();
+</script>
+</body>
+</html>

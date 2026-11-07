@@ -52,3 +52,32 @@ pnpm build
 
 Las pruebas de API requieren los servicios de Compose encendidos y migrados. `pnpm infra:down`
 detiene los servicios locales sin borrar sus volúmenes.
+
+## Mapa del repositorio
+
+### Archivos de la raíz
+
+- `README.md`: presentación, estado, inicio local, comprobaciones y este mapa del repositorio.
+- `package.json`: comandos del monorepo, herramientas compartidas y requisitos de Node.js/pnpm.
+- `pnpm-workspace.yaml` y `pnpm-lock.yaml`: paquetes del workspace, catálogo de versiones y resolución reproducible de dependencias.
+- `tsconfig.base.json`: opciones TypeScript compartidas.
+- `biome.json` y `knip.json`: formato/lint y detección de dependencias o exports sin uso.
+- `.editorconfig`, `.gitattributes`, `.gitignore`, `.npmrc` y `.nvmrc`: convenciones del editor, Git, pnpm y versión de Node.js.
+- `.env.example`: plantilla de variables locales; `.env` contiene configuración local y no se debe compartir.
+- `BITACORA_AGENTES_IA.md` y `CLAUDE.md`: bitácora y contexto de trabajo para agentes de desarrollo.
+- `LICENSE`: términos de licencia del repositorio.
+- `setup-project.ps1`, `SETUP_COMPLETE.md`, `SETUP_DOCKER.md` y `start-docker-and-setup.bat`: automatización e instrucciones auxiliares de instalación local en Windows.
+
+### Carpetas
+
+- `.github/`: configuración de automatización y acciones de CI.
+- `.vscode/`: preferencias de este workspace para Visual Studio Code.
+- `apps/`: aplicaciones ejecutables; `api/` contiene el backend NestJS y `web/` la SPA React.
+- `packages/`: bibliotecas internas compartidas (`contracts/` para contratos y esquemas, `ui/` para componentes visuales).
+- `docs/`: documento rector, plan, pendientes, arquitectura y decisiones de diseño.
+- `infra/`: definiciones de Docker Compose, inicialización de PostgreSQL e imágenes de despliegue.
+- `poc/`: pruebas de concepto independientes; `rls/` demuestra el aislamiento multiempresa mediante Row-Level Security.
+- `tools/`: comprobaciones auxiliares de paleta y tamaño del bundle.
+- `Background_effects/`: kit auxiliar de fondos interactivos, sus demostraciones y componentes; no forma parte de las aplicaciones del workspace.
+
+Las carpetas de dependencias instaladas y los artefactos de compilación, cobertura o caché se omiten de este mapa.

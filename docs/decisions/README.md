@@ -14,3 +14,20 @@ Las decisiones vienen del documento madre §14. ADR-005 se decidió con la prueb
 - [ADR-011](ADR-011-alcance-funcional.md) — RADIAN, Odoo, automatización, analítica y LeadGen
 - [ADR-005](ADR-005-orm.md) — Drizzle ORM para acceso a datos y migraciones
 - [ADR-012](ADR-012-acceso-con-codigo-por-correo.md) — Acceso con código por correo en lugar de passkey
+
+## Contenido de esta carpeta
+
+Además de este índice, cada archivo registra una decisión y sus consecuencias:
+
+- `ADR-001-fuentes.md`: precedencia y resolución de conflictos entre fuentes del proyecto.
+- `ADR-002-estilo-arquitectonico.md`: elección del monolito modular NestJS.
+- `ADR-003-frontend.md`: SPA basada en React, Vite, Tailwind y componentes Radix/shadcn.
+- `ADR-004-multi-tenancy.md`: aislamiento multiempresa mediante tablas compartidas y RLS.
+- `ADR-005-orm.md`: Drizzle ORM para persistencia y migraciones.
+- `ADR-006-identidad.md`: decisión inicial sobre Better Auth e identidad sin contraseña, parcialmente reemplazada por ADR-012.
+- `ADR-007-marca-y-ui.md`: marca, paleta, tipografía, iconos y organización visual.
+- `ADR-008-convenciones.md`: idioma, repositorio y herramientas de desarrollo.
+- `ADR-009-datos-e-infraestructura.md`: decisiones sobre cola, archivos y secretos.
+- `ADR-010-hosting-y-disponibilidad.md`: hosting en VPS con Docker Compose y objetivo de disponibilidad.
+- `ADR-011-alcance-funcional.md`: alcance relativo a RADIAN, Odoo, automatización, analítica y LeadGen.
+- `ADR-012-acceso-con-codigo-por-correo.md`: acceso con código de un solo uso enviado por correo.

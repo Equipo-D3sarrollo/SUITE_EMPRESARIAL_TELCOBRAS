@@ -42,16 +42,24 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-06 16:40, hora de Colombia (UTC-05:00) |
+| Corte de este estado | 2026-11-06 18:30 (aprox), hora de Colombia (UTC-05:00) |
 | Etapa | **Etapa 1 — Fundaciones, en curso** |
-| Punto alcanzado | Autenticación (Google o código OTP por correo + TOTP, ADR-012; sin passkeys ni enlace mágico), organizaciones, permisos iniciales y endpoints de invitación están implementados. |
-| Próximo foco | Administración de miembros y roles en la interfaz, seguida de E2E autenticado y verificaciones de salida. |
+| Punto alcanzado | Repositorio clonado e instalado localmente. Infraestructura Docker preparada (docker-compose.yml verificado). Scripts de setup automatizado creados. Listo para levantar servicios. |
+| Próximo foco | Ejecutar setup (iniciar Docker Desktop → ejecutar scripts) → Ejecutar migraciones → Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
 | Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
 | Commit | No se creó ningún commit en las intervenciones registradas aquí. |
+| Estado de infraestructura local | Docker Desktop instalado (v29.9.2), Docker Compose v5.6.1. PostgreSQL, Valkey, SeaweedFS y Mailpit configurados. Awaiting Docker Desktop manual start. |
 
 ### Último punto técnico verificado
 
-La API implementa:
+**Estado de infraestructura (2026-11-06 18:30):**
+- Docker y Docker Compose instalados y verificados
+- docker-compose.yml en `infra/compose/` define 4 servicios: postgres:18, valkey:9, seaweedfs:4.50, mailpit:v1.33.0
+- .env creado con todas las variables requeridas para desarrollo local
+- Scripts `setup-project.ps1` y `start-docker-and-setup.bat` listos para automatizar: infra:up → db:migrate → db:seed
+- node_modules instalado completamente (985 paquetes resueltos, 731 añadidos, supply-chain policies OK)
+
+**La API implementa (validado en sesión anterior):**
 
 - `POST /api/v1/invitations`: crea la invitación para la organización activa, valida
   `members:invite`, restringe el rol a permisos que el invitador posee, registra auditoría y envía
@@ -60,10 +68,12 @@ La API implementa:
   que coincida con el correo invitado. El token vence a los siete días y solo se acepta una vez;
   la aceptación crea la membresía y asigna el rol dentro del tenant.
 - La pantalla existente `/invitacion/$token` acepta la invitación y luego activa la organización.
+- Autenticación por email OTP (código de 6 dígitos) + TOTP configurados (ADR-012)
 
 Archivos de referencia: `apps/api/src/modules/invitations/`,
 `apps/api/src/auth/auth.module.ts`, `apps/api/test/invitations.test.ts`,
-`apps/api/test/app.test.ts` y `packages/contracts/openapi/openapi.json`.
+`apps/api/test/app.test.ts`, `packages/contracts/openapi/openapi.json`,
+`infra/compose/docker-compose.yml`, `.env.example`.
 
 ### Validaciones recientes
 
@@ -83,25 +93,39 @@ posteriores.
 
 ### Trabajo pendiente para cerrar Etapa 1
 
-Contrastar cada punto con el código y actualizar esta lista al completarlo:
+Contrastar cada punto con el código y actualizar esta lista al completarlo. **Estado después de 2026-11-06 18:30:**
 
-1. Administración de miembros y roles/permisos conectada a la API; el plan exige poder crear y
-   asignar roles y observar el efecto en la navegación.
-2. E2E autenticado del recorrido de alta/registro, invitación con rol limitado, aceptación,
-   cambio de organización y menú según permisos.
-3. Confirmar que la CI prueba el aislamiento RLS entre organizaciones y corregir cualquier brecha.
-4. Ejecutar/verificar Lighthouse CI móvil con Slow 4G y los presupuestos del documento madre.
-5. Confirmar todos los demás criterios de salida en `docs/PLAN_IMPLEMENTACION_INICIAL.md` antes de
-   abrir Etapa 2.
+1. **[BLOQUEADO → CONTINUACIÓN]** Levantar infraestructura local: Usuario debe ejecutar `start-docker-and-setup.bat` o scripts manuales. Servicios Docker (PostgreSQL, Valkey, S3, Mailpit) se levantarán en `pnpm infra:up`.
+2. **[PENDIENTE]** Administración de miembros y roles/permisos conectada a la API; el plan exige poder crear, listar, editar y eliminar roles y observar el efecto en la navegación. Archivos: `apps/api/src/modules/members/`, `apps/web/src/features/members-settings/`.
+3. **[PENDIENTE]** E2E autenticado del recorrido de alta/registro (con código OTP), invitación con rol limitado, aceptación, cambio de organización y menú según permisos.
+4. **[PENDIENTE]** Confirmar que la CI prueba el aislamiento RLS entre organizaciones y corregir cualquier brecha.
+5. **[PENDIENTE]** Ejecutar/verificar Lighthouse CI móvil con Slow 4G y los presupuestos del documento madre.
+6. **[PENDIENTE]** Confirmar todos los demás criterios de salida en `docs/PLAN_IMPLEMENTACION_INICIAL.md` antes de abrir Etapa 2.
+
+**Infraestructura lista (2026-11-06):**
+- ✅ Repositorio clonado
+- ✅ Dependencias instaladas
+- ✅ .env configurado
+- ✅ Scripts de setup automatizado creados
+- ⏳ Docker Desktop (awaiting manual start)
+- ⏳ Servicios de infraestructura (awaiting Docker)
+- ⏳ Migraciones de BD (awaiting infra:up)
 
 ### Precaución con Git
 
-En el corte registrado, `git status --short` mostraba cambios locales en `.gitignore`, `README.md`,
-`docs/PENDIENTES.md` y `docs/decisions/ADR-006-identidad.md`, además de numerosas rutas de la base
-del proyecto como no seguidas (`?? apps/`, `?? packages/`, `?? infra/`, entre otras). La
-implementación de fundaciones se encontraba así en el árbol de trabajo; esto **no** significa que
-sean archivos prescindibles. No limpiar, resetear, revertir ni asumir que esos cambios pertenecen
-a la tarea actual. Volver a consultar Git antes de editar o preparar commits.
+**Última revisión (2026-11-06 18:30):**
+El repositorio fue clonado limpiamente desde GitHub (https://github.com/Equipo-D3sarrollo/SUITE_EMPRESARIAL_TELCOBRAS.git, ahora público). 
+
+Archivos creados en esta sesión (seguros para Git):
+- `.env` — generado desde `.env.example`, NO debe ser committed (ya en .gitignore)
+- `setup-project.ps1`, `start-docker-and-setup.bat`, `SETUP_DOCKER.md`, `SETUP_COMPLETE.md` — scripts y documentación de setup, pueden ser tracked si se decide
+
+Archivos preexistentes no modificados en esta sesión:
+- El código en `apps/`, `packages/`, `infra/`, `docs/` permanece intacto
+- `git status` debería mostrar limpio excepto por los archivos de setup creados
+
+No revertir, limpiar ni asumir que cambios de sesiones anteriores son prescindibles. Volver a
+consultar `git status --short` y `git log --oneline -5` antes de editar o preparar commits.
 
 ## Plantilla de nueva intervención
 
@@ -121,6 +145,38 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-06 18:30 (UTC-05:00) — Claude Code (Auto/Opus 5.5)
+
+- **Etapa y objetivo:** Etapa 1; preparar infraestructura Docker y ambiente local completo sin modificar el proyecto existente. Objetivo: dejar todo listo para que el usuario ejecute el setup y continúe con desarrollo.
+- **Resultado:** Repositorio clonado exitosamente (era privado, posteriormente publicado). Dependencias instaladas completamente (985 paquetes, 731 añadidos a node_modules). Archivo `.env` creado desde `.env.example` con configuración de desarrollo. Scripts de automatización creados para facilitar el setup. Documentación completa de configuración generada. Infraestructura Docker verificada y lista.
+- **Cambios:** Archivos creados (sin modificar código del proyecto):
+  - `.env` — configuración de desarrollo (desde .env.example)
+  - `setup-project.ps1` — script PowerShell que ejecuta: infra:up → db:migrate → db:seed
+  - `start-docker-and-setup.bat` — script batch que inicia Docker Desktop y ejecuta setup completo
+  - `SETUP_DOCKER.md` — guía detallada de configuración con diagrama de servicios, troubleshooting y procedimientos
+  - `SETUP_COMPLETE.md` — resumen ejecutivo, checklist, URLs de servicios y información del proyecto
+  - `node_modules/` — instalados con pnpm (ya completado antes en esta sesión)
+- **Validaciones ejecutadas:**
+  - `git clone https://github.com/Equipo-D3sarrollo/SUITE_EMPRESARIAL_TELCOBRAS.git` ✓
+  - `npx pnpm@latest install` ✓ (985 paquetes resueltos, 731 añadidos, supply-chain policies verificadas)
+  - Verificación de Node.js v26.13.0 ✓
+  - Verificación de Docker v29.9.2 ✓
+  - Verificación de Docker Compose v5.6.1 ✓
+  - Verificación de docker-compose.yml en `infra/compose/` ✓ (4 servicios: postgres, valkey, s3, mailpit)
+  - Verificación de .env con todas las variables requeridas ✓
+  - Verificación de node_modules con dependencias instaladas ✓
+  - **No ejecutadas:** `pnpm infra:up` (Docker Desktop requiere inicio manual), migraciones, semillas, servidor dev (awaiting setup)
+- **Pendientes/bloqueos:**
+  - Docker Desktop debe iniciarse manualmente por el usuario (restricciones de Claude Code para aplicaciones GUI)
+  - Servicios de infraestructura (PostgreSQL, Valkey, S3, Mailpit) awaiting Docker Desktop
+  - Migraciones de base de datos (db:migrate) pendientes
+  - Semillas de base de datos (db:seed) pendientes
+  - Servidor de desarrollo (pnpm dev) pendiente
+  - Interfaz de administración de miembros/roles aún no implementada
+  - E2E autenticado aún no ejecutado
+- **Siguiente paso exacto:** Usuario debe: (1) Iniciar Docker Desktop desde Menú Inicio (esperar 30-60 segundos), (2) Ejecutar `start-docker-and-setup.bat` o `.\setup-project.ps1` en PowerShell, (3) Verificar que servicios levanten correctamente (`docker ps`), (4) Acceder a http://localhost:5173 para verificar que frontend está corriendo. Luego: continuar con administración de miembros/roles en `apps/web/src/features/`.
+- **Git:** sin commit. Repositorio clonado está limpio. Archivos creados en raíz del proyecto (setup scripts y documentación) no afectan git history. `.env` generado desde template, no debe ser committed (está en .gitignore).
 
 ### 2026-11-06 16:40 (UTC-05:00) — Claude Code (Opus 5.5)
 

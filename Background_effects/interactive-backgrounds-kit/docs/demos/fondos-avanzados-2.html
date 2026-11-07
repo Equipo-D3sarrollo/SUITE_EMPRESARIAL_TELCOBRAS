@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fondos interactivos avanzados 2</title>
+<style>
+:root{--bg:#f6f7fb;--fg:#14172b;--dot:#4f5ef0;--card:rgba(255,255,255,.82);--bd:rgba(20,23,43,.15);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d1a;--fg:#eef0ff;--dot:#8a96ff;--card:rgba(20,23,43,.78);--bd:rgba(238,240,255,.18);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0d1a;--fg:#eef0ff;--dot:#8a96ff;--card:rgba(20,23,43,.78);--bd:rgba(238,240,255,.18);color-scheme:dark}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+main{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none}
+h1{font-size:clamp(1.6rem,5vw,3rem);margin:0 0 .4rem}
+#d{margin:0 0 1.2rem;max-width:34rem;opacity:.85;line-height:1.5;min-height:3em}
+.tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;pointer-events:auto;background:var(--card);border:1px solid var(--bd);padding:6px;border-radius:20px;backdrop-filter:blur(8px);max-width:92vw}
+button{font:inherit;font-size:.88rem;color:var(--fg);background:transparent;border:0;padding:8px 13px;border-radius:999px;cursor:pointer}
+button[aria-pressed="true"]{background:var(--dot);color:#fff}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<main>
+  <h1>Fondos interactivos avanzados 2</h1>
+  <p id="d"></p>
+  <div class="tabs" id="tabs"></div>
+</main>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H,dpr,cur='star',mouse={x:-999,y:-999,in:false},S={};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const vm=t=>mouse.in?mouse:{x:W/2+Math.cos(t*.0006)*W*.3,y:H/2+Math.sin(t*.0008)*H*.25};
+const E={
+star:{name:'Starfield 3D',desc:'Campo de estrellas en 3D: viajas por el espacio y el cursor mueve la cámara con efecto de profundidad (parallax).',
+ init(){S.s=Array.from({length:Math.min(500,W*H/1800|0)},()=>({x:(Math.random()*2-1)*W*1.2,y:(Math.random()*2-1)*H*1.2,z:20+Math.random()*1180}));S.ox=0;S.oy=0},
+ draw(t,c){
+  const m=vm(t);S.ox+=((m.x-W/2)*1.4-S.ox)*.06;S.oy+=((m.y-H/2)*1.4-S.oy)*.06;
+  ctx.strokeStyle=c.dot;ctx.lineCap='round';
+  for(const s of S.s){
+   const z0=s.z+14;s.z-=5;
+   if(s.z<20){s.z=1200;s.x=(Math.random()*2-1)*W*1.2;s.y=(Math.random()*2-1)*H*1.2}
+   const k1=300/s.z,k0=300/z0;
+   ctx.globalAlpha=Math.min(1,1.1-s.z/1200);ctx.lineWidth=Math.max(.6,(1-s.z/1200)*2.6);
+   ctx.beginPath();ctx.moveTo(W/2+(s.x-S.ox)*k0,H/2+(s.y-S.oy)*k0);ctx.lineTo(W/2+(s.x-S.ox)*k1,H/2+(s.y-S.oy)*k1);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+ }},
+mesh:{name:'Elastic mesh',desc:'Malla elástica: una red de líneas que se estira y se dobla como una tela cuando el cursor la empuja.',
+ init(){const g=36;S.cols=Math.ceil(W/g)+1;S.rows=Math.ceil(H/g)+1;S.n=[];for(let j=0;j<S.rows;j++)for(let i=0;i<S.cols;i++)S.n.push({ox:i*g,oy:j*g,x:i*g,y:j*g})},
+ draw(t,c){
+  const m=vm(t);
+  for(const n of S.n){
+   const dx=n.ox-m.x,dy=n.oy-m.y,d=Math.hypot(dx,dy);let tx=n.ox,ty=n.oy;
+   if(d<190){const f=Math.pow(1-d/190,2)*70;tx+=dx/(d||1)*f;ty+=dy/(d||1)*f}
+   n.x+=(tx-n.x)*.18;n.y+=(ty-n.y)*.18;
+  }
+  ctx.strokeStyle=c.dot;ctx.globalAlpha=.4;ctx.lineWidth=1;ctx.beginPath();
+  for(let j=0;j<S.rows;j++)for(let i=0;i<S.cols;i++){
+   const n=S.n[j*S.cols+i];
+   if(i<S.cols-1){const q=S.n[j*S.cols+i+1];ctx.moveTo(n.x,n.y);ctx.lineTo(q.x,q.y)}
+   if(j<S.rows-1){const q=S.n[(j+1)*S.cols+i];ctx.moveTo(n.x,n.y);ctx.lineTo(q.x,q.y)}
+  }
+  ctx.stroke();ctx.globalAlpha=1;
+ }},
+hex:{name:'Hex glow',desc:'Panal hexagonal: las celdas se iluminan al paso del cursor y se apagan poco a poco, dejando una estela.',
+ init(){const r=24,w=r*1.5,h=r*Math.sqrt(3);S.r=r;S.c=[];for(let i=0,x=0;x<W+r;i++,x+=w)for(let y=(i%2)*h/2;y<H+r;y+=h)S.c.push({x,y,v:0})},
+ draw(t,c){
+  const m=vm(t),r=S.r-2;ctx.strokeStyle=c.dot;ctx.fillStyle=c.dot;ctx.lineWidth=1;
+  for(const k of S.c){
+   if(Math.hypot(k.x-m.x,k.y-m.y)<S.r*1.6)k.v=1;k.v*=.96;
+   ctx.beginPath();
+   for(let a=0;a<6;a++){const px=k.x+r*Math.cos(a*1.0472),py=k.y+r*Math.sin(a*1.0472);a?ctx.lineTo(px,py):ctx.moveTo(px,py)}
+   ctx.closePath();ctx.globalAlpha=.12+k.v*.7;ctx.stroke();
+   if(k.v>.02){ctx.globalAlpha=k.v*.3;ctx.fill()}
+  }
+  ctx.globalAlpha=1;
+ }},
+terrain:{name:'Wireframe terrain',desc:'Terreno 3D de alambre: una superficie de olas con perspectiva estilo synthwave. El cursor levanta una colina.',
+ init(){},
+ draw(t,c){
+  const cols=36,rows=26,sp=64,m=vm(t),mi=m.x/W*cols,mj=(1-m.y/H)*rows,P=[];
+  for(let j=0;j<=rows;j++){
+   const row=[];
+   for(let i=0;i<=cols;i++){
+    const x=(i-cols/2)*sp,z=180+j*sp;
+    let y=Math.sin(i*.45+t*.0014)*Math.cos(j*.4-t*.001)*38+Math.sin(j*.25+t*.0007)*22;
+    y+=120*Math.exp(-((i-mi)*(i-mi)+(j-mj)*(j-mj))/7);
+    const k=480/z;row.push([W/2+x*k,H*.42+(230-y)*k]);
+   }
+   P.push(row);
+  }
+  ctx.strokeStyle=c.dot;ctx.lineWidth=1.2;
+  for(let j=0;j<=rows;j++){
+   ctx.globalAlpha=Math.max(.08,1-j/rows*.9);
+   ctx.beginPath();P[j].forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+   if(j<rows){ctx.beginPath();for(let i=0;i<=cols;i++){ctx.moveTo(P[j][i][0],P[j][i][1]);ctx.lineTo(P[j+1][i][0],P[j+1][i][1])}ctx.stroke()}
+  }
+  ctx.globalAlpha=1;
+ }},
+orbit:{name:'Orbit swarm',desc:'Enjambre orbital: cientos de partículas giran alrededor del cursor con inercia y dejan estelas de luz.',trail:true,
+ init(){S.p=Array.from({length:Math.min(320,W*H/2500|0)},()=>({x:W/2,y:H/2,a:Math.random()*6.283,r:30+Math.random()*150,s:(Math.random()*.02+.008)*(Math.random()<.5?-1:1),k:.03+Math.random()*.09}))},
+ draw(t,c){
+  const m=vm(t);ctx.globalAlpha=.14;ctx.fillStyle=c.bg;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=.9;ctx.fillStyle=c.dot;
+  for(const p of S.p){
+   p.a+=p.s;const rr=p.r*(1+.25*Math.sin(t*.002+p.a*3)),tx=m.x+Math.cos(p.a)*rr,ty=m.y+Math.sin(p.a)*rr*.6;
+   p.x+=(tx-p.x)*p.k;p.y+=(ty-p.y)*p.k;ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,6.283);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+ }},
+spot:{name:'Spotlight grid',desc:'Cuadrícula tipo plano técnico: las líneas se revelan con un foco alrededor del cursor y aparecen marcas en las intersecciones.',
+ init(){},
+ draw(t,c){
+  const m=vm(t),g=40;ctx.strokeStyle=c.dot;ctx.lineWidth=1;
+  const grid=a=>{ctx.globalAlpha=a;ctx.beginPath();for(let x=0;x<=W;x+=g){ctx.moveTo(x,0);ctx.lineTo(x,H)}for(let y=0;y<=H;y+=g){ctx.moveTo(0,y);ctx.lineTo(W,y)}ctx.stroke()};
+  grid(.1);
+  for(const [r,a] of [[240,.12],[170,.14],[100,.18]]){ctx.save();ctx.beginPath();ctx.arc(m.x,m.y,r,0,6.283);ctx.clip();grid(a);ctx.restore()}
+  ctx.globalAlpha=.9;ctx.beginPath();
+  for(let x=Math.floor((m.x-130)/g)*g;x<m.x+130;x+=g)for(let y=Math.floor((m.y-130)/g)*g;y<m.y+130;y+=g){
+   if(Math.hypot(x-m.x,y-m.y)<130){ctx.moveTo(x-4,y);ctx.lineTo(x+4,y);ctx.moveTo(x,y-4);ctx.lineTo(x,y+4)}
+  }
+  ctx.stroke();ctx.globalAlpha=1;
+ }}
+};
+function init(){
+  dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  E[cur].init();ctx.clearRect(0,0,W,H);
+}
+function loop(t){
+  const e=E[cur];
+  if(!e.trail)ctx.clearRect(0,0,W,H);
+  e.draw(t,{bg:css('--bg'),dot:css('--dot')});
+  requestAnimationFrame(loop);
+}
+const tabs=document.getElementById('tabs'),d=document.getElementById('d');
+function set(k){
+  cur=k;
+  for(const b of tabs.children)b.setAttribute('aria-pressed',b.dataset.k===k);
+  d.textContent=E[k].desc;init();
+}
+for(const k in E){const b=document.createElement('button');b.textContent=E[k].name;b.dataset.k=k;b.onclick=()=>set(k);tabs.appendChild(b)}
+addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;mouse.in=true});
+document.addEventListener('pointerleave',()=>{mouse.in=false});
+addEventListener('resize',init);
+set('star');requestAnimationFrame(loop);
+</script>
+</body>
+</html>
