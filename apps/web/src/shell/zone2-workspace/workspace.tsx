@@ -7,20 +7,23 @@ type WorkspaceProps = {
   /** Texto pequeño sobre el título, por ejemplo el módulo. */
   eyebrow?: ReactNode;
   title: ReactNode;
+  /** Decoración confinada a esta Zona 2, por ejemplo el fondo del Dashboard General. */
+  background?: ReactNode;
   children: ReactNode;
 };
 
 /** Zona 2: área principal (~72 %) con scroll propio. Destino del enlace "Saltar al contenido principal". */
-export function Workspace({ routeKey, eyebrow, title, children }: WorkspaceProps) {
+export function Workspace({ routeKey, eyebrow, title, background, children }: WorkspaceProps) {
   return (
     <main
       id="main-content"
       tabIndex={-1}
       aria-label={t.shell.regions.workspace}
-      className="min-w-0 basis-[72%] overflow-y-auto p-6 outline-none"
+      className="relative min-w-0 basis-[72%] overflow-y-auto p-6 outline-none"
     >
+      {background}
       {/* animate-fade-in viene del tema; motion-safe lo quita con prefers-reduced-motion. */}
-      <div key={routeKey} className="space-y-6 motion-safe:animate-fade-in">
+      <div key={routeKey} className="relative z-[1] space-y-6 motion-safe:animate-fade-in">
         <header>
           {eyebrow && <p className="text-sm">{eyebrow}</p>}
           <h1 className="font-semibold text-2xl">{title}</h1>
