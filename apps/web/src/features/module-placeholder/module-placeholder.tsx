@@ -1,7 +1,7 @@
 import { Link, useParams } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle, EmptyState } from '@telcobras/ui';
 import { NotFoundView } from '@/app/route-states';
-import { DashboardOverviewBackground } from '@/features/dashboard/dashboard-overview-background';
+import { PageBackground } from '@/components/page-background';
 import { t } from '@/i18n/es-CO';
 import { moduleIcon } from '@/shell/module-icons';
 import { moduleLabel, submoduleLabel, useAllowedModules } from '@/shell/navigation';
@@ -36,13 +36,9 @@ export function ModulePlaceholder() {
         routeKey={routeKey}
         eyebrow={moduleLabel(module.id)}
         title={title}
-        background={
-          module.id === 'dashboard' && submodule.id === 'overview' ? (
-            <DashboardOverviewBackground />
-          ) : undefined
-        }
+        background={<PageBackground />}
       >
-        <Card>
+        <Card className="bg-tb-blanco/50 backdrop-blur-sm border-none shadow-none">
           <EmptyState
             icon={moduleIcon(module)}
             title={title}

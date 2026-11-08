@@ -35,15 +35,11 @@ $startTime = Get-Date
 $dockerReady = $false
 
 while ((New-TimeSpan -Start $startTime).TotalSeconds -lt $MaxWaitSeconds) {
-    try {
-        $null = docker info 2>&1
-        if ($?) {
-            Write-Status "✓ Docker está listo" "Success"
-            $dockerReady = $true
-            break
-        }
-    } catch {
-        # sigue intentando
+    docker info | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Status "Docker esta listo" "Success"
+        $dockerReady = $true
+        break
     }
     Start-Sleep -Seconds 2
 }
@@ -56,7 +52,10 @@ if (-not $dockerReady) {
 Write-Status "Levantando servicios de Docker..." "Info"
 try {
     cd C:\SUITE-TELCOBRAS
-    npx pnpm@latest infra:up --wait
+    docker compose -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.override.yml up -d --wait
+    if ($LASTEXITCODE -ne 0) {
+        throw "Docker Compose no pudo levantar la infraestructura"
+    }
     Write-Status "Servicios de Docker levantados correctamente" "Success"
 } catch {
     Write-Status "Error al levantar servicios: $_" "Error"
@@ -85,7 +84,7 @@ try {
 
 # 6. Resumen
 Write-Status "╔════════════════════════════════════════════════════════════════╗" "Success"
-Write-Status "║     ✓ PROYECTO CONFIGURADO EXITOSAMENTE" "Success"
+Write-Status "PROYECTO CONFIGURADO EXITOSAMENTE" "Success"
 Write-Status "╚════════════════════════════════════════════════════════════════╝" "Success"
 Write-Host ""
 Write-Host "Los siguientes servicios están disponibles:" -ForegroundColor Green

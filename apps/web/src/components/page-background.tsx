@@ -7,8 +7,8 @@ import {
 
 const ROTATION_MS = 30_000;
 
-/** Fondo sutil exclusivo del Dashboard General; no ocupa otras zonas del shell. */
-export function DashboardOverviewBackground() {
+/** Fondo sutil para las pantallas de la aplicación. */
+export function PageBackground() {
   const [variantIndex, setVariantIndex] = useState(0);
 
   useEffect(() => {
@@ -29,16 +29,17 @@ export function DashboardOverviewBackground() {
   return (
     <div
       className="pointer-events-none absolute inset-0 overflow-hidden"
-      data-testid="dashboard-overview-background"
+      data-testid="page-background"
     >
       <InteractiveBackground
         variant={variant}
         density={0.75}
-        intensity={0.4}
+        intensity={1.0}
         radius={0.9}
         autoplay={false}
         interactive
-        className="opacity-80"
+        className="opacity-100"
+        color="var(--color-tb-azul)"
       />
       <button
         type="button"

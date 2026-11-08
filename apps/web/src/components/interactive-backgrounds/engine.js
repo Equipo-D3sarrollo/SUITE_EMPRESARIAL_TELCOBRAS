@@ -118,7 +118,12 @@ export function createEngine(canvas, userOptions = {}) {
     ? new IntersectionObserver(([en]) => { visible = en.isIntersecting; visible ? start() : stop(); })
     : null;
   if (io) io.observe(canvas);
-  start();
+
+  // Defer initial build until the next frame to allow for initial paint
+  requestAnimationFrame(() => {
+    resize();
+    start();
+  });
 
   return {
     setOptions(next = {}) { Object.assign(o, next); rebuild(); start(); },

@@ -20,9 +20,20 @@ Todos los pasos que no requieren Docker Desktop han sido completados:
 | `SETUP_DOCKER.md` | Guía completa de configuración |
 | `SETUP_COMPLETE.md` | Este archivo (resumen) |
 
-## Lo Que Falta: 1 PASO MANUAL 🚀
+## Estado actual ✅
 
-**Docker Desktop NO está corriendo.** Necesitas iniciarlo manualmente.
+Docker Desktop está activo y la infraestructura local ya fue configurada. PostgreSQL del proyecto usa el puerto `5433` para no interferir con otro PostgreSQL de Windows que utiliza `5432`.
+
+Servicios verificados:
+
+- ✅ PostgreSQL: `127.0.0.1:5433` (contenedor escucha internamente en `5432`)
+- ✅ Valkey: `127.0.0.1:6379`
+- ✅ SeaweedFS: `127.0.0.1:8333`
+- ✅ Mailpit: `127.0.0.1:1025` / `127.0.0.1:8025`
+- ✅ Migraciones y seed ejecutados
+- ✅ Web y API funcionando con `npx pnpm@latest dev`
+
+Para iniciar una nueva sesión, Docker debe estar activo y puedes ejecutar `setup-project.ps1` desde la raíz. El override local de Compose se aplica mediante el comando completo documentado abajo.
 
 ### Opción 1: Haz doble-click en un archivo (MÁS FÁCIL)
 ```
@@ -48,7 +59,7 @@ Este archivo:
 ### Opción 3: Paso a Paso Manual
 ```powershell
 # Una vez Docker Desktop esté corriendo:
-pnpm infra:up       # Levanta PostgreSQL, Redis, S3, Mailpit
+docker compose -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.override.yml up -d --wait  # Levanta PostgreSQL, Valkey, S3, Mailpit
 pnpm db:migrate     # Ejecuta migraciones
 pnpm db:seed        # Carga datos iniciales
 pnpm dev            # Inicia el servidor de desarrollo

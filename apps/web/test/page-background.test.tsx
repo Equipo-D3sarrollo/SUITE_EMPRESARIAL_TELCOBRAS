@@ -1,16 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  DashboardOverviewBackground,
-  ROTATION_MS,
-} from '@/features/dashboard/dashboard-overview-background';
+import { PageBackground, ROTATION_MS } from '@/components/page-background';
 
-describe('DashboardOverviewBackground', () => {
+describe('PageBackground', () => {
   it('cambia el fondo manualmente y rota después de 30 segundos', () => {
     vi.useFakeTimers();
-    render(<DashboardOverviewBackground />);
+    render(<PageBackground />);
 
-    const background = screen.getByTestId('dashboard-overview-background');
+    const background = screen.getByTestId('page-background');
     expect(background).toBeInTheDocument();
     const canvas = background.querySelector('canvas');
     expect(canvas).toHaveAttribute('aria-hidden', 'true');

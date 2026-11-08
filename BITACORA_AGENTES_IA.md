@@ -42,21 +42,23 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-06 18:30 (aprox), hora de Colombia (UTC-05:00) |
+| Corte de este estado | 2026-11-07, hora de Colombia (UTC-05:00) |
 | Etapa | **Etapa 1 — Fundaciones, en curso** |
-| Punto alcanzado | Repositorio clonado e instalado localmente. Infraestructura Docker preparada (docker-compose.yml verificado). Scripts de setup automatizado creados. Listo para levantar servicios. |
-| Próximo foco | Ejecutar setup (iniciar Docker Desktop → ejecutar scripts) → Ejecutar migraciones → Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
+| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, y aplicación web/API funcionando localmente. |
+| Próximo foco | Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
 | Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
 | Commit | No se creó ningún commit en las intervenciones registradas aquí. |
-| Estado de infraestructura local | Docker Desktop instalado (v29.9.2), Docker Compose v5.6.1. PostgreSQL, Valkey, SeaweedFS y Mailpit configurados. Awaiting Docker Desktop manual start. |
+| Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. PostgreSQL del proyecto en `localhost:5433` para no interferir con PostgreSQL de Windows en `localhost:5432`; Valkey, SeaweedFS y Mailpit saludables. |
 
 ### Último punto técnico verificado
 
-**Estado de infraestructura (2026-11-06 18:30):**
-- Docker y Docker Compose instalados y verificados
-- docker-compose.yml en `infra/compose/` define 4 servicios: postgres:18, valkey:9, seaweedfs:4.50, mailpit:v1.33.0
-- .env creado con todas las variables requeridas para desarrollo local
-- Scripts `setup-project.ps1` y `start-docker-and-setup.bat` listos para automatizar: infra:up → db:migrate → db:seed
+**Estado de infraestructura (2026-11-07):**
+- Docker y Docker Compose instalados, activos y verificados
+- `docker-compose.yml` en `infra/compose/` define 4 servicios: postgres:18, valkey:9, seaweedfs:4.50, mailpit:v1.33.0
+- `infra/compose/docker-compose.override.yml` publica PostgreSQL en `127.0.0.1:5433`, dejando libre el PostgreSQL de Windows en `5432`
+- `.env` usa `localhost:5433` en `DATABASE_URL` y `DATABASE_OWNER_URL`
+- Migraciones y seed ejecutados correctamente
+- Web y API levantadas con `npx pnpm@latest dev`
 - node_modules instalado completamente (985 paquetes resueltos, 731 añadidos, supply-chain policies OK)
 
 **La API implementa (validado en sesión anterior):**
@@ -145,6 +147,16 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-07 — Claude Code (Auto)
+
+- **Etapa y objetivo:** Etapa 1; configurar Docker/Compose y levantar todo el proyecto localmente sin interferir con otro PostgreSQL instalado en Windows.
+- **Resultado:** Docker Desktop y Compose verificados. Valkey, SeaweedFS y Mailpit ya estaban saludables; PostgreSQL del proyecto no podía publicar `5432` porque el servicio Windows `postgresql-x64-18` lo ocupaba. Se configuró un override local para publicar el contenedor en `5433`, dejando el otro proyecto en `5432`. Los cuatro servicios quedaron saludables.
+- **Cambios:** creado `infra/compose/docker-compose.override.yml` con `127.0.0.1:5433:5432`; actualizado `.env` para que `DATABASE_URL` y `DATABASE_OWNER_URL` usen `localhost:5433`. No se modificó el `docker-compose.yml` base ni el código de la aplicación.
+- **Validaciones:** `docker compose ... up -d --wait` ✓; `npx pnpm@latest db:migrate` ✓; `npx pnpm@latest db:seed` ✓; `npx pnpm@latest dev` ✓. Web `GET http://localhost:5173/` respondió HTTP 200. API `GET http://localhost:3000/api/v1/health` respondió HTTP 200 con PostgreSQL, Valkey y S3 en estado `up`. Compose reportó los cuatro contenedores `healthy`.
+- **Pendientes/bloqueos:** el servidor de desarrollo permanece ejecutándose en segundo plano en esta sesión; la administración de miembros/roles, E2E autenticado, aislamiento RLS en CI y Lighthouse siguen pendientes de Etapa 1.
+- **Siguiente paso exacto:** abrir http://localhost:5173 y validar el flujo de registro usando los códigos enviados a http://localhost:8025; después continuar con administración de miembros y roles.
+- **Git:** sin commit. `.env` permanece local/no trackeado; el override debe conservarse como configuración local del proyecto.
 
 ### 2026-11-06 18:30 (UTC-05:00) — Claude Code (Auto/Opus 5.5)
 

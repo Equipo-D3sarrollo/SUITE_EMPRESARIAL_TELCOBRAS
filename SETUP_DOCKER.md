@@ -43,7 +43,7 @@ ejecuta uno de estos comandos desde la carpeta del proyecto:
 ### Opción B: Paso a Paso
 ```powershell
 # 1. Levanta la infraestructura (PostgreSQL, Valkey, SeaweedFS, Mailpit)
-pnpm infra:up
+docker compose -f infra/compose/docker-compose.yml -f infra/compose/docker-compose.override.yml up -d --wait
 
 # 2. Ejecuta las migraciones de base de datos
 pnpm db:migrate
