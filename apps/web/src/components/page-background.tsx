@@ -39,7 +39,7 @@ export function PageBackground() {
         autoplay={false}
         interactive
         className="opacity-100"
-        color="var(--color-tb-azul)"
+        color="var(--color-tb-azul-claro)"
       />
       <button
         type="button"
