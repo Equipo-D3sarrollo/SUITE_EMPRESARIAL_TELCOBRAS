@@ -59,6 +59,9 @@ export function UserMenu() {
           <span className="truncate font-normal text-xs">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate({ to: '/registro' })}>
+          <span className="font-medium">{t.shell.organization.add}</span>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void signOut()}>
           <LogOut aria-hidden="true" />
           {t.shell.userMenu.signOut}
