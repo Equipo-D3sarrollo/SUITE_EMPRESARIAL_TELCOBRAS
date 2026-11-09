@@ -1,6 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PageBackground, ROTATION_MS } from '../src/components/page-background';
+import {
+  BRAND_COLORS,
+  PageBackground,
+  ROTATION_MS,
+} from '../src/components/page-background';
 
 describe('PageBackground', () => {
   it('cambia el fondo manualmente y rota después de 30 segundos', () => {
@@ -10,6 +14,7 @@ describe('PageBackground', () => {
     const background = screen.getByTestId('page-background');
     expect(background).toBeInTheDocument();
     const canvas = background.querySelector('canvas');
+    expect(BRAND_COLORS).toEqual(['#88BD4C', '#2491CC', '#F3CB35']);
     expect(canvas).toHaveAttribute('aria-hidden', 'true');
     expect(canvas).toHaveStyle({ pointerEvents: 'none' });
 

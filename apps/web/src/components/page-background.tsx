@@ -7,9 +7,13 @@ import {
 
 const ROTATION_MS = 30_000;
 
+/** Colores oficiales de Telcobras, según el Documento Madre §12.4.1. */
+export const BRAND_COLORS = ['#88BD4C', '#2491CC', '#F3CB35'] as const;
+
 /** Fondo sutil para las pantallas de la aplicación. */
 export function PageBackground() {
   const [variantIndex, setVariantIndex] = useState(0);
+  const [colorIndex, setColorIndex] = useState(0);
 
   useEffect(() => {
     const prefersReducedMotion =
@@ -18,13 +22,18 @@ export function PageBackground() {
 
     const timer = window.setInterval(() => {
       setVariantIndex((current) => (current + 1) % variants.length);
+      setColorIndex((current) => (current + 1) % BRAND_COLORS.length);
     }, ROTATION_MS);
 
     return () => window.clearInterval(timer);
   }, []);
 
   const variant = variants[variantIndex] as BackgroundVariant;
-  const changeVariant = () => setVariantIndex((current) => (current + 1) % variants.length);
+  const color = BRAND_COLORS[colorIndex];
+  const changeVariant = () => {
+    setVariantIndex((current) => (current + 1) % variants.length);
+    setColorIndex((current) => (current + 1) % BRAND_COLORS.length);
+  };
 
   return (
     <div
@@ -39,7 +48,7 @@ export function PageBackground() {
         autoplay={false}
         interactive
         className="opacity-100"
-        color="var(--color-tb-azul-claro)"
+        color={color}
       />
       <button
         type="button"
