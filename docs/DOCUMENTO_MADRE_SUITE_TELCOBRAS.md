@@ -796,6 +796,14 @@ Todas las cifras son [EJEMPLO].
 - Un lint o prueba en la CI rechaza cualquier HEX o clase de color fuera de estos 6 más el rojo de error.
 - Los dashboards, la Zona 4 y los gráficos de Stitch se adaptan a esta paleta.
 
+**Fondos interactivos y superficies aprobados (implementación web, 8-nov-2026):**
+- Las vistas del shell que utilizan `Workspace` renderizan un fondo interactivo confinado a la Zona 2; no invade la Zona 0, Zona 1, Zona 3 ni Zona 4 y no intercepta eventos del contenido.
+- El fondo contiene los 13 efectos del kit (`grid`, `constellation`, `flow`, `ripple`, `aurora`, `flicker`, `magnet`, `star`, `mesh`, `hex`, `terrain`, `orbit` y `spot`). El efecto cambia automáticamente cada 30 segundos y dispone de un control manual accesible.
+- El color del efecto intercambia, junto con la rotación, únicamente los tres colores de marca: verde `#88BD4C`, azul `#2491CC` y amarillo `#F3CB35`. No se utilizan tonos arbitrarios para la decoración.
+- El motor de canvas difiere su inicialización para permitir el primer pintado, evita dibujar antes de tener dimensiones válidas, pausa cuando la vista no es visible o la pestaña está oculta, cancela sus `requestAnimationFrame` al desmontar y respeta `prefers-reduced-motion`.
+- Todas las tarjetas del componente base `Card` usan superficie blanca al 60% (`bg-tb-blanco/60`) y `backdrop-blur-sm`, conservando el borde y la sombra del design system. Las variantes específicas pueden sobrescribir estas clases cuando exista una decisión visual explícita.
+- La rotación de efectos y colores, la inicialización de cada efecto y la compilación de producción tienen cobertura de pruebas automatizadas.
+
 **Reglas de contraste (WCAG 2.2 AA sobre blanco, calculadas):**
 
 | Color sobre blanco | Contraste | Uso permitido |

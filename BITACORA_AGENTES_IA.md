@@ -42,12 +42,12 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-07, hora de Colombia (UTC-05:00) |
+| Corte de este estado | 2026-11-08, hora de Colombia (UTC-05:00) |
 | Etapa | **Etapa 1 — Fundaciones, en curso** |
-| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, y aplicación web/API funcionando localmente. |
+| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. |
 | Próximo foco | Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
 | Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
-| Commit | No se creó ningún commit en las intervenciones registradas aquí. |
+| Commit | La implementación visual quedó registrada en commits de `main`; esta actualización documental queda pendiente de commit. |
 | Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. PostgreSQL del proyecto en `localhost:5433` para no interferir con PostgreSQL de Windows en `localhost:5432`; Valkey, SeaweedFS y Mailpit saludables. |
 
 ### Último punto técnico verificado
@@ -147,6 +147,16 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-08 — Claude Code — actualización documental de la versión visual aprobada
+
+- **Etapa y objetivo:** Etapa 1; documentar los cambios visuales aprobados de la última versión sin modificar el alcance funcional.
+- **Resultado:** La documentación ahora registra los fondos interactivos globales de la Zona 2, la rotación de los 13 efectos y de los tres colores oficiales de Telcobras, las medidas de rendimiento/accesibilidad del motor y la transparencia del 60% de las tarjetas base.
+- **Cambios:** actualizado `docs/DOCUMENTO_MADRE_SUITE_TELCOBRAS.md` con la decisión de implementación visual; actualizado `docs/PLAN_IMPLEMENTACION_INICIAL.md` para incluir tarjetas al 60% y desenfoque; actualizado esta bitácora con el estado y la intervención.
+- **Validaciones:** se verificó la paleta contra el Documento Madre §12.4.1: verde `#88BD4C`, azul `#2491CC`, amarillo `#F3CB35`; no se ejecutaron pruebas de código porque esta intervención solo modifica documentación.
+- **Pendientes/bloqueos:** siguen pendientes administración de miembros/roles, E2E autenticado, aislamiento RLS en CI y Lighthouse de Etapa 1. Permanece un cambio no relacionado sin commit en `apps/web/src/shell/zone0-topbar/user-menu.tsx`.
+- **Siguiente paso exacto:** revisar esta actualización documental y continuar con administración de miembros/roles; ejecutar las validaciones completas después de los próximos cambios de código.
+- **Git:** cambios documentales sin commit; no se incluyeron cambios de código no relacionados.
 
 ### 2026-11-07 — Claude Code (Auto)
 

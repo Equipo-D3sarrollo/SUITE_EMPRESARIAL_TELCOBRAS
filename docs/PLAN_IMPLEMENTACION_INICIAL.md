@@ -103,7 +103,7 @@ docs/           documento madre, plan, ADR
 
 | Paquete | Contenido | Criterio de aceptación |
 |---|---|---|
-| Design system | **Paleta oficial de 6 colores** (documento madre §12.4.1) como variables en `@theme` de Tailwind v4, con la paleta por defecto desactivada; botones, inputs, badges, tablas y tabs con las medidas de DESIGN.md | Página de muestra con todos los componentes; la CI falla si aparece un color fuera de los 6; todo el texto cumple el contraste AA |
+| Design system | **Paleta oficial de 6 colores** (documento madre §12.4.1) como variables en `@theme` de Tailwind v4, con la paleta por defecto desactivada; botones, inputs, badges, tablas y tabs con las medidas de DESIGN.md. Las tarjetas base usan fondo blanco al 60% y desenfoque. | Página de muestra con todos los componentes; la CI falla si aparece un color fuera de los 6; todo el texto cumple el contraste AA; las tarjetas mantienen legibilidad sobre fondos decorativos. |
 | Layout de 5 zonas | Zona 0 (56 px), Zona 1 (256 px, acordeón single), Zona 2 (72 %), Zona 3 (28 %), Zona 4 (48 px); scroll independiente por zona | Sin scroll global a 1280 px o más; el comportamiento en tablet sigue ADR-003 |
 | Navegación | Árbol de 10 módulos (documento madre §12.2); **la ruta en la URL** decide las Zonas 2, 3 y 4; fade de 0,15 s | Recargar la página o usar "atrás" mantiene el submódulo |
 | Zona 0 | Logo oficial (eslogan en español), selector de organización (desde el servidor), Ctrl+K (cmdk) sobre los módulos, campana, menú de usuario | El selector solo muestra las organizaciones del usuario |
