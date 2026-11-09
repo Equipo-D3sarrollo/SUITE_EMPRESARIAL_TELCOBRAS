@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PageBackground, ROTATION_MS } from '@/components/page-background';
+import { PageBackground, ROTATION_MS } from '../src/components/page-background';
 
 describe('PageBackground', () => {
   it('cambia el fondo manualmente y rota después de 30 segundos', () => {

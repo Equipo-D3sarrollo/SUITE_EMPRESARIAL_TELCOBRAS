@@ -29,7 +29,7 @@ export function createEngine(canvas, userOptions = {}) {
   const mouse = { x: -9999, y: -9999, in: false };
   const mq = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   let reduced = !!(mq && mq.matches);
-  let raf = 0, running = false, visible = true, frameNo = 0, dpr = 1;
+  let raf = 0, initRaf = 0, running = false, visible = true, frameNo = 0, dpr = 1;
 
   const A = {
     ctx, W: 0, H: 0, s: {}, o, mouse, clicks: [], c: { dot: '#4f5ef0' },
@@ -55,12 +55,16 @@ export function createEngine(canvas, userOptions = {}) {
   function readColors() {
     const cs = getComputedStyle(canvas);
     const get = (n) => cs.getPropertyValue(n).trim();
-    A.c.dot = o.color || get('--ib-color') || get('--mantine-primary-color-filled') || get('--mantine-color-blue-filled') || '#4f5ef0';
+    const configured = typeof o.color === 'string' ? o.color.trim() : '';
+    const variable = configured.match(/^var\(\s*(--[\w-]+)(?:\s*,\s*([^\)]+))?\s*\)$/);
+    A.c.dot = variable
+      ? get(variable[1]) || variable[2]?.trim() || '#4f5ef0'
+      : configured || get('--ib-color') || get('--mantine-primary-color-filled') || get('--mantine-color-blue-filled') || '#4f5ef0';
   }
 
   function drawFrame(t) {
     const e = effects[o.variant];
-    if (!e) return;
+    if (!e || !A.W || !A.H) return;
     if (!e.trail) ctx.clearRect(0, 0, A.W, A.H);
     e.draw(A, t);
   }
@@ -82,7 +86,7 @@ export function createEngine(canvas, userOptions = {}) {
     drawFrame(t);
     raf = requestAnimationFrame(frame);
   }
-  const start = () => { if (running || reduced || !visible || document.hidden) return; running = true; raf = requestAnimationFrame(frame); };
+  const start = () => { if (running || reduced || !visible || document.hidden || !A.W || !A.H) return; running = true; raf = requestAnimationFrame(frame); };
   const stop = () => { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; };
 
   function resize() {
@@ -119,8 +123,9 @@ export function createEngine(canvas, userOptions = {}) {
     : null;
   if (io) io.observe(canvas);
 
-  // Defer initial build until the next frame to allow for initial paint
-  requestAnimationFrame(() => {
+  // Defer initial build until the next frame to allow for initial paint.
+  initRaf = requestAnimationFrame(() => {
+    initRaf = 0;
     resize();
     start();
   });
@@ -130,6 +135,8 @@ export function createEngine(canvas, userOptions = {}) {
     resize,
     destroy() {
       stop();
+      if (initRaf) cancelAnimationFrame(initRaf);
+      initRaf = 0;
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerdown', onDown);
       document.documentElement.removeEventListener('pointerleave', onLeave);

@@ -3,7 +3,7 @@ import {
   type BackgroundVariant,
   InteractiveBackground,
   variants,
-} from '@/components/interactive-backgrounds';
+} from './interactive-backgrounds';
 
 const ROTATION_MS = 30_000;
 
