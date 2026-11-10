@@ -5,4 +5,4 @@ identificador de cada carpeta es el mismo de `packages/contracts/src/modules.ts`
 
 | Carpeta | Módulo |
 |---|---|
-| `documents/` | 04 Documentos: Centro Documental, RADIAN / DIAN Facturas y Aprobaciones Odoo |
+| `documents/` | 04 **DataDian** (nombre visible; antes «Documentos»): documentos recibidos de la DIAN, eventos RADIAN y aprobaciones hacia Odoo |

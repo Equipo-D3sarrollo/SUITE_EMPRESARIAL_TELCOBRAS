@@ -6,11 +6,16 @@ Plataforma SaaS multiempresa. La fuente de alcance, arquitectura y decisiones es
 
 ## Estado
 
-El proyecto está en la **Etapa 1: Fundaciones**. El monorepo, la infraestructura local, el núcleo
-de identidad, el alta de organizaciones, RBAC inicial, RLS, invitaciones por correo y el shell web
-están en construcción. Siguen pendientes la administración de miembros y roles desde la interfaz,
-el flujo E2E autenticado y las verificaciones de salida. La Etapa 2 (CRM, documentos y
-notificaciones) está especificada, pero comienza al cumplir el criterio de salida de la Etapa 1.
+La **Etapa 1: Fundaciones** se cerró el 10-nov-2026 por decisión del usuario
+([ADR-013](docs/decisions/ADR-013-datadian-y-nueva-ruta.md)). Quedaron hechos el monorepo, la
+infraestructura local, el núcleo de identidad, el alta de organizaciones, RBAC inicial, RLS,
+invitaciones por correo y el shell web. La administración de miembros y roles desde la interfaz,
+el E2E autenticado y Lighthouse en la CI pasaron a pendientes.
+
+La **Etapa 2 es DataDian**: el módulo 04, antes «Documentos», que trae de la DIAN las facturas
+recibidas, registra sus eventos RADIAN y las envía con aprobación a Odoo. Su alcance está en
+[ETAPA_2_DATADIAN.md](docs/etapas/ETAPA_2_DATADIAN.md) y el diseño de submódulos va antes de
+implementar. El CRM y las notificaciones pasan a la Etapa 3.
 Los pendientes conocidos se registran en [PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Requisitos

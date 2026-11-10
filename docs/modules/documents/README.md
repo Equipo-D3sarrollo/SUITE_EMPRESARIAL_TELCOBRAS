@@ -1,13 +1,14 @@
-# Módulo 04 Documentos
+# Módulo 04: DataDian
 
-Documentación del módulo `documents`. Sus submódulos son `document-center` (Centro Documental),
-`radian-invoices` (RADIAN / DIAN Facturas) y `odoo-approvals` (Aprobaciones Odoo), según
-`packages/contracts/src/navigation.ts`.
+Documentación del módulo `documents`, que el usuario final ve como **DataDian** (ADR-013). El
+identificador interno, las rutas y los permisos siguen usando `documents`.
 
-El alcance funcional está en el Documento Madre §4.4 (RADIAN / Document Intelligence) y §4.7
-(Document Management). La etapa que lo construye es la 4, y su alcance lo fija ADR-011: recepción
-de facturas de proveedores, eventos 030, 031, 032 y 033, aprobación humana y borrador en Odoo.
+DataDian trae de la DIAN los documentos electrónicos recibidos, permite registrar sus eventos
+RADIAN y, con aprobación humana, los envía como borrador a Odoo. Ocupa el lugar del antiguo Centro
+Documental, que desaparece. Se construye en la **etapa 2**.
 
-| Carpeta | Contenido |
+| Documento | Contenido |
 |---|---|
-| `apidian/` | Análisis de APIDIAN (FacturaLatam) y su Extractor V2, la herramienta que se evalúa para descargar los documentos de la DIAN, con la copia completa de su documentación |
+| `docs/etapas/ETAPA_2_DATADIAN.md` | Decisiones, alcance y lo que falta diseñar antes de implementar |
+| Documento madre §4.4 y §4.7 | Alcance funcional de RADIAN y del servicio interno de archivos |
+| `apidian/` | Análisis de APIDIAN (FacturaLatam), su documentación completa y la copia de su código MIT |

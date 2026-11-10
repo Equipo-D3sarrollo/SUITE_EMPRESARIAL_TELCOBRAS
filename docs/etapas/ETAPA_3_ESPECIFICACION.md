@@ -1,13 +1,15 @@
-# Etapa 2 — CRM, Document Management y notificaciones
+# Etapa 3 — CRM y notificaciones
+
+> **Renumerada el 10-nov-2026 ([ADR-013](../decisions/ADR-013-datadian-y-nueva-ruta.md)).** Antes era la etapa 2. La etapa 2 es ahora DataDian (`ETAPA_2_DATADIAN.md`). Cambios en esta especificación: el **Centro Documental se elimina** (DataDian ocupa su lugar en el menú) y la gestión documental queda como **servicio interno de archivos** que el CRM usa para sus adjuntos. Los identificadores E2-1 a E2-13 se conservan para no romper referencias. Si DataDian necesita antes alguna pieza compartida (archivos de E2-7 u outbox de E2-13), se construye en la etapa 2 y aquí se reutiliza.
 
 | Campo | Valor |
 |---|---|
-| Estado | Especificación aprobada por decisiones del 6-nov-2026; se construye cuando la etapa 1 cumpla su criterio de salida |
+| Estado | Especificación aprobada por decisiones del 6-nov-2026; se construye cuando la etapa 2 (DataDian) cumpla su criterio de salida |
 | Base | Documento madre §4.2, §4.7, §4.8, §5.3, §7.4, §12, §15, §19; `PENDIENTES.md`; ADR-002 a ADR-011 y ADR-005 |
-| Diseño de referencia | Stitch `crm_pipeline_kanban` y `centro_documental` (copia fuera del repo), adaptados a la paleta oficial (§12.4.1), Poppins y lucide |
-| Criterio de salida (plan §15) | Flujo **lead → oportunidad → actividad** funcionando de punta a punta, con documentos y notificaciones |
+| Diseño de referencia | Stitch `crm_pipeline_kanban` (copia fuera del repo; `centro_documental` quedó descartada por ADR-013), adaptados a la paleta oficial (§12.4.1), Poppins y lucide |
+| Criterio de salida (plan §15) | Flujo **lead → oportunidad → actividad** funcionando de punta a punta, con adjuntos y notificaciones |
 
-## 1. Decisiones de la etapa 2
+## 1. Decisiones de la etapa (identificadores E2 conservados)
 
 | ID | Decisión |
 |---|---|
@@ -15,14 +17,14 @@
 | E2-2 | **Etapas por defecto del Kanban = las 8 del PDF §5.4:** Nuevo lead → Contactado → Calificado → Reunión → Propuesta → Negociación → Ganado / Perdido. Son configurables por organización (renombrar, reordenar, agregar, desactivar); Ganado y Perdido son cierres obligatorios. Un lead convertido entra en **Calificado** por defecto (se puede elegir otra etapa); una oportunidad creada a mano puede empezar en cualquiera |
 | E2-3 | **Duplicados: reglas + revisión humana.** Duplicado seguro (mismo NIT, correo normalizado o dominio web dentro de la organización): se bloquea y se ofrece abrir el existente. Duplicado probable (nombre parecido, `pg_trgm` + `unaccent`): aviso y el usuario decide. La fusión es manual y queda auditada |
 | E2-4 | **Tiempo real con SSE.** `GET /api/v1/events/stream`, autenticado con la cookie de sesión. Envía solo eventos de la organización activa y del usuario, distribuidos con Valkey pub/sub (canal por organización) para funcionar con varias instancias. Reconexión con `Last-Event-ID`. Las acciones siguen por REST |
-| E2-5 | **Notificaciones internas + correo.** Campana en la Zona 0 con contador, bandeja y "marcar como leído", por SSE. Correo para lo importante: oportunidad asignada, actividad vencida o por vencer, mención. Preferencias por usuario y por tipo. WhatsApp queda para la etapa 3 |
+| E2-5 | **Notificaciones internas + correo.** Campana en la Zona 0 con contador, bandeja y "marcar como leído", por SSE. Correo para lo importante: oportunidad asignada, actividad vencida o por vencer, mención. Preferencias por usuario y por tipo. WhatsApp queda para la etapa 4 |
 | E2-6 | **Búsqueda global en PostgreSQL.** `tsvector` en español + `unaccent` + `pg_trgm` sobre empresas, contactos, leads, oportunidades y documentos, dentro de `withTenant`. `GET /api/v1/search?q=` con debounce de 300 ms. Sin motor externo |
 | E2-7 | **Archivos: máximo 25 MB, tipos cerrados, antivirus.** PDF, XML, DOCX, XLSX, PNG, JPG y ZIP; el tipo se valida por el contenido real. Subida directa a S3 con URL prefirmada. El archivo queda "en verificación" hasta que **ClamAV** lo escanea. SHA-256 y versiones. Descarga con URL prefirmada de corta duración |
 | E2-8 | **Alcance de los permisos: "propios" o "todos".** Por ejemplo `crm.opportunity:read:own` frente a `crm.opportunity:read:all`. "Propios" = el usuario es el responsable (`owner_user_id`). Comercial = propios; Gerente y Administrador de empresa = todos. Se aplica en el backend (filtro + verificación por objeto); RLS sigue aislando por organización. Equipos y territorios, después |
 | E2-9 | **Importar y exportar.** Empresas, contactos y leads desde CSV/XLSX: mapeo de columnas, vista previa con errores y duplicados, confirmación. Corre en segundo plano (BullMQ), con progreso por SSE, y queda auditado. Exportar listas filtradas a Excel y PDF respetando el alcance |
 | E2-10 | **Papelera con restauración.** Borrado lógico (`deleted_at`, `deleted_by`) restaurable. El borrado definitivo requiere permiso de administrador y queda auditado. Los documentos fiscales no se borran definitivamente mientras corra su plazo legal (pendiente) |
-| E2-11 | **Multimoneda desde la etapa 2: COP y USD.** Cada monto guarda importe, moneda, importe convertido a COP, tasa usada y fecha de la tasa. Los totales del pipeline se muestran en COP. Tasa: **TRM oficial diaria** (Superintendencia Financiera, publicada en datos.gov.co; confirmar el dataset y su API al implementar), descargada por un trabajo diario y guardada en `exchange_rates`. Si falta la TRM del día se usa la última disponible y se indica su fecha |
-| E2-12 | **Actividades sin sincronizar calendarios en la etapa 2.** Viven en la suite, con recordatorios por la campana y el correo. Google Calendar / Outlook llegan con el Integration Hub (etapa 3) |
+| E2-11 | **Multimoneda desde la etapa 3: COP y USD.** Cada monto guarda importe, moneda, importe convertido a COP, tasa usada y fecha de la tasa. Los totales del pipeline se muestran en COP. Tasa: **TRM oficial diaria** (Superintendencia Financiera, publicada en datos.gov.co; confirmar el dataset y su API al implementar), descargada por un trabajo diario y guardada en `exchange_rates`. Si falta la TRM del día se usa la última disponible y se indica su fecha |
+| E2-12 | **Actividades sin sincronizar calendarios en la etapa 3.** Viven en la suite, con recordatorios por la campana y el correo. Google Calendar / Outlook llegan con el Integration Hub (etapa 4) |
 | E2-13 [REC] | **Eventos internos.** Sobre: `{ id (uuid v7), type, version, organizationId, actorUserId, occurredAt, correlationId, data }`. Se escriben en la tabla `outbox_events` en la misma transacción del cambio. Un despachador los publica en BullMQ (`FOR UPDATE SKIP LOCKED`). Los consumidores son idempotentes, con la tabla `processed_events` por id. Hasta 5 reintentos con backoff exponencial; después pasan a la cola de mensajes fallidos y a la tabla `failed_events` para revisarlos |
 
 ## 2. Alcance
@@ -35,7 +37,7 @@
 - reportes comerciales básicos en la Zona 3.
 
 También entran:
-- Document Management transversal (PDF §12);
+- adjuntos del CRM sobre el servicio interno de archivos (PDF §12, sin Centro Documental; ADR-013);
 - notificaciones internas y correo (PDF §13);
 - búsqueda global Ctrl+K;
 - tiempo real por SSE;
@@ -44,11 +46,11 @@ También entran:
 - multimoneda.
 
 **No entra:**
-- LeadGen y su envío de prospectos al CRM (etapa 3);
-- RADIAN, OCR o extracción de facturas y vínculo con Odoo/DIAN (etapa 4);
-- WhatsApp y calendarios (etapa 3);
+- LeadGen y su envío de prospectos al CRM (etapa 4);
+- RADIAN, extracción de facturas y vínculo con Odoo/DIAN (etapa 2, DataDian);
+- WhatsApp y calendarios (etapa 4);
 - equipos y territorios;
-- analítica transversal y MRR (etapa 5).
+- analítica transversal y MRR (etapa 6).
 
 Los botones de Stitch que dependen de esas etapas ("Sincronizar RADIAN/DIAN", "Vincular con Odoo/DIAN", "Re-indexar OCR") **no se muestran** hasta su etapa.
 
@@ -111,7 +113,7 @@ Reglas de §7.4 en todas las tablas:
 | Tiempo real | `GET /events/stream` (SSE) |
 | Monedas | `GET /exchange-rates/latest?from=USD&to=COP` |
 
-## 6. Eventos de negocio (PDF §9.4 + etapa 2)
+## 6. Eventos de negocio (PDF §9.4 + esta etapa)
 
 `company.created`, `contact.created`, `lead.created`, `lead.qualified`, `lead.converted`, `lead.discarded`, `opportunity.created`, `opportunity.stage_changed`, `opportunity.won`, `opportunity.lost`, `opportunity.assigned`, `activity.created`, `activity.due_soon`, `activity.overdue`, `document.uploaded`, `document.scanned`, `document.infected`, `import.completed`, `record.merged`.
 
@@ -128,7 +130,7 @@ Las notificaciones (E2-5), el tiempo real (E2-4) y el historial se alimentan de 
 | **Leads** | Tabla con estado, origen, score, prioridad y responsable. Acciones: calificar, descartar, convertir (asistente con verificación de duplicados), importar | Leads por origen y estado | — |
 | **Oportunidades** | Vista de tabla del pipeline | — | — |
 | **Actividades** | Lista y agenda (día/semana) con filtros; completar en línea | Vencidas y por vencer | — |
-| **Centro Documental** (Stitch) | KPIs: total, cargados hoy, en verificación, disponibles, rechazados. Buzón de carga (arrastrar y soltar, tipos y 25 MB visibles). Pestañas por categoría. Tabla: documento, empresa asociada, origen, fecha, estado. Búsqueda | Inspector: metadatos, SHA-256, versiones, vínculos, historial de auditoría, descargar, enviar a papelera | Estado del escaneo antivirus |
+| **Adjuntos** (pestaña de la Ficha 360°; ya no hay Centro Documental, ADR-013) | Buzón de carga (arrastrar y soltar, tipos y 25 MB visibles). Tabla: documento, categoría, fecha, estado. Búsqueda | Inspector: metadatos, SHA-256, versiones, vínculos, historial de auditoría, descargar, enviar a papelera | Estado del escaneo antivirus |
 | **Zona 0** | Campana con contador y bandeja; Ctrl+K con resultados reales de la búsqueda global | | |
 
 Datos colombianos: NIT con dígito de verificación, montos en COP o USD con `Intl` (es-CO), zona horaria America/Bogota. Todo con la paleta oficial y estados con icono + texto.
@@ -174,9 +176,9 @@ Datos colombianos: NIT con dígito de verificación, montos en COP o USD con `In
 - **Multimoneda:** conversión con la TRM y uso de la última tasa disponible.
 - **E2E del criterio de salida:** crear lead → calificar → convertir → mover la oportunidad en el Kanban → crear actividad → recibir notificación (campana y correo en Mailpit) → adjuntar documento → encontrarlo con Ctrl+K.
 
-## 11. Depende de la etapa 1
+## 11. Depende de las etapas 1 y 2
 
-`withTenant`, roles y permisos con guard, auditoría, sesión con organización activa, shell de 5 zonas, design system (KpiCard, DataTable, EmptyState, Skeleton, StatusBadge), cliente OpenAPI, Valkey, S3 local, Mailpit y la CI.
+`withTenant`, roles y permisos con guard, auditoría, sesión con organización activa, shell de 5 zonas, design system (KpiCard, DataTable, EmptyState, Skeleton, StatusBadge), cliente OpenAPI, Valkey, S3 local, Mailpit y la CI. De la etapa 2 (DataDian) reutiliza lo que ya exista del servicio interno de archivos y del outbox.
 
 ## 12. Pendientes que siguen abiertos para esta etapa
 

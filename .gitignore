@@ -4,6 +4,11 @@
 # Grafo de graphify (se regenera)
 graphify-out/
 
+# Código de terceros clonado como referencia (APIDIAN, MIT, 32 MB de PHP): no se versiona en la suite
+docs/modules/documents/apidian/repositorio-original/*
+!docs/modules/documents/apidian/repositorio-original/README.md
+!docs/modules/documents/apidian/repositorio-original/clonar-apidian.ps1
+
 # Dependencias y builds
 node_modules/
 dist/

@@ -5,6 +5,8 @@
 - **Decide:** arquitecto del producto
 - **Decisiones:** D-15, D-16, D-17, D-20, D-21 (documento madre §14)
 
+> **Nota (10 de noviembre de 2026):** [ADR-013](ADR-013-datadian-y-nueva-ruta.md) adelanta RADIAN y el conector Odoo a la nueva etapa 2 (DataDian) y renumera la ruta: la "etapa 4" de este texto es hoy la etapa 2. El alcance de RADIAN v1 (solo recepción, eventos 030 a 033, aprobación humana y borrador en Odoo con JSON-2) sigue vigente.
+
 ## Contexto
 El blueprint asume Odoo 16 con XML-RPC, n8n para clientes y analítica mezclada; el flujo RADIAN mezcla roles.
 

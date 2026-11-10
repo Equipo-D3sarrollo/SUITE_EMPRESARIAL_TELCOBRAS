@@ -6,21 +6,23 @@
 | Base | `docs/DOCUMENTO_MADRE_SUITE_TELCOBRAS.md` v1.1 |
 | Uso | Lista única de lo que **no** está definido o hecho al iniciar la construcción. Cuando un punto se resuelve, se marca aquí y se actualiza el documento madre o el ADR correspondiente |
 
-**Especificación de la etapa 2:** [`docs/etapas/ETAPA_2_ESPECIFICACION.md`](etapas/ETAPA_2_ESPECIFICACION.md) (decisiones E2-1 a E2-13).
+**Ruta actualizada el 10-nov-2026 por [ADR-013](decisions/ADR-013-datadian-y-nueva-ruta.md):** etapa 1 cerrada, etapa 2 = DataDian, etapa 3 = CRM y notificaciones, y el resto se corre un número.
 
-**Lo que sí está definido** (no se repite aquí): visión, 12 módulos, decisiones D-01–D-06, D-08–D-13, D-15–D-17 y D-20–D-24 (ADR-001 a ADR-012), paleta y tipografía, layout de 5 zonas, modelo de datos conceptual, reglas de seguridad, requisitos de rendimiento (§19) y ruta por etapas (§15).
+**Especificaciones:** etapa 2 en [`docs/etapas/ETAPA_2_DATADIAN.md`](etapas/ETAPA_2_DATADIAN.md) (decisiones DD-1 a DD-7, diseño pendiente); etapa 3 en [`docs/etapas/ETAPA_3_ESPECIFICACION.md`](etapas/ETAPA_3_ESPECIFICACION.md) (decisiones E2-1 a E2-13).
+
+**Lo que sí está definido** (no se repite aquí): visión, 12 módulos, decisiones D-01–D-06, D-08–D-13, D-15–D-17 y D-20–D-24 (ADR-001 a ADR-013), paleta y tipografía, layout de 5 zonas, modelo de datos conceptual, reglas de seguridad, requisitos de rendimiento (§19) y ruta por etapas (§15).
 
 ## 1. Decisiones diferidas
 
 | ID | Qué falta decidir | Quién | Bloquea |
 |---|---|---|---|
-| D-13 | Proveedor y región del VPS y del S3; transferencia internacional (Ley 1581) si quedan fuera de Colombia | Gerencia + arquitecto | Producción (etapa 5) |
-| D-14 | Figura ante la DIAN: PT tercero, mandato (evento 043), habilitación propia o solo descarga | Arquitecto + contabilidad/legal | Etapa 4 (RADIAN) |
-| D-16 | Versión exacta, edición y hosting de Odoo; si su RADIAN nativo duplica el módulo | Arquitecto | Etapa 3 (conector Odoo) |
-| D-18 | Lenguaje de los agentes (Python o TS), tracing propio, ZDR y retención con OpenAI | Arquitecto | Etapa 6 |
-| D-19 | WhatsApp multi-tenant (WABA por organización o número compartido) | Arquitecto | Etapa 3+ |
-| D-21 | Validación legal de las fuentes de LeadGen (RUES, datos de personas) | Arquitecto + legal | Etapa 3 (LeadGen) |
-| D-25 | Modelo comercial: planes, límites y precios | Gerencia | Etapa 5 |
+| D-13 | Proveedor y región del VPS y del S3; transferencia internacional (Ley 1581) si quedan fuera de Colombia | Gerencia + arquitecto | Producción (etapa 6) |
+| D-14 | Figura ante la DIAN: PT tercero, mandato (evento 043), habilitación propia o solo descarga | Arquitecto + contabilidad/legal | Etapa 2 (solo el envío de eventos de DataDian) |
+| D-16 | Versión exacta, edición y hosting de Odoo; si su RADIAN nativo duplica el módulo | Arquitecto | Etapa 2 (borrador en Odoo de DataDian) |
+| D-18 | Lenguaje de los agentes (Python o TS), tracing propio, ZDR y retención con OpenAI | Arquitecto | Etapa 7 |
+| D-19 | WhatsApp multi-tenant (WABA por organización o número compartido) | Arquitecto | Etapa 4+ |
+| D-21 | Validación legal de las fuentes de LeadGen (RUES, datos de personas) | Arquitecto + legal | Etapa 4 (LeadGen) |
+| D-25 | Modelo comercial: planes, límites y precios | Gerencia | Etapa 6 |
 
 ## 2. Información por conseguir (etapa 0)
 
@@ -39,15 +41,15 @@
 | Sidebar colapsable a 64 px | Mejora posterior; 256 px fijo | Posterior |
 | Router, formularios y cliente API del frontend | Sin elegir | Al montar la etapa 1 |
 | Lint y formato (ESLint/Prettier o Biome) | Sin elegir | Etapa 1 |
-| Tiempo real: SSE o WebSocket, autenticación, reconexión | ✅ Resuelto: SSE (E2-4, `docs/etapas/ETAPA_2_ESPECIFICACION.md`) | Etapa 2 |
-| Bus de eventos: sobre, DLQ, retención | ✅ Resuelto: E2-13 (outbox + BullMQ + mensajes fallidos) | Etapa 2 |
-| Búsqueda (Ctrl+K global, deduplicación de leads) | ✅ Resuelto: E2-6 y E2-3 | Etapa 2 |
-| UI de notificaciones (más allá de la campana) | ✅ Resuelto: E2-5 (campana, bandeja, correo, preferencias) | Etapa 2 |
-| Consentimiento y lista de supresión unificada (correo y WhatsApp, Ley 2300) | Sin definir | Etapa 3 |
-| Dominios de envío por organización (SPF, DKIM, DMARC) y proveedor de correo | Sin definir | Etapa 3 |
-| Retención legal de XML/PDF de facturas y de la auditoría | Sin definir | Antes de la etapa 4 |
-| Certificados digitales por organización (custodia, vencimientos, XAdES-EPES) | Depende de D-14 | Etapa 4 |
-| Calendario de días hábiles y festivos de Colombia | Sin definir | Etapa 4 |
+| Tiempo real: SSE o WebSocket, autenticación, reconexión | ✅ Resuelto: SSE (E2-4, `docs/etapas/ETAPA_3_ESPECIFICACION.md`) | Etapa 3 |
+| Bus de eventos: sobre, DLQ, retención | ✅ Resuelto: E2-13 (outbox + BullMQ + mensajes fallidos) | Etapa 2 o 3, la que lo necesite primero |
+| Búsqueda (Ctrl+K global, deduplicación de leads) | ✅ Resuelto: E2-6 y E2-3 | Etapa 3 |
+| UI de notificaciones (más allá de la campana) | ✅ Resuelto: E2-5 (campana, bandeja, correo, preferencias) | Etapa 3 |
+| Consentimiento y lista de supresión unificada (correo y WhatsApp, Ley 2300) | Sin definir | Etapa 4 |
+| Dominios de envío por organización (SPF, DKIM, DMARC) y proveedor de correo | Sin definir | Etapa 4 |
+| Retención legal de XML/PDF de facturas y de la auditoría | Sin definir | Etapa 2 (antes de permitir borrado definitivo en DataDian) |
+| Certificados digitales por organización (custodia, vencimientos, XAdES-EPES) | La custodia y los vencimientos no dependen de D-14; la firma de eventos sí | Etapa 2 |
+| Calendario de días hábiles y festivos de Colombia | Sin definir | Etapa 2 |
 | SSO corporativo (Okta/Entra) por organización | Diferido por D-09 | Posterior |
 | TOTP obligatorio para administradores de organización y superadministradores | Sin implementar; hoy es opcional para todos (ADR-012) | Antes del piloto |
 | Exigir TOTP también al entrar con Google: hoy quien tiene TOTP activo entra con Google sin el segundo factor, porque el hook de Better Auth solo cubre el código por correo y el callback de OAuth es una navegación (hay que redirigir a `/iniciar-sesion?paso=totp`) | Sin implementar; decidir si se corrige o si se acepta porque Google Workspace aplica su propia verificación (ADR-012) | Antes de habilitar Google en producción |
@@ -57,13 +59,17 @@
 | Logo gráfico de OrveX.IA y eslogan propio: hoy el logotipo es solo texto animado (`apps/web/src/shell/zone0-topbar/logo.tsx`) y conserva el eslogan de Telcobras «Una nueva forma de entender las redes» | Pendiente del diseño de marca | Antes del piloto |
 | NIT repetido al crear una organización: la base no lo impide (`organizations.nit` sin restricción única) y el formulario muestra un error genérico si la API rechaza la creación | Sin decidir si el NIT debe ser único y qué mensaje mostrar | Antes del piloto |
 | Acceso a «Registrar otra organización» también desde el selector de organizaciones (hoy solo está en el menú de usuario) | Mejora opcional | Posterior |
-| Suplantación del superadmin: duración, aviso, quién autoriza | Solo el principio (auditada) | Etapa 5 |
-| Facturación electrónica de la propia suite | Sin definir | Etapa 5 |
-| Herramienta de analítica (réplica, vistas, almacén) | Sin definir (D-20 cubre el alcance) | Etapa 5 |
-| Responsable del "NOC 24/7" y SLA de soporte | Sin definir | Etapa 5 |
-| Respuesta a incidentes y notificación de brechas a la SIC | Sin definir | Etapa 5 |
-| Agentes: herramientas, evaluación, memoria/RAG, costos por organización | Solo conceptual | Etapa 6 |
-| Presupuestos de rendimiento (§19.4) y timeouts | Punto de partida sin datos reales | Ajustar en etapa 1 |
+| Suplantación del superadmin: duración, aviso, quién autoriza | Solo el principio (auditada) | Etapa 6 |
+| Facturación electrónica de la propia suite | Sin definir | Etapa 6 |
+| Herramienta de analítica (réplica, vistas, almacén) | Sin definir (D-20 cubre el alcance) | Etapa 6 |
+| Responsable del "NOC 24/7" y SLA de soporte | Sin definir | Etapa 6 |
+| Respuesta a incidentes y notificación de brechas a la SIC | Sin definir | Etapa 6 |
+| Agentes: herramientas, evaluación, memoria/RAG, costos por organización | Solo conceptual | Etapa 7 |
+| Presupuestos de rendimiento (§19.4) y timeouts | Punto de partida sin datos reales | Ajustar en etapa 2 |
+| Administración de miembros y roles en la interfaz (invitar con un rol limitado desde la web) | Criterio de salida de la etapa 1 no verificado; la API de invitaciones ya existe (ADR-013) | Antes del piloto |
+| E2E autenticado (registro → login → cambiar de organización → menú según el rol) | Criterio de salida de la etapa 1 no verificado (ADR-013) | Antes del piloto |
+| Lighthouse móvil con Slow 4G y presupuestos de §19.4 en la CI | Criterio de salida de la etapa 1 no verificado (ADR-013) | Antes del piloto |
+| Etapas que muestran las vistas de reserva (`apps/web/src/features/module-placeholder/stages.ts`) y textos del menú «Documentos» y «Centro Documental» | Siguen con la ruta vieja; se cambian junto con el menú de DataDian (ADR-013) | Etapa 2, al aplicar el menú |
 
 ## 4. Verificaciones pendientes
 

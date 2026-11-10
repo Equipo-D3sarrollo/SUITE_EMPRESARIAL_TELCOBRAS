@@ -43,10 +43,10 @@ documento que corresponda y dejar constancia aquí.
 | Campo | Estado |
 |---|---|
 | Corte de este estado | 2026-11-10, hora de Colombia (UTC-05:00) |
-| Etapa | **Etapa 1 — Fundaciones, en curso** |
+| Etapa | **Etapa 1 — Fundaciones, cerrada el 10-nov-2026 por decisión del usuario (ADR-013).** Siguiente: **Etapa 2 — DataDian**, en diseño |
 | Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. Producto renombrado a OrveX.IA. Una cuenta puede registrar varias organizaciones desde el menú de usuario (`/organizaciones/nueva`). Tarjetas al 80% de transparencia y con el efecto «haz con cola + onda al clic» en todas (integrado en `Card`). Optimización de carga: zod fuera del JS inicial, 3 pesos de Poppins precargados y animaciones decorativas solo en el compositor. |
-| Próximo foco | Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
-| Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
+| Próximo foco | Diseñar los submódulos de DataDian en `docs/etapas/ETAPA_2_DATADIAN.md` (Zonas 2–4, modelo de datos, permisos, técnica del listado de recibidos) y, después, aplicar el menú completo. No implementar antes. Los criterios no verificados de la etapa 1 están en `docs/PENDIENTES.md` §3. |
+| Etapa 2 | **DataDian** (módulo 04, id `documents`): alcance aprobado, diseño pendiente. El CRM pasó a la etapa 3 (`docs/etapas/ETAPA_3_ESPECIFICACION.md`). |
 | Commit | La implementación visual quedó registrada en commits de `main`; esta actualización documental queda pendiente de commit. |
 | Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. PostgreSQL del proyecto en `localhost:5433` para no interferir con PostgreSQL de Windows en `localhost:5432`; Valkey, SeaweedFS y Mailpit saludables. |
 
@@ -147,6 +147,69 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — documentación: DataDian y nueva ruta de etapas
+
+- **Objetivo:** a pedido del usuario, actualizar solo la documentación (sin implementar) con sus
+  decisiones: etapa 1 terminada; etapa 2 = construir DataDian funcional; DataDian reemplaza al
+  Centro Documental y es el nombre visible del módulo 04 (el id `documents` no cambia); listado de
+  recibidos propio. Telcobras tiene acceso al portal DIAN; el certificado `.p12` se conseguirá.
+- **Cambios:**
+  - nuevo `docs/decisions/ADR-013-datadian-y-nueva-ruta.md` (ruta 0–7 con tabla de equivalencias;
+    reemplaza en parte a ADR-011 y ADR-002, que llevan una nota; índice de ADR actualizado);
+  - nuevo `docs/etapas/ETAPA_2_DATADIAN.md` (decisiones DD-1 a DD-7, alcance, propuesta de
+    submódulos sin aprobar, temas por diseñar y bloqueos);
+  - `docs/etapas/ETAPA_2_ESPECIFICACION.md` renombrado con `git mv` a `ETAPA_3_ESPECIFICACION.md`:
+    CRM y notificaciones, sin Centro Documental (los adjuntos pasan a la Ficha 360°), IDs E2 conservados;
+  - Documento madre v1.2: resumen, §3, §4.4, §4.7, §10, §12.2, §14 (D-14, D-18, D-19, D-21, D-25),
+    §15, §16, §18 y §19 con la nueva numeración;
+  - Plan de implementación (etapa 1 cerrada con sus criterios no verificados, etapas 2–7, riesgos,
+    tabla de ADR), `PENDIENTES.md` (etapas renumeradas y 4 pendientes nuevos), READMEs (raíz,
+    `docs/etapas`, `docs/modules`, `docs/modules/documents`, apidian), análisis de APIDIAN y
+    `SETUP_COMPLETE.md`.
+- **No se tocó:** código (el mapa de etapas de `module-placeholder/stages.ts` y los textos del menú
+  siguen con la ruta vieja hasta aplicar el menú de DataDian; quedó en PENDIENTES), las fuentes de
+  `docs/Arquitectura/` ni las entradas anteriores de esta bitácora.
+- **Supuesto:** la gestión documental sigue como servicio interno de archivos (S3, metadatos,
+  versiones) para el XML/PDF de DataDian y los adjuntos del CRM, sin pantalla propia.
+- **Validaciones:** cambio solo documental; búsqueda de referencias a la numeración vieja y al
+  Centro Documental en los documentos vigentes. No se ejecutaron pruebas de código.
+- **Siguiente paso exacto:** diseñar los submódulos de DataDian en `ETAPA_2_DATADIAN.md` §3–§4.
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — clon del APIDIAN público
+
+- **Objetivo:** clonar el repositorio público que indicó el usuario, `github.com/facturalatam/apidian`.
+- **Resultado:** clonado en `docs/modules/documents/apidian/repositorio-original/apidian/` (rama
+  `main`, commit `da4ed764`, 14-ago-2026, 1.027 archivos, 32 MB). Es la **edición Community, MIT**.
+  Su README excluye el **Módulo Extractor de facturas de compras** (solo Enterprise), pero trae
+  eventos RADIAN, XML por CUFE (`GetXmlByDocumentKey`) y documentos recibidos. El catálogo de
+  `event_id` (1=030, 2=031, 3=032, 4=033, 5=034) y los motivos de reclamo 01–04 salen de
+  `public/csv/events.csv` y `type_rejections`.
+- **Cambios:** `ORIGEN-apidian.txt`; README de `repositorio-original/` reescrito; `ANALISIS_APIDIAN.md`
+  actualizado (resumen, §2, §5.2, R1, R6, pregunta 1); comentario del `.gitignore`. La copia sigue
+  sin versionarse (`git check-ignore` lo confirma).
+- **Siguiente paso exacto:** decidir si se construye un listado propio de recibidos o se licencia
+  la Enterprise, y luego replicar en TypeScript las piezas MIT útiles.
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — carpeta para el repositorio original de APIDIAN
+
+- **Objetivo:** a pedido del usuario, crear dentro de la documentación del módulo de Documentos
+  una carpeta con el repositorio original de APIDIAN clonado, para replicarlo en la suite.
+- **Resultado:** **no se pudo clonar.** `git ls-remote` a `co-apidian2026.git` falla con *could not
+  read Username*; no hay credenciales guardadas para `git.buho.la` y su API no lista proyectos
+  públicos de APIDIAN. Se dejó lista `docs/modules/documents/apidian/repositorio-original/` con
+  README y `clonar-apidian.ps1`, que clona o actualiza con las credenciales del usuario y deja un
+  `ORIGEN-<carpeta>.txt` con commit y licencia encontrada.
+- **Cambios:** esa carpeta; `.gitignore` excluye el código clonado y los `ORIGEN-*.txt` (también
+  quedan fuera de graphify, que respeta `.gitignore`); fila nueva en `docs/modules/documents/apidian/README.md`.
+- **Validaciones:** `git check-ignore` confirma que un archivo dentro del clon y el `ORIGEN` se
+  ignoran, y que README y script se versionan. El parser de PowerShell no reporta errores en el
+  script. No se ejecutó el clon.
+- **Siguiente paso exacto:** el usuario ejecuta el script con una cuenta con acceso; luego se
+  analiza el código clonado.
+- **Git:** sin commit.
 
 ### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — documentación de APIDIAN para el módulo 04 Documentos
 

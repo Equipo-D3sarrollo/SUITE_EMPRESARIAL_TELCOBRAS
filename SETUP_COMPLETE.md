@@ -137,7 +137,7 @@ SMTP Host:           localhost:1025
 
 ## Información del Proyecto 📚
 
-**Estado:** Etapa 1 - Fundaciones (en construcción)
+**Estado:** Etapa 1 - Fundaciones (cerrada el 10-nov-2026, ADR-013)
 
 **Características actuales:**
 - ✅ Monorepo configurado
@@ -149,8 +149,9 @@ SMTP Host:           localhost:1025
 - ✅ Shell web
 
 **Próximas fases:**
-- Etapa 2: CRM, Documentos, Notificaciones
-- Etapa 3: Reportes y Analytics
+- Etapa 2: DataDian (documentos recibidos de la DIAN, eventos RADIAN y aprobación hacia Odoo)
+- Etapa 3: CRM y notificaciones
+- Ruta completa: documento madre §15
 
 Ver más en: [PLAN_IMPLEMENTACION_INICIAL.md](docs/PLAN_IMPLEMENTACION_INICIAL.md)
 

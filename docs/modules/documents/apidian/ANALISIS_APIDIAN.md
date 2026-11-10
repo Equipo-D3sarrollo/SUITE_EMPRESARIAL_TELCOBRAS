@@ -1,10 +1,17 @@
-# Análisis de APIDIAN (FacturaLatam) para el módulo 04 Documentos
+# Análisis de APIDIAN (FacturaLatam) para DataDian (módulo 04)
+
+> **Decisiones tomadas después de este análisis (10-nov-2026, [ADR-013](../../../decisions/ADR-013-datadian-y-nueva-ruta.md)):**
+> - La herramienta se llama **DataDian** y ocupa el lugar del Centro Documental, que desaparece.
+> - Se construye un **listado de recibidos propio**; no se licencia la edición Enterprise.
+> - DataDian se replica en TypeScript dentro del monolito, sobre el código MIT de APIDIAN Community. Eso equivale a la opción B de §8.2, no a la A que recomendaba este análisis.
+> - DataDian es la **etapa 2**. Donde este texto dice "etapa 4", hoy es la etapa 2.
+> - Especificación: `docs/etapas/ETAPA_2_DATADIAN.md`.
 
 | Campo | Valor |
 |---|---|
 | Fecha | 10 de noviembre de 2026 |
 | Elaborado | Claude Code, a pedido del usuario |
-| Módulo destino | `documents` (04 Documentos): submódulos `radian-invoices`, `odoo-approvals` y `document-center` |
+| Módulo destino | `documents`, visible como **DataDian** (04). Submódulos por definir en `docs/etapas/ETAPA_2_DATADIAN.md`; sale `document-center` |
 | Estado | Análisis. No hay código del módulo todavía |
 | Fuentes | Manual oficial completo (290 páginas), colección Postman pública (185 requests) y la transcripción del video del extractor. Copias en `referencia/` |
 
@@ -25,9 +32,10 @@ documentos descargados → panel → aprobación humana → borrador en Odoo.
    directamente la decisión abierta D-14.
 4. **APIDIAN no habla con Odoo.** La aprobación humana y el borrador en Odoo son nuestros. Así lo
    fija ADR-011: Odoo 19/20, API JSON-2, sin XML-RPC.
-5. **El código no es público.** El repositorio vive en un GitLab privado que pide cuenta, y la
-   documentación no menciona ninguna licencia. Antes de "clonar" hay que conseguir el acceso y
-   confirmar la licencia (§2).
+5. **Hay una edición pública con licencia MIT**, la Community, en
+   `github.com/facturalatam/apidian`. Ya está clonada en `repositorio-original/apidian/`. **No
+   incluye el Extractor de facturas de compras**, que es de la edición Enterprise. Sí incluye los
+   eventos RADIAN y la consulta de XML por CUFE (§2).
 
 ---
 
@@ -52,7 +60,7 @@ documentos descargados → panel → aprobación humana → borrador en Odoo.
 | Sección | Qué hace | Relevancia para el módulo 04 |
 |---|---|---|
 | 01 Configuraciones básicas | Registrar empresa, certificado `.p12`, software, resoluciones, logo, SMTP, ambiente | **Media.** Solo registrar la empresa, su certificado y el ambiente de eventos |
-| 02 Primeros envíos | Emitir facturas, notas, nómina, documento soporte y equivalentes | No aplica: no emitimos en la etapa 4 |
+| 02 Primeros envíos | Emitir facturas, notas, nómina, documento soporte y equivalentes | No aplica: DataDian no emite documentos |
 | 03 Consultas de estado | Estado por CUFE, por ZipKey y eventos de un documento | **Alta** para los eventos de un documento recibido |
 | 04 Casuísticas de envíos | Variantes de factura con impuestos, descuentos y cargos | No aplica |
 | 05 Utilidades | Listados, descargas, consecutivos, rangos de numeración, clientes y productos | **Media.** Descarga de archivos recibidos y razón social por NIT |
@@ -71,6 +79,22 @@ El índice de los 185 endpoints está en `referencia/indice-de-endpoints.md`.
 ---
 
 ## 2. Disponibilidad del código y licencia
+
+> **Actualización del 10-nov-2026.** El usuario indicó el repositorio público
+> `https://github.com/facturalatam/apidian`, ya clonado en `repositorio-original/apidian/` (commit
+> `da4ed764`, 14-ago-2026). Es la **edición Community con licencia MIT** (Copyright (c) 2026
+> Factura Latam): se puede usar, modificar y redistribuir conservando el aviso de licencia.
+>
+> Su README declara **fuera de la Community**, solo en la edición Enterprise de pago: el
+> **Módulo Extractor de facturas de compras**, nómina, documentos equivalentes, RIPS y salud, la
+> app móvil, roles avanzados y almacenamiento en la nube. **Sí incluye** los eventos RADIAN
+> (`RadianEventController`, `SendEventController`), la consulta del XML por CUFE
+> (`XmlDocumentController`, web service `GetXmlByDocumentKey`) y los estados (`StateController`).
+>
+> **Consecuencia para el encargo:** el paso de **listar** los documentos recibidos en la DIAN no
+> se puede copiar de este código. Hay que construirlo nosotros o licenciar la Enterprise. Todo lo
+> demás del flujo (XML por CUFE, almacenamiento de recibidos y eventos) sí tiene base en el código
+> MIT. La tabla de abajo describe el repositorio privado de la edición completa.
 
 | Hecho comprobado el 10-nov-2026 | Consecuencia |
 |---|---|
@@ -260,11 +284,30 @@ RADIAN la empresa necesita un software de facturación electrónica propio, habi
 - Los eventos llevan las responsabilidades tributarias en `cbc:TaxLevelCode`, varias separadas por
   `;` desde octubre de 2026.
 
-**Vacío importante:** la documentación **no publica el catálogo de `event_id`**. Los ejemplos solo
-usan `1`. El texto nombra cuatro eventos: acuse de recibo, recibo del bien o servicio, aceptación
-y rechazo. Para nosotros corresponden a 030, 032, 033 y 031 (Documento Madre §4.4). La relación
-entre cada `event_id` y su código DIAN hay que confirmarla en el código o con FacturaLatam antes de
-enviar nada a producción.
+**Catálogo de `event_id`.** La documentación no lo publica, pero el código Community sí, en
+`public/csv/events.csv`:
+
+| `event_id` | Evento | Código DIAN |
+|---|---|---|
+| 1 | Acuse de recibo de Factura Electrónica de Venta | 030 |
+| 2 | Reclamo de la Factura Electrónica de Venta | 031 |
+| 3 | Recibo del bien y/o prestación del servicio | 032 |
+| 4 | Aceptación expresa | 033 |
+| 5 | Aceptación tácita | 034 |
+| 6 | Documento validado por la DIAN | 02 |
+| 7 | Documento rechazado por la DIAN | 04 |
+
+Los motivos de reclamo (`type_rejection_id`) están en la tabla `type_rejections`:
+
+| `type_rejection_id` | Motivo | Código |
+|---|---|---|
+| 1 | Documento con inconsistencias | 01 |
+| 2 | Mercancía no entregada totalmente | 02 |
+| 3 | Mercancía entregada parcialmente | 03 |
+| 4 | Servicio no prestado | 04 |
+
+La aceptación tácita (034) la registra el emisor, no el receptor (Documento Madre §4.4). Nuestro
+módulo solo enviará 030, 031, 032 y 033 (ADR-011).
 
 ### 5.3 Estados de la DIAN que devuelve el API
 
@@ -345,7 +388,7 @@ empresa. Cualquier instalación debe estar en la versión corregida.
 | **B. Reimplementar lo necesario** | Escribir en TypeScript solo la consulta al web service de la DIAN (`GetXmlByDocumentKey`), el parser UBL y el envío de eventos, con APIDIAN como referencia funcional | Un solo stack y multiempresa nativa con RLS. Sin dependencia de licencia si no se copia código | Más trabajo. Hay que mantener la firma XAdES y seguir los cambios de la DIAN. El listado por catálogo sigue dependiendo del portal |
 | **C. Mixta** | Empezar con A y reemplazar por B la parte que más pese | Entrega valor antes | Dos integraciones durante un tiempo |
 
-**Recomendación preliminar:** la opción A para arrancar la etapa 4. El Documento Madre exige
+**Recomendación preliminar (superada por ADR-013, que eligió la opción B):** la opción A para arrancar la etapa 4. El Documento Madre exige
 inspeccionar antes de reescribir, y un servicio externo se reemplaza sin tocar el resto. La
 decisión final depende de §2 y de D-14, y la toma el arquitecto.
 
@@ -364,12 +407,12 @@ decisión final depende de §2 y de D-14, y la toma el arquitecto.
 
 | # | Riesgo o vacío | Impacto | Qué hacer |
 |---|---|---|---|
-| R1 | Repositorio privado y licencia desconocida | No se puede "clonar" hoy. Riesgo legal si se copia código | Pedir acceso y licencia por escrito a FacturaLatam |
+| R1 | La edición pública MIT no trae el extractor (es Enterprise) | El listado de documentos recibidos hay que construirlo o licenciarlo | Decidir entre construir el listado propio o comprar la Enterprise. El resto del flujo se puede adaptar del código MIT conservando su aviso |
 | R2 | El envío de eventos exige un software propio habilitado por organización | Choca con D-14, abierta: figura ante la DIAN | Decidir D-14 antes de prometer eventos. Descargar sí es posible sin software |
 | R3 | El listado depende de un enlace por token que pide una persona | La extracción semanal no se automatiza del todo | Confirmar cómo se emite y cuánto dura. Evaluar el modo `.p12` cuando salga de pruebas |
 | R4 | Scraping del portal | Un cambio de la DIAN rompe el listado en silencio, como en septiembre de 2026 | Alertar cuando un rango devuelva cero documentos de forma inesperada. Conciliar con el modo 4 |
 | R5 | Términos de uso del portal de la DIAN | Uso automatizado no revisado legalmente | Revisión legal, en línea con D-14 y D-21 |
-| R6 | Catálogo de `event_id` no publicado | Riesgo de enviar el evento equivocado | Confirmarlo en el código o con FacturaLatam |
+| R6 | Catálogo de `event_id` no publicado en el manual | Resuelto: está en `public/csv/events.csv` del código Community (§5.2) | Usar esa tabla |
 | R7 | El job avanza con el polling, 5 documentos por llamada | Un worker que no consulte deja el job detenido | Polling cada 3 a 5 segundos desde un job de BullMQ, con tope de 2 horas |
 | R8 | Errores no estándar (`502` por cuerpo inválido, `200` con `data: []`) | Errores mal clasificados | Normalizarlos en el adaptador |
 | R9 | Stack PHP fuera del nuestro | Operación y parches de seguridad extra | Imagen fijada por digest, red interna y actualizaciones vigiladas |
@@ -379,8 +422,8 @@ decisión final depende de §2 y de D-14, y la toma el arquitecto.
 
 ## 10. Preguntas abiertas para el arquitecto
 
-1. ¿Telcobras tiene o puede conseguir acceso al repositorio `co-apidian2026` y al del extractor?
-   ¿Con qué licencia?
+1. El extractor solo está en la edición Enterprise. ¿Construimos nuestro propio listado de
+   documentos recibidos, o se licencia la Enterprise de FacturaLatam?
 2. ¿Qué opción de §8.2 prefiere: servicio externo, reimplementación o mixta?
 3. Para D-14: ¿cada organización enviará los eventos con su propio software o lo hará Telcobras
    como proveedor tecnológico o mandatario? ¿O la etapa 4 arranca solo con descarga y aprobación?

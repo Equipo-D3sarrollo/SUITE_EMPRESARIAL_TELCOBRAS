@@ -5,7 +5,7 @@
 | Versión | 1.0 — borrador para aprobación |
 | Fecha | 4 de noviembre de 2026 |
 | Base | `docs/DOCUMENTO_MADRE_SUITE_TELCOBRAS.md` (§14 decisiones, §15 ruta) |
-| Alcance | Etapas 0 y 1 en detalle; etapas 2 a 6 solo como referencia |
+| Alcance | Etapas 0 y 1 en detalle; etapas 2 a 7 solo como referencia (ruta actualizada por ADR-013 el 10-nov-2026) |
 
 Sin fechas ni semanas: el PDF §29.2 prohíbe inventar cronogramas. Cada etapa termina cuando se cumple su criterio de salida, no en una fecha.
 
@@ -22,7 +22,7 @@ Aprobadas por el arquitecto el 4-nov-2026 y **redactadas** en `docs/decisions/` 
 | ADR | Decisión tomada |
 |---|---|
 | ADR-001 | D-01: los conflictos entre fuentes se resuelven caso por caso |
-| ADR-002 | D-06: monolito modular NestJS; LeadGen y RADIAN como servicios Python aparte; REST + OpenAPI |
+| ADR-002 | D-06: monolito modular NestJS; LeadGen como servicio Python aparte; REST + OpenAPI. **RADIAN pasa al monolito como DataDian (ADR-013)** |
 | ADR-003 | D-02/D-03: SPA React + Vite + TS, Tailwind v4, shadcn con Radix |
 | ADR-004 | D-08: tablas compartidas + RLS, `organization_id`, membresías |
 | ADR-006 | D-09: Better Auth; Google o correo + passkey, con TOTP; sin contraseñas. **Reemplazado parcialmente por ADR-012** |
@@ -32,11 +32,12 @@ Aprobadas por el arquitecto el 4-nov-2026 y **redactadas** en `docs/decisions/` 
 | ADR-010 | D-13: VPS con Docker Compose; disponibilidad del piloto 99,5 % |
 | ADR-011 | D-15/D-16/D-17/D-20/D-21: RADIAN solo recepción; Odoo 19/20 con JSON-2; módulo 06 como catálogo gobernado; analítica separada; LeadGen se revisa primero |
 | ADR-012 | D-09 (6-nov-2026): Google o código de 6 dígitos por correo (10 min, 5 intentos), con TOTP; sin passkeys, sin enlace mágico y sin contraseñas |
+| ADR-013 | 10-nov-2026: etapa 1 cerrada; DataDian (módulo 04, id `documents`) es la etapa 2 con listado de recibidos propio; sale el Centro Documental; ruta renumerada de 0 a 7 |
 
 **Diferidas por decisión del arquitecto (4-nov-2026):** se resuelven más adelante y no frenan el arranque.
 - ✅ **ADR-005 (D-07 ORM):** resuelto el 5-nov-2026 con la prueba de 0.3: Drizzle.
 - **D-13:** el proveedor y la región del VPS.
-- **D-14:** la figura ante la DIAN. El arquitecto lo averigua; bloquea la etapa 4.
+- **D-14:** la figura ante la DIAN. El arquitecto lo averigua; bloquea el envío de eventos en la etapa 2 (DataDian).
 - **D-18 y D-19:** se deciden más adelante.
 
 ### 0.2 Inspección de activos existentes (PDF §29.1)
@@ -124,6 +125,8 @@ docs/           documento madre, plan, ADR
 - **Pruebas:** unitarias en reglas de permisos y RLS; una prueba E2E del flujo registro → login → cambiar de organización → ver el menú según el rol.
 - **Accesibilidad:** navegación con teclado entre zonas y contraste AA de los tokens elegidos.
 
+**Estado: cerrada el 10-nov-2026 por decisión del usuario (ADR-013).** De los criterios de abajo quedaron sin verificar la invitación con rol limitado desde la interfaz (falta la administración de miembros y roles), el E2E autenticado y Lighthouse móvil en la CI. Pasaron a `PENDIENTES.md` §3.
+
 **Criterio de salida de la etapa 1:**
 - El usuario registra una organización e invita a otro usuario con un rol limitado.
 - Ambos navegan los 10 módulos (vacíos) según sus permisos.
@@ -136,11 +139,12 @@ docs/           documento madre, plan, ADR
 
 | Etapa | Contenido | Antes de empezar se necesita |
 |---|---|---|
-| 2 | CRM completo, Document Management, notificaciones internas | D-10, D-11 |
-| 3 | Integration Hub, conector Odoo, LeadGen por contrato | D-12, D-16, D-21, inventario 0.2 |
-| 4 | RADIAN (estados internos + eventos DIAN), aprobación humana → borrador Odoo, adaptador Make | D-14, D-15 |
-| 5 | Analítica, suscripciones y consumo, Panel Global, pentest, piloto | D-13, D-20 |
-| 6 | Agent Management, Runtime Layer, agentes con OpenAI Agents SDK en Docker | D-18, D-19 |
+| 2 | **DataDian** (`docs/etapas/ETAPA_2_DATADIAN.md`): listado propio de recibidos de la DIAN, XML por CUFE, eventos RADIAN, aprobación humana → borrador Odoo; custodia de certificados y conector Odoo mínimos | D-11, D-12, D-15, D-16; D-14 solo para enviar eventos; certificado `.p12` de pruebas |
+| 3 | CRM completo con adjuntos y notificaciones internas (`docs/etapas/ETAPA_3_ESPECIFICACION.md`) | D-10, D-11 |
+| 4 | Integration Hub completo, resto de conectores, LeadGen por contrato | D-12, D-19, D-21, inventario 0.2 |
+| 5 | Adaptador Make y módulo de Automatización | D-17, inventario de Make |
+| 6 | Analítica, suscripciones y consumo, Panel Global, pentest, piloto | D-13, D-20, D-25 |
+| 7 | Agent Management, Runtime Layer, agentes con OpenAI Agents SDK en Docker | D-18 |
 
 ---
 
@@ -148,7 +152,7 @@ docs/           documento madre, plan, ADR
 
 | Riesgo | Efecto | Mitigación |
 |---|---|---|
-| No se consigue acceso a LeadGen, RADIAN o Make | Las etapas 3 y 4 quedan bloqueadas | Pedir los accesos en la etapa 0; las etapas 1 y 2 no los necesitan |
-| La figura ante la DIAN (D-14) exige habilitación | RADIAN no puede registrar eventos por terceros | Consultar con legal/contable antes de la etapa 4 |
+| No se consigue acceso a LeadGen o Make | Las etapas 4 y 5 quedan bloqueadas | Pedir los accesos con tiempo; DataDian (etapa 2) no los necesita porque construye su propio listado |
+| La figura ante la DIAN (D-14) exige habilitación | DataDian no puede registrar eventos por terceros | Consultar con legal/contable antes de enviar eventos en la etapa 2; consultar y descargar siguen funcionando |
 | La marca no se decide (D-04) | Hay que rehacer los tokens | Tokens centralizados en `packages/ui`: cambiar la paleta es editar un solo archivo |
 | Versiones de la auditoría sin verificación cruzada | Se elige una versión equivocada | Confirmar cada versión en la documentación oficial al escribir el ADR |
