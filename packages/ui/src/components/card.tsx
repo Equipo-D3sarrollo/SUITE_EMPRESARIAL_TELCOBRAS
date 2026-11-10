@@ -45,6 +45,7 @@ export function Card({ className, children, onPointerDown, ...props }: Component
     >
       {children}
       {/* Capas decorativas: no reciben clics ni las lee el lector de pantalla. */}
+      <span aria-hidden="true" className="tail-ripple__beam" />
       {flashKey > 0 && <span key={flashKey} aria-hidden="true" className="tail-ripple__flash" />}
       <span aria-hidden="true" className="tail-ripple__waves">
         {ripples.map((ripple) => (

@@ -1,7 +1,7 @@
 import { z } from 'zod';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from './page-size.js';
 
-export const MAX_PAGE_SIZE = 100;
-export const DEFAULT_PAGE_SIZE = 20;
+export { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE };
 
 /** Parámetros de una lista paginada por cursor (keyset). Ninguna lista responde sin límite. */
 export const cursorPageQuerySchema = z.object({

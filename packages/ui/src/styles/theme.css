@@ -133,15 +133,11 @@
  * Efecto "haz con cola + onda al clic" de todas las tarjetas (Card, components/card.tsx).
  * Solo usa el verde primario y el blanco de la paleta (§12.4.1).
  */
-@property --tail-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
+/* Giro del haz con la propiedad rotate: el navegador la anima en el compositor (GPU), sin recalcular
+   estilos ni repintar en cada fotograma, a diferencia de animar una propiedad personalizada. */
 @keyframes tail-spin {
   to {
-    --tail-angle: 360deg;
+    rotate: 1turn;
   }
 }
 
@@ -180,20 +176,19 @@
     isolation: isolate;
   }
 
-  /* 1. Haz con cola: anillo cónico de 2 px que gira en sentido horario. */
-  .tail-ripple::after {
-    content: "";
+  /*
+   * 1. Haz con cola: anillo de 2 px que gira en sentido horario, una vuelta cada 3 s.
+   * El anillo (.tail-ripple__beam) es fijo y recorta con una máscara; dentro gira un cuadrado con el
+   * gradiente cónico, centrado en la tarjeta. Se ve igual que girar el ángulo del gradiente, pero el
+   * giro corre en el compositor. 150cqmax cubre la diagonal de cualquier tarjeta (√2 ≈ 1,41).
+   */
+  .tail-ripple__beam {
     position: absolute;
     inset: -1px; /* se monta sobre el borde de 1 px de la tarjeta */
     border-radius: inherit;
     padding: 2px; /* grosor del haz */
+    container-type: size;
     pointer-events: none;
-    background: conic-gradient(
-      from var(--tail-angle),
-      transparent 0 55%,
-      var(--tail-from) 85%,
-      var(--tail-to) 100%
-    );
     /* Recorta el interior y deja solo el anillo. */
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
@@ -203,6 +198,17 @@
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
     mask-composite: exclude;
+  }
+
+  .tail-ripple__beam::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 150cqmax;
+    height: 150cqmax;
+    translate: -50% -50%;
+    background: conic-gradient(transparent 0 55%, var(--tail-from) 85%, var(--tail-to) 100%);
     animation: tail-spin 3s linear infinite;
   }
 
@@ -242,7 +248,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .tail-ripple::after {
+    .tail-ripple__beam::before {
       animation: none;
     }
 

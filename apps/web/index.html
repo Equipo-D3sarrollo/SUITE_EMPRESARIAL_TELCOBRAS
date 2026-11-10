@@ -5,13 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="OrveX.IA: gestión comercial, documental y de integraciones." />
     <title>OrveX.IA</title>
-    <!-- Precarga de Poppins 400, el peso del texto base (documento madre §19.1). Vite reescribe la ruta con el hash. -->
+    <!--
+      Precarga de los 3 pesos de Poppins (documento madre §19.1): los tres se ven en la primera pantalla
+      (texto 400, etiquetas y botones 500, títulos y logo 600). Sin la precarga, 500 y 600 llegan tarde y
+      el cambio de fuente mueve el contenido (CLS). Son ~8 kB cada uno. Vite reescribe la ruta con el hash.
+    -->
     <link
       rel="preload"
       as="font"
       type="font/woff2"
       crossorigin
       href="../../packages/ui/node_modules/@fontsource/poppins/files/poppins-latin-400-normal.woff2"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="../../packages/ui/node_modules/@fontsource/poppins/files/poppins-latin-500-normal.woff2"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      crossorigin
+      href="../../packages/ui/node_modules/@fontsource/poppins/files/poppins-latin-600-normal.woff2"
     />
   </head>
   <body>

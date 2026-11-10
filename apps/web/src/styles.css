@@ -28,21 +28,56 @@
     -webkit-background-clip: text;
     color: transparent;
     filter: drop-shadow(0 0 0.18em color-mix(in srgb, var(--color-tb-azul) 30%, transparent));
-    animation: orvex-sweep 6s ease-in-out infinite;
+    /*
+     * Ciclo de 6 s: 3,3 s quieto y 2,7 s de barrido. La pausa va como retraso (animation-delay) y no
+     * dentro de los keyframes: una animación activa, aunque esté quieta, recalcula y repinta en cada
+     * fotograma; durante el retraso el navegador no trabaja. Logo() la reinicia al terminar alternando
+     * .orvex-name--b (mismos keyframes con otro nombre), sin volver a montar la X ni el punto.
+     */
+    animation: orvex-sweep 2.7s ease-in-out 3.3s;
   }
 
-  /* Color sólido (no degradado recortado): así el resplandor con text-shadow sigue la letra. */
+  .orvex-name--b {
+    animation-name: orvex-sweep-b;
+  }
+
+  /*
+   * Color sólido (no degradado recortado): así el resplandor con text-shadow sigue la letra.
+   * El brillo que late vive en ::after (la misma X, transparente, solo con su sombra) y se anima con
+   * opacity, que corre en el compositor; animar text-shadow repintaba el logo en cada fotograma.
+   */
   .orvex-x {
+    position: relative;
+    isolation: isolate;
     display: inline-block;
     margin-inline: 0.01em 0.02em;
     color: var(--color-tb-verde);
     -webkit-text-fill-color: var(--color-tb-verde);
     font-style: italic;
+    text-shadow: 0 0 0.05em color-mix(in srgb, var(--color-tb-verde) 35%, transparent);
+  }
+
+  .orvex-x::after {
+    content: "X";
+    position: absolute;
+    inset: 0;
+    z-index: -1; /* debajo de la letra, como un text-shadow */
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+      0 0 0.12em color-mix(in srgb, var(--color-tb-verde) 70%, transparent),
+      0 0 0.35em color-mix(in srgb, var(--color-tb-verde) 45%, transparent);
+    opacity: 0;
+    pointer-events: none;
     animation: orvex-x-glow 3s ease-in-out infinite;
   }
 
-  /* Indicador encendido en lugar del carácter ".": un aro sutil lo hace visible sobre blanco. */
+  /*
+   * Indicador encendido en lugar del carácter ".": un aro sutil lo hace visible sobre blanco.
+   * El halo que late vive en ::after y se anima con opacity (compositor), no con box-shadow.
+   */
   .orvex-dot {
+    position: relative;
     display: inline-block;
     width: 0.2em;
     height: 0.2em;
@@ -51,16 +86,33 @@
     background-color: var(--color-tb-amarillo);
     box-shadow:
       0 0 0 0.03em color-mix(in srgb, var(--color-tb-negro) 18%, transparent),
-      0 0 0.3em var(--color-tb-amarillo);
+      0 0 0.06em color-mix(in srgb, var(--color-tb-amarillo) 40%, transparent);
+  }
+
+  .orvex-dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0.3em var(--color-tb-amarillo);
+    pointer-events: none;
     animation: orvex-dot-pulse 2.4s ease-in-out infinite;
   }
 
   @keyframes orvex-sweep {
-    0%,
-    55% {
+    from {
       background-position: 100% 0;
     }
-    100% {
+    to {
+      background-position: 0% 0;
+    }
+  }
+
+  @keyframes orvex-sweep-b {
+    from {
+      background-position: 100% 0;
+    }
+    to {
       background-position: 0% 0;
     }
   }
@@ -68,33 +120,27 @@
   @keyframes orvex-x-glow {
     0%,
     100% {
-      text-shadow: 0 0 0.05em color-mix(in srgb, var(--color-tb-verde) 35%, transparent);
+      opacity: 0;
     }
     50% {
-      text-shadow:
-        0 0 0.12em color-mix(in srgb, var(--color-tb-verde) 70%, transparent),
-        0 0 0.35em color-mix(in srgb, var(--color-tb-verde) 45%, transparent);
+      opacity: 1;
     }
   }
 
   @keyframes orvex-dot-pulse {
     0%,
     100% {
-      box-shadow:
-        0 0 0 0.03em color-mix(in srgb, var(--color-tb-negro) 18%, transparent),
-        0 0 0.3em var(--color-tb-amarillo);
+      opacity: 1;
     }
     50% {
-      box-shadow:
-        0 0 0 0.03em color-mix(in srgb, var(--color-tb-negro) 18%, transparent),
-        0 0 0.06em color-mix(in srgb, var(--color-tb-amarillo) 40%, transparent);
+      opacity: 0;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .orvex-name,
-    .orvex-x,
-    .orvex-dot {
+    .orvex-x::after,
+    .orvex-dot::after {
       animation: none;
     }
   }

@@ -1,4 +1,5 @@
 import { cn } from '@telcobras/ui';
+import { type AnimationEvent, useState } from 'react';
 import { t } from '@/i18n/es-CO';
 
 type LogoProps = {
@@ -12,6 +13,15 @@ type LogoProps = {
  * definitivo. Los efectos viven en styles.css (.orvex-*) y se apagan con prefers-reduced-motion.
  */
 export function Logo({ withSlogan = false, className }: LogoProps) {
+  // Cada barrido es una sola pasada con su pausa como retraso (styles.css). Al terminar se alterna el
+  // nombre de la animación para lanzar la siguiente: la pausa no cuesta fotogramas al navegador.
+  const [alternateSweep, setAlternateSweep] = useState(false);
+
+  function restartSweep(event: AnimationEvent<HTMLSpanElement>) {
+    // Solo el barrido del nombre; las animaciones de la X y el punto son infinitas y no terminan.
+    if (event.target === event.currentTarget) setAlternateSweep((current) => !current);
+  }
+
   return (
     <span
       role="img"
@@ -23,7 +33,11 @@ export function Logo({ withSlogan = false, className }: LogoProps) {
       )}
     >
       {/* El punto es un indicador luminoso, no el carácter ".": el nombre accesible está en aria-label. */}
-      <span aria-hidden="true" className="orvex-name">
+      <span
+        aria-hidden="true"
+        className={cn('orvex-name', alternateSweep && 'orvex-name--b')}
+        onAnimationEnd={restartSweep}
+      >
         Orve<span className="orvex-x">X</span>
         <span className="orvex-dot" />
         IA

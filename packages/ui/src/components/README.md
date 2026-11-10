@@ -8,7 +8,7 @@ Cada archivo implementa un control o patrón visual para componer pantallas del 
 | `avatar.tsx` | Representación visual de una persona o cuenta. |
 | `badge.tsx` | Etiquetas compactas. |
 | `button.tsx` | Botones y variantes de acción. |
-| `card.tsx` | Contenedores de contenido. |
+| `card.tsx` | Contenedores de contenido: superficie al 80 % de transparencia y efecto «haz con cola + onda al clic» (estilos `.tail-ripple*` en `styles/theme.css`). |
 | `data-table.tsx` | Presentación tabular de registros. |
 | `dialog.tsx` | Ventanas modales. |
 | `dropdown-menu.tsx` | Menús desplegables de acciones. |
@@ -24,7 +24,5 @@ Cada archivo implementa un control o patrón visual para componer pantallas del 
 | `skeleton.tsx` | Marcadores de carga. |
 | `status-badge.tsx` | Etiquetas visuales de estado. |
 | `switch.tsx` | Control booleano de activación. |
-| `tabs.tsx` | Navegación entre paneles de una vista. |
-| `tail-ripple-card.tsx` | `Card` con un haz de luz que recorre el borde y una onda al hacer clic (prueba visual; estilos `.tail-ripple*` en `styles/theme.css`). |
-| `tooltip.tsx` | Ayuda breve contextual. |
+| `tabs.tsx` | Navegación entre paneles de una vista. || `tooltip.tsx` | Ayuda breve contextual. |
 

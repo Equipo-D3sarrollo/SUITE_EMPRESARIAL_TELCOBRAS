@@ -5,7 +5,7 @@ SPA React con Vite que ofrece el acceso al producto, el onboarding y el shell mu
 | Archivo o subcarpeta | Propósito |
 |---|---|
 | `package.json` | Dependencias y comandos de desarrollo, compilación y pruebas de la SPA. |
-| `index.html` | Documento HTML de entrada de Vite. |
+| `index.html` | Documento HTML de entrada de Vite; precarga los 3 pesos de Poppins (400, 500 y 600). |
 | `vite.config.ts` | Configura Vite y la integración del frontend. |
 | `vitest.config.ts` | Configura las pruebas de la aplicación web. |
 | `tsconfig.json` y `tsconfig.node.json` | Opciones TypeScript para la aplicación y su configuración Node. |

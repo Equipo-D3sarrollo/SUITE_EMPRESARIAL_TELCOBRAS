@@ -44,7 +44,7 @@ documento que corresponda y dejar constancia aquí.
 |---|---|
 | Corte de este estado | 2026-11-10, hora de Colombia (UTC-05:00) |
 | Etapa | **Etapa 1 — Fundaciones, en curso** |
-| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. Producto renombrado a OrveX.IA. Una cuenta puede registrar varias organizaciones desde el menú de usuario (`/organizaciones/nueva`). Tarjetas al 80% de transparencia; prueba del efecto «haz con cola + onda» (`TailRippleCard`) solo en la tarjeta del Dashboard General. |
+| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. Producto renombrado a OrveX.IA. Una cuenta puede registrar varias organizaciones desde el menú de usuario (`/organizaciones/nueva`). Tarjetas al 80% de transparencia y con el efecto «haz con cola + onda al clic» en todas (integrado en `Card`). Optimización de carga: zod fuera del JS inicial, 3 pesos de Poppins precargados y animaciones decorativas solo en el compositor. |
 | Próximo foco | Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
 | Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
 | Commit | La implementación visual quedó registrada en commits de `main`; esta actualización documental queda pendiente de commit. |
@@ -147,6 +147,86 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — documentación de APIDIAN para el módulo 04 Documentos
+
+- **Etapa y objetivo:** preparación de la etapa 4 (RADIAN), sin iniciarla. A pedido del usuario,
+  revisar toda la documentación de APIDIAN (FacturaLatam) y guardarla en la carpeta del módulo de
+  Documentos. El encargo de fondo es incorporar su extractor de documentos de la DIAN, con
+  aprobación humana y envío a Odoo; el usuario pidió no implementar todavía.
+- **Resultado:** creada `docs/modules/documents/apidian/` con `ANALISIS_APIDIAN.md` y
+  `referencia/`: manual oficial completo (290 páginas en 4 archivos), colección Postman pública
+  (185 requests en 14 archivos), índice de endpoints y la transcripción del video que entregó el
+  usuario. READMEs en `docs/modules/`, `docs/modules/documents/` y la carpeta; `docs/README.md`
+  enlaza `modules/`.
+- **Hallazgos clave:** APIDIAN es PHP/Laravel y se centra en emitir; el Extractor V2 es un
+  servicio aparte que lista el catálogo DIAN con un enlace por token y baja cada XML por el web
+  service oficial con el `.p12`. Descargar solo exige certificado; enviar eventos exige software
+  propio habilitado (toca D-14). APIDIAN no habla con Odoo. **El repositorio
+  `git.buho.la/facturalatam/apidian/co-apidian2026` es privado** y no hay licencia publicada: no
+  se pudo leer el código ni `API_EXTRACTOR.md`/`EXTRACTOR_INTEGRACION.md`.
+- **Validaciones:** gitleaks v8.30.1 en contenedor con `.github/gitleaks.toml` sobre `docs/modules`:
+  sin hallazgos, tras censurar tokens, JWT, contraseñas, PIN, clave técnica y CUFE de ejemplo.
+  Cambio solo documental; no se ejecutaron pruebas de código.
+- **Pendientes/bloqueos:** acceso y licencia del repositorio; decisión de incorporación (servicio
+  externo, reimplementación o mixta, §8.2 del análisis); D-14; catálogo de `event_id` sin publicar.
+- **Siguiente paso exacto:** esperar la siguiente instrucción del usuario sobre el encargo. Las
+  preguntas para el arquitecto están en §10 del análisis. Etapa 1 sigue pendiente de cierre.
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — optimización de tiempos de carga de la capa visual
+
+- **Etapa y objetivo:** Etapa 1; revisar la arquitectura visual y optimizar la carga sin cambiar lo que
+  se ve ni el funcionamiento.
+- **Diagnóstico (medido):** presupuestos de §19.4 cumplidos, pero (1) zod entraba al JS inicial porque
+  `lib/queries.ts` importa `MAX_PAGE_SIZE` del barril de `@telcobras/contracts`, que no declaraba
+  `sideEffects`; (2) solo se precargaba Poppins 400 y el cambio a 500/600 movía el panel del login
+  (CLS 0,025); (3) en Lighthouse móvil el hilo principal gastaba 3,6 de 4,1 s en estilo, layout y
+  pintura: el haz de las tarjetas animaba `--tail-angle` (recalcula estilos cada fotograma) y el logo
+  animaba `text-shadow`, `box-shadow` y `background-position`. Una animación activa cuesta aunque esté
+  quieta; durante `animation-delay` no cuesta. El canvas del fondo ya estaba bien optimizado.
+- **Cambios:** `packages/contracts/package.json` (`"sideEffects": false`); nuevo
+  `schemas/page-size.ts` (reexportado por `pagination.ts`, API igual); `apps/web/index.html` precarga
+  500 y 600; `card.tsx` + `theme.css`: el haz es un anillo enmascarado (`.tail-ripple__beam`) con un
+  cuadrado cónico que gira con `rotate` (compositor), sin `@property`; `styles.css` + `logo.tsx`:
+  brillo de la X y halo del punto en `::after` animados con `opacity`, y el barrido del nombre es una
+  pasada de 2,7 s con la pausa de 3,3 s como `animation-delay`, reiniciada alternando
+  `.orvex-name--b` (misma línea de tiempo de 6 s). Docs: Documento Madre §12.4.1 y §19.1, README de
+  `apps/web`, `apps/web/src` y `contracts/src/schemas`.
+- **Resultados:** JS inicial 150,2 → 125,6 kB gzip; CLS 0,000 en 6/6 corridas (antes hasta 0,025);
+  A/B con CPU 4× (6 s): login estilo 1376 → 333 ms y layout 618 → 66 ms; dashboard estilo
+  1878 → 610 ms y layout 629 → 253 ms. LCP igual (~0,8 s). El TBT de Lighthouse varía mucho en este
+  equipo (205–1085 ms entre corridas iguales), así que no sirve para comparar aquí; las tareas largas
+  que quedan son de React al montar la ruta cuando responde la sesión.
+- **Validaciones:** typecheck contracts/ui/web ✓; Biome ✓; `check:palette` sin nuevas; presupuesto de
+  bundle ✓; Playwright: el haz gira (3 s/vuelta), el barrido se repite cada ~6 s alternando la clase,
+  X y punto laten, con movimiento reducido todo queda quieto y el punto conserva su halo. Vitest:
+  contracts 17/17, ui 19/19, web 45/47 en la corrida completa; las 2 de `command-search.test.tsx`
+  pasan al correrlas solas (2/2): es inestabilidad por carga del equipo, ya vista antes de este cambio.
+- **Herramientas:** Lighthouse 13.6 del repo con Edge del sistema en modo headless y puerto fijo
+  (`chrome-launcher` no logra lanzar Edge por sí solo).
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — efecto «haz con cola + onda» en todas las tarjetas
+
+- **Etapa y objetivo:** Etapa 1; a pedido del usuario, llevar el efecto probado en la tarjeta del
+  Dashboard General a todas las tarjetas del proyecto.
+- **Resultado:** el efecto se integró en el `Card` base, así que lo heredan todas las tarjetas
+  (submódulos Zonas 2 y 3, acceso/registro/invitación, onboarding y nueva organización,
+  `KpiCard`) y las tarjetas de conectores del popover de la Zona 4, que pasaron de `<li>` con
+  estilos propios a `Card` (con `shadow-none`, como antes). Tabla y diálogo no son tarjetas.
+- **Cambios:** `packages/ui/src/components/card.tsx` (estado de ondas y destello); eliminado
+  `tail-ripple-card.tsx` y su export; `module-placeholder.tsx` vuelve a usar `Card`;
+  `status-bar.tsx` usa `Card` (Biome reformateó el archivo); comentario en `theme.css`;
+  Documento Madre §12.4.1, README de `packages/ui/src/components`, `styles` y `module-placeholder`.
+- **Validaciones:** typecheck ui/web ✓; Biome en archivos tocados ✓; knip y `check:palette` sin
+  hallazgos nuevos; Vitest ui 19/19 y web 47/47. Playwright con Edge: el efecto (`tail-spin`)
+  aparece en la tarjeta de login, las 3 de cada submódulo, la de nueva organización y las 5 de la
+  Zona 4; 3 clics → 3 ondas y 0 tras 1,5 s en cada tipo; el popover sigue abierto al hacer clic en
+  una tarjeta y los campos del formulario siguen escribiéndose. Único error de consola: 404 de
+  `favicon.ico` (preexistente). Durante la prueba la API devolvió un 500 pasajero al enviar el
+  código; al repetir, funcionó.
+- **Git:** sin commit.
 
 ### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — cierre documental de sus cambios
 

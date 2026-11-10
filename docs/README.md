@@ -10,4 +10,5 @@ La documentación de alcance y ejecución se complementa con las carpetas especi
 | `Arquitectura/` | Material técnico de arquitectura, diseño y frontend. |
 | `decisions/` | Registro de decisiones de arquitectura (ADR). |
 | `etapas/` | Especificaciones de alcance para etapas posteriores. |
+| `modules/` | Análisis y material de referencia por módulo funcional. |
 
