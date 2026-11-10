@@ -1,4 +1,4 @@
-# Suite Empresarial Telcobras
+# OrveX.IA
 
 Plataforma SaaS multiempresa. La fuente de alcance, arquitectura y decisiones es el
 [documento madre](docs/DOCUMENTO_MADRE_SUITE_TELCOBRAS.md); el plan de construcción está en
@@ -52,6 +52,11 @@ pnpm build
 
 Las pruebas de API requieren los servicios de Compose encendidos y migrados. `pnpm infra:down`
 detiene los servicios locales sin borrar sus volúmenes.
+
+No ejecutes `pnpm build` con `pnpm dev` encendido: `nest build` borra `apps/api/dist` y tumba la
+API que corre en modo vigilancia. Las pruebas de API usan la misma base local que el desarrollo y
+crean sus propios datos; `pnpm db:seed` vuelve a crear las organizaciones demo (Demo Andina y Demo
+Caribe).
 
 ## Mapa del repositorio
 

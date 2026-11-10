@@ -38,7 +38,7 @@ export function ModulePlaceholder() {
         title={title}
         background={<PageBackground />}
       >
-        <Card className="bg-tb-blanco/50 backdrop-blur-sm border-none shadow-none">
+        <Card className="border-none shadow-none">
           <EmptyState
             icon={moduleIcon(module)}
             title={title}

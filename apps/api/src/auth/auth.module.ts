@@ -50,7 +50,7 @@ function requireTwoFactorOnEmailOtp<T extends ReturnType<typeof twoFactor>>(plug
 
 function createAuth(db: Database, env: Env, valkey: Redis, mailer: Mailer) {
   return betterAuth({
-    appName: 'Suite Empresarial Telcobras',
+    appName: 'OrveX.IA',
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [env.WEB_ORIGIN],
@@ -122,17 +122,17 @@ function createAuth(db: Database, env: Env, valkey: Redis, mailer: Mailer) {
           await mailer.sendMail({
             from: env.MAIL_FROM,
             to: email,
-            subject: 'Tu código de acceso a Suite Telcobras',
+            subject: 'Tu código de acceso a OrveX.IA',
             text: [
               `Tu código de acceso es: ${otp}`,
               '',
               `Vence en ${OTP_EXPIRES_IN_SECONDS / 60} minutos y solo sirve una vez.`,
-              'Si no intentaste entrar a Suite Telcobras, ignora este correo.',
+              'Si no intentaste entrar a OrveX.IA, ignora este correo.',
             ].join('\n'),
           });
         },
       }),
-      requireTwoFactorOnEmailOtp(twoFactor({ issuer: 'Telcobras' })),
+      requireTwoFactorOnEmailOtp(twoFactor({ issuer: 'OrveX.IA' })),
     ],
   });
 }

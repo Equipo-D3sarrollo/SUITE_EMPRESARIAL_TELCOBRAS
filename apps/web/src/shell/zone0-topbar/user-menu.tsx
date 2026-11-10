@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@telcobras/ui';
-import { ChevronDown, LogOut } from 'lucide-react';
+import { Building2, ChevronDown, LogOut } from 'lucide-react';
 import { t } from '@/i18n/es-CO';
 import { sessionQuery } from '@/lib/queries';
 
@@ -59,9 +59,12 @@ export function UserMenu() {
           <span className="truncate font-normal text-xs">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => navigate({ to: '/registro' })}>
-          <span className="font-medium">{t.shell.organization.add}</span>
+        {/* Misma cuenta, otra empresa: el formulario no vuelve a pedir inicio de sesión. */}
+        <DropdownMenuItem onSelect={() => navigate({ to: '/organizaciones/nueva' })}>
+          <Building2 aria-hidden="true" />
+          {t.shell.organization.add}
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut()}>
           <LogOut aria-hidden="true" />
           {t.shell.userMenu.signOut}

@@ -1,4 +1,4 @@
-# Documento madre — Suite Empresarial Telcobras
+# Documento madre — OrveX.IA
 
 | Campo | Valor |
 |---|---|
@@ -145,7 +145,7 @@ Este documento manda sobre las fuentes originales. Cada cambio de decisión se r
 ## 3. Mapa de dominios, módulos y dependencias
 
 ```
-                    SUITE EMPRESARIAL TELCOBRAS
+                    ORVEX.IA
       NÚCLEO CENTRAL        INTELIGENCIA COMERCIAL     OPERACIONES DOCUMENTALES
   orgs, usuarios, auth,     LeadGen, investigación,    RADIAN, DIAN, facturas,
   roles, permisos,          enriquecimiento, scoring,  extracción, validaciones,
@@ -801,7 +801,8 @@ Todas las cifras son [EJEMPLO].
 - El fondo contiene los 13 efectos del kit (`grid`, `constellation`, `flow`, `ripple`, `aurora`, `flicker`, `magnet`, `star`, `mesh`, `hex`, `terrain`, `orbit` y `spot`). El efecto cambia automáticamente cada 30 segundos y dispone de un control manual accesible.
 - El color del efecto intercambia, junto con la rotación, únicamente los tres colores de marca: verde `#88BD4C`, azul `#2491CC` y amarillo `#F3CB35`. No se utilizan tonos arbitrarios para la decoración.
 - El motor de canvas difiere su inicialización para permitir el primer pintado, evita dibujar antes de tener dimensiones válidas, pausa cuando la vista no es visible o la pestaña está oculta, cancela sus `requestAnimationFrame` al desmontar y respeta `prefers-reduced-motion`.
-- Todas las tarjetas del componente base `Card` usan superficie blanca al 60% (`bg-tb-blanco/60`) y `backdrop-blur-sm`, conservando el borde y la sombra del design system. Las variantes específicas pueden sobrescribir estas clases cuando exista una decisión visual explícita.
+- Todas las tarjetas del componente base `Card` usan superficie blanca al 20% (`bg-tb-blanco/20`, es decir, 80% de transparencia; cambio del 10-nov-2026) y `backdrop-blur-sm`, conservando el borde y la sombra del design system. La transparencia se aplica solo al fondo con un color alfa, nunca con `opacity`, para que el texto y los datos de la tarjeta se vean al 100%. Ninguna tarjeta sobrescribe esta transparencia: todas usan la misma medida.
+- **Prueba visual «haz con cola + onda al clic» (10-nov-2026):** solo la tarjeta de la Zona 2 del Dashboard General (`/app/dashboard/overview`) usa `TailRippleCard` (`packages/ui`), que envuelve `Card` sin cambiar su contenido ni su tamaño. Un haz de 2 px recorre el borde en sentido horario (una vuelta cada 3 s), con una estela que aparece desde el 55 % del recorrido; al hacer clic nace una onda de 24 px en ese punto, que crece 18 veces y se desvanece en 0,85 s, y el contorno destella durante 0,7 s. El color es el verde primario (`--tail-color: var(--color-tb-verde)`). Con `prefers-reduced-motion` el haz no gira y las ondas casi no se ven. Es una prueba: extenderla a otras tarjetas requiere decisión explícita.
 - La rotación de efectos y colores, la inicialización de cada efecto y la compilación de producción tienen cobertura de pruebas automatizadas.
 
 **Reglas de contraste (WCAG 2.2 AA sobre blanco, calculadas):**

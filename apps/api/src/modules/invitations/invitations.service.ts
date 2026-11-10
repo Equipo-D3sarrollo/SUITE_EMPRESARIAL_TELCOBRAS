@@ -142,7 +142,7 @@ export class InvitationsService {
       await this.mailer.sendMail({
         from: this.env.MAIL_FROM,
         to: invitation.email,
-        subject: 'Te invitaron a Suite Empresarial Telcobras',
+        subject: 'Te invitaron a OrveX.IA',
         text: `Acepta la invitación a la organización desde este enlace: ${invitationUrl}\n\nEl enlace vence el ${invitation.expiresAt.toLocaleString('es-CO', { timeZone: 'America/Bogota' })}.`,
       });
 

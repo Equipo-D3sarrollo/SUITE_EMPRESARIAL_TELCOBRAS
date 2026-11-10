@@ -14,7 +14,7 @@ describe('Buscador Ctrl+K (Zona 0)', () => {
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
     const dialog = await screen.findByRole(
       'dialog',
-      { name: 'Buscar en la suite' },
+      { name: 'Buscar en OrveX.IA' },
       { timeout: 5_000 },
     );
     expect(within(dialog).getByRole('option', { name: 'Dashboard General' })).toBeInTheDocument();

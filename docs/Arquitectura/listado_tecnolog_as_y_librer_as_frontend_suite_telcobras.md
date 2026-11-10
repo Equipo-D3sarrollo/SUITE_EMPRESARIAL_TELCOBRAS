@@ -1,5 +1,5 @@
 # ESPECIFICACIÓN TÉCNICA FRONTEND: STACK, LIBRERÍAS Y ARQUITECTURA VISUAL
-**Plataforma: Suite Empresarial Telcobras (Arquitectura Reactiva de 5 Zonas: 0 a 4)**  
+**Plataforma: OrveX.IA (Arquitectura Reactiva de 5 Zonas: 0 a 4)**  
 *Guía de Replicación de Interfaz de Usuario y Experiencia de Usuario (UI/UX)*
 
 ---

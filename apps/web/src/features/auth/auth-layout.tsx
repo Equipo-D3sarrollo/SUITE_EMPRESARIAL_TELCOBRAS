@@ -9,7 +9,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex h-20 shrink-0 items-center border-tb-gris/40 border-b px-6">
-        <Logo withSlogan className="h-14" />
+        <Logo withSlogan />
       </header>
       <main id="main-content" className="flex flex-1 items-center justify-center p-6">
         <div className="grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">

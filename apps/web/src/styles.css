@@ -1,2 +1,101 @@
 @import "tailwindcss";
 @import "@telcobras/ui/theme.css";
+
+/*
+ * Logotipo de OrveX.IA (shell/zone0-topbar/logo.tsx). Solo colores de la paleta oficial (ADR-007):
+ * un degradado azul que recorre un destello de luz, la X en verde y azul con resplandor, y el punto
+ * en amarillo que late como un indicador encendido.
+ */
+@layer components {
+  .orvex-name {
+    position: relative;
+    display: inline-block;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    background-image: linear-gradient(
+      100deg,
+      var(--color-tb-azul) 0%,
+      var(--color-tb-azul) 38%,
+      color-mix(in srgb, var(--color-tb-azul) 45%, var(--color-tb-blanco)) 46%,
+      var(--color-tb-blanco) 50%,
+      color-mix(in srgb, var(--color-tb-azul) 45%, var(--color-tb-blanco)) 54%,
+      var(--color-tb-azul) 62%,
+      var(--color-tb-azul) 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 0.18em color-mix(in srgb, var(--color-tb-azul) 30%, transparent));
+    animation: orvex-sweep 6s ease-in-out infinite;
+  }
+
+  /* Color sólido (no degradado recortado): así el resplandor con text-shadow sigue la letra. */
+  .orvex-x {
+    display: inline-block;
+    margin-inline: 0.01em 0.02em;
+    color: var(--color-tb-verde);
+    -webkit-text-fill-color: var(--color-tb-verde);
+    font-style: italic;
+    animation: orvex-x-glow 3s ease-in-out infinite;
+  }
+
+  /* Indicador encendido en lugar del carácter ".": un aro sutil lo hace visible sobre blanco. */
+  .orvex-dot {
+    display: inline-block;
+    width: 0.2em;
+    height: 0.2em;
+    margin-inline: 0.06em 0.08em;
+    border-radius: 9999px;
+    background-color: var(--color-tb-amarillo);
+    box-shadow:
+      0 0 0 0.03em color-mix(in srgb, var(--color-tb-negro) 18%, transparent),
+      0 0 0.3em var(--color-tb-amarillo);
+    animation: orvex-dot-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes orvex-sweep {
+    0%,
+    55% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: 0% 0;
+    }
+  }
+
+  @keyframes orvex-x-glow {
+    0%,
+    100% {
+      text-shadow: 0 0 0.05em color-mix(in srgb, var(--color-tb-verde) 35%, transparent);
+    }
+    50% {
+      text-shadow:
+        0 0 0.12em color-mix(in srgb, var(--color-tb-verde) 70%, transparent),
+        0 0 0.35em color-mix(in srgb, var(--color-tb-verde) 45%, transparent);
+    }
+  }
+
+  @keyframes orvex-dot-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0.03em color-mix(in srgb, var(--color-tb-negro) 18%, transparent),
+        0 0 0.3em var(--color-tb-amarillo);
+    }
+    50% {
+      box-shadow:
+        0 0 0 0.03em color-mix(in srgb, var(--color-tb-negro) 18%, transparent),
+        0 0 0.06em color-mix(in srgb, var(--color-tb-amarillo) 40%, transparent);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orvex-name,
+    .orvex-x,
+    .orvex-dot {
+      animation: none;
+    }
+  }
+}

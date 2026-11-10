@@ -1,4 +1,4 @@
-# Pendientes — Suite Empresarial Telcobras
+# Pendientes — OrveX.IA
 
 | Campo | Valor |
 |---|---|
@@ -54,6 +54,9 @@
 | Límite de envíos de códigos de acceso por cuenta y por hora; confirmar el límite por IP de Better Auth en producción (hoy 3 por minuto, solo activo en producción) | Sin definir (ADR-012) | Antes del piloto |
 | Duración de la sesión (hoy 7 días por defecto de Better Auth) y una más corta para administradores | Sin definir (ADR-012) | Antes del piloto |
 | Restablecimiento del TOTP por un administrador cuando la persona perdió la app y los códigos de respaldo | Sin definir (ADR-012) | Antes del piloto |
+| Logo gráfico de OrveX.IA y eslogan propio: hoy el logotipo es solo texto animado (`apps/web/src/shell/zone0-topbar/logo.tsx`) y conserva el eslogan de Telcobras «Una nueva forma de entender las redes» | Pendiente del diseño de marca | Antes del piloto |
+| NIT repetido al crear una organización: la base no lo impide (`organizations.nit` sin restricción única) y el formulario muestra un error genérico si la API rechaza la creación | Sin decidir si el NIT debe ser único y qué mensaje mostrar | Antes del piloto |
+| Acceso a «Registrar otra organización» también desde el selector de organizaciones (hoy solo está en el menú de usuario) | Mejora opcional | Posterior |
 | Suplantación del superadmin: duración, aviso, quién autoriza | Solo el principio (auditada) | Etapa 5 |
 | Facturación electrónica de la propia suite | Sin definir | Etapa 5 |
 | Herramienta de analítica (réplica, vistas, almacén) | Sin definir (D-20 cubre el alcance) | Etapa 5 |

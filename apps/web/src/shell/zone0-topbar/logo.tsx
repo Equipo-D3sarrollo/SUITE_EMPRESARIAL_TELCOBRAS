@@ -7,28 +7,35 @@ type LogoProps = {
   className?: string;
 };
 
-/** Logo oficial de Telcobras recreado en SVG con la paleta de la suite (documento madre §12.4.1). */
+/**
+ * Logotipo provisional de OrveX.IA: solo el nombre, con un barrido de luz, mientras llega el logo
+ * definitivo. Los efectos viven en styles.css (.orvex-*) y se apagan con prefers-reduced-motion.
+ */
 export function Logo({ withSlogan = false, className }: LogoProps) {
   return (
-    <svg
+    <span
       role="img"
       aria-label={withSlogan ? `${t.brand.name}. ${t.brand.slogan}` : t.brand.name}
-      viewBox={withSlogan ? '0 0 248 60' : '0 0 206 44'}
-      className={cn('w-auto shrink-0', className)}
-    >
-      {/* Marca: tres velas superpuestas, verde, amarilla y azul. */}
-      <path d="M2 8 13 2v38L2 44Z" className="fill-tb-verde" />
-      <path d="M10 12 19 7v33l-9 4Z" className="fill-tb-amarillo" />
-      <path d="M17 16 26 11v28l-9 4Z" className="fill-tb-azul" />
-      <text x="34" y="33" fontSize="30" fontWeight="600" fontStyle="italic" letterSpacing="-0.5">
-        <tspan className="fill-tb-azul">TELCO</tspan>
-        <tspan className="fill-tb-verde">BRAS</tspan>
-      </text>
-      {withSlogan && (
-        <text x="34" y="54" fontSize="12.5" textLength="210" className="fill-tb-negro">
-          {t.brand.slogan}
-        </text>
+      className={cn(
+        'orvex-wordmark inline-flex shrink-0 select-none flex-col justify-center leading-none',
+        withSlogan ? 'text-3xl' : 'text-2xl',
+        className,
       )}
-    </svg>
+    >
+      {/* El punto es un indicador luminoso, no el carácter ".": el nombre accesible está en aria-label. */}
+      <span aria-hidden="true" className="orvex-name">
+        Orve<span className="orvex-x">X</span>
+        <span className="orvex-dot" />
+        IA
+      </span>
+      {withSlogan && (
+        <span
+          aria-hidden="true"
+          className="mt-1.5 font-normal text-tb-negro/70 text-xs tracking-wide"
+        >
+          {t.brand.slogan}
+        </span>
+      )}
+    </span>
   );
 }

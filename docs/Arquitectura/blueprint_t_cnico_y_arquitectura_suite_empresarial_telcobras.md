@@ -1,4 +1,4 @@
-# BLUEPRINT MAESTRO DE INGENIERÍA Y ARQUITECTURA: SUITE EMPRESARIAL TELCOBRAS
+# BLUEPRINT MAESTRO DE INGENIERÍA Y ARQUITECTURA: ORVEX.IA
 **Versión de Especificación: 4.8.2-Enterprise-Release**  
 **Organización: Telcobras S.A.S. | Cloud Enterprise Systems**  
 *Documento Rector de Arquitectura de Software, Modelo de Datos, Topología de Red y Roadmap Técnico*
@@ -7,7 +7,7 @@
 
 ## 1. RESUMEN ARQUITECTÓNICO & PRINCIPIOS DE DISEÑO
 
-El **Blueprint de la Suite Empresarial Telcobras** define la arquitectura end-to-end para una solución SaaS multi-tenant diseñada para operar con latencia mínima (< 20 ms en UI), procesamiento tributario asíncrono y desacoplamiento estricto por capas.
+El **Blueprint de OrveX.IA** define la arquitectura end-to-end para una solución SaaS multi-tenant diseñada para operar con latencia mínima (< 20 ms en UI), procesamiento tributario asíncrono y desacoplamiento estricto por capas.
 
 ### Principios Rectores:
 1. **Reactividad de 5 Zonas (0 a 4)**: Cero recargas de página completas (`SPA/SSR híbrido`). Transición instantánea del Workspace (Zona 2), Panel Contextual (Zona 3) y Telemetría (Zona 4) al conmutar submenús en el Sidebar (Zona 1).
@@ -176,7 +176,7 @@ CREATE TABLE integraciones_config (
          |
          +---> 3. Sincronización asíncrona hacia Odoo ERP v16.0 (XML-RPC)
          |
-         +---> 4. Emisión de Evento WebSocket a la Suite Telcobras
+         +---> 4. Emisión de Evento WebSocket a OrveX.IA
                          |
                          +---> Zona [2]: Se añade la fila a la tabla con badge 'Sincronizado'
                          +---> Zona [3]: Actualiza el Donut y el Feed de Actividad en vivo

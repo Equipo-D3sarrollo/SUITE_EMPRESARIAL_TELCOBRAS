@@ -3,11 +3,11 @@ REM Script para iniciar Docker Desktop y configurar el proyecto automáticamente
 REM Este archivo se puede hacer doble-click desde el Explorador
 
 color 0A
-title Suite Telcobras - Docker Setup
+title OrveX.IA - Docker Setup
 
 echo.
 echo ╔════════════════════════════════════════════════════════════════╗
-echo ║  Suite Empresarial Telcobras - Docker Setup                   ║
+echo ║  OrveX.IA - Docker Setup                                       ║
 echo ╚════════════════════════════════════════════════════════════════╝
 echo.
 

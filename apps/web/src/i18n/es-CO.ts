@@ -101,9 +101,8 @@ const navigation: NavigationLabels = {
 /** Todos los textos visibles de la SPA, en español de Colombia (ADR-008). */
 export const t = {
   brand: {
-    name: 'Telcobras',
-    suite: 'Suite',
-    productName: 'Suite Empresarial Telcobras',
+    name: 'OrveX.IA',
+    productName: 'OrveX.IA',
     slogan: 'Una nueva forma de entender las redes',
     copyright: (year: number) => `© ${year} Telcobras S.A.S.`,
   },
@@ -132,11 +131,12 @@ export const t = {
       active: 'Activa',
       nit: (nit: string) => `NIT: ${nit}`,
       switchError: 'No se pudo cambiar de organización.',
+      add: 'Registrar otra organización',
     },
     search: {
       trigger: 'Buscar módulos…',
       shortcut: 'Ctrl K',
-      dialogTitle: 'Buscar en la suite',
+      dialogTitle: 'Buscar en OrveX.IA',
       placeholder: 'Escribe el nombre de un módulo o submódulo',
       empty: 'No hay resultados para tu búsqueda.',
     },
@@ -181,7 +181,7 @@ export const t = {
   },
   auth: {
     sidePanel: {
-      title: 'Bienvenido a la Suite Empresarial Telcobras',
+      title: 'Bienvenido a OrveX.IA',
       description:
         'Gestión comercial, documental y de integraciones para tu empresa, en un solo lugar.',
       features: [
@@ -201,14 +201,14 @@ export const t = {
     emailPlaceholder: 'nombre@empresa.com',
     invalidEmail: 'Escribe un correo válido.',
     login: {
-      title: 'Iniciar sesión en Suite Telcobras',
+      title: 'Iniciar sesión en OrveX.IA',
       description:
         'Ingresa a tu espacio de trabajo con un código que te enviamos al correo o con tu cuenta de Google.',
       google: 'Continuar con Google Workspace',
       sendCode: 'Enviarme un código',
       submitCode: 'Iniciar sesión',
       error: 'No pudimos iniciar tu sesión. Intenta de nuevo.',
-      noAccount: '¿Tu empresa es nueva en Telcobras?',
+      noAccount: '¿Tu empresa es nueva en OrveX.IA?',
       createAccount: 'Crea una cuenta',
     },
     code: {
@@ -240,7 +240,7 @@ export const t = {
       error: 'El código no es válido o ya venció.',
     },
     register: {
-      title: 'Crear cuenta en Telcobras',
+      title: 'Crear cuenta en OrveX.IA',
       description: 'Empieza en minutos. No necesitas contraseña.',
       google: 'Registrarse con Google',
       nameLabel: 'Nombre completo',
@@ -252,7 +252,7 @@ export const t = {
       steps: { details: '1. Tus datos', code: '2. Código del correo' },
     },
     invitation: {
-      title: 'Te invitaron a Suite Telcobras',
+      title: 'Te invitaron a OrveX.IA',
       description: 'Acepta la invitación para unirte a la organización que te invitó.',
       signedOutHint: 'Para aceptarla, crea tu cuenta o inicia sesión con el correo invitado.',
       accept: 'Aceptar invitación',
@@ -262,7 +262,7 @@ export const t = {
   onboarding: {
     badge: 'Configura tu empresa en 2 minutos',
     title: 'Personaliza tu espacio de trabajo',
-    description: 'Ingresa los datos esenciales de tu empresa para empezar a usar la suite.',
+    description: 'Ingresa los datos esenciales de tu empresa para empezar a usar OrveX.IA.',
     nameLabel: 'Nombre de la empresa',
     namePlaceholder: 'Logística Andina',
     legalNameLabel: 'Razón social',
@@ -281,5 +281,12 @@ export const t = {
       nitCheckDigit: 'El dígito de verificación no corresponde al NIT.',
       size: 'Elige el tamaño de la empresa.',
     },
+  },
+  newOrganization: {
+    title: 'Registrar otra organización',
+    description:
+      'Se crea con tu cuenta actual, sin volver a iniciar sesión, y quedarás con el rol de Administrador de empresa. Tus demás organizaciones siguen disponibles en el selector.',
+    account: (email: string) => `Cuenta: ${email}`,
+    back: 'Volver al panel',
   },
 } as const;

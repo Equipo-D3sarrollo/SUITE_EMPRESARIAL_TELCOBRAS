@@ -13,4 +13,5 @@ Cada archivo declara una página o ruta del router file-based.
 | `registro.tsx` | Página de registro. |
 | `invitacion.$token.tsx` | Página que resuelve una invitación a partir de su token. |
 | `onboarding.tsx` | Ruta de configuración inicial de la cuenta u organización. |
+| `organizaciones.nueva.tsx` | Registrar otra organización con la cuenta actual; exige sesión y al menos una organización (sin ninguna lleva a `/onboarding`) y queda fuera de `/app`. |
 

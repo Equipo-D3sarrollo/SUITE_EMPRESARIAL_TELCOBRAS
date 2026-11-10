@@ -10,6 +10,7 @@ Las pruebas verifican endpoints y reglas transversales; los casos que acceden a 
 | `global-setup.ts` | Prepara recursos compartidos antes de ejecutar las pruebas. |
 | `idempotency.test.ts` | Comprueba el manejo de solicitudes idempotentes. |
 | `invitations.test.ts` | Verifica endpoints y reglas de invitaciones. |
+| `multiple-organizations.test.ts` | Verifica por HTTP que una cuenta crea varias organizaciones con la misma sesión, las lista todas sin filtrar por rol y cambia la activa. |
 | `organizations.test.ts` | Verifica endpoints y reglas de organizaciones. |
 | `pagination.test.ts` | Comprueba la lectura y validación de paginación. |
 | `rls.test.ts` | Comprueba el aislamiento de tenants mediante RLS. |

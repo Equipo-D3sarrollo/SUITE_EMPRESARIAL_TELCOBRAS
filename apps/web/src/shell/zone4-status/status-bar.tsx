@@ -1,4 +1,12 @@
-import { Badge, cn, Popover, PopoverContent, PopoverTrigger, StatusBadge } from '@telcobras/ui';
+import {
+  Badge,
+  Card,
+  cn,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  StatusBadge,
+} from '@telcobras/ui';
 import { Activity, ChevronUp } from 'lucide-react';
 import { t } from '@/i18n/es-CO';
 import { averageLatencyMs, CONNECTORS, type ConnectorStatus, connectorsUp } from './connectors';
@@ -14,8 +22,7 @@ export function StatusBar() {
   return (
     <footer className="relative z-20 h-12 shrink-0 border-tb-gris/40 border-t bg-tb-blanco">
       <Popover>
-        <PopoverTrigger className="group flex h-full w-full cursor-pointer items-center gap-5 px-4 text-left text-sm outline-tb-azul hover:bg-tb-gris/15 focus-visible:outline-2 focus-visible:-outline-offset-2"
-        >
+        <PopoverTrigger className="group flex h-full w-full cursor-pointer items-center gap-5 px-4 text-left text-sm outline-tb-azul hover:bg-tb-gris/15 focus-visible:outline-2 focus-visible:-outline-offset-2">
           <Activity aria-hidden="true" className="size-4 shrink-0 text-tb-azul" />
           <span className="font-medium">{t.shell.status.title}</span>
           <span className="tabular-nums">
@@ -53,20 +60,19 @@ export function StatusBar() {
           </div>
           <ul className="grid grid-cols-5 gap-3">
             {CONNECTORS.map((connector) => (
-              <li
-                key={connector.id}
-                className="flex flex-col gap-1.5 rounded-lg border border-tb-gris/40 p-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-semibold text-sm">{t.connectors[connector.id].name}</span>
-                  <StatusBadge status={connector.status}>
-                    {t.shell.status.states[connector.status]}
-                  </StatusBadge>
-                </div>
-                <span className="text-xs">{t.connectors[connector.id].description}</span>
-                <span className="text-xs tabular-nums">
-                  {t.connectors.latency(connector.latencyMs)}
-                </span>
+              <li key={connector.id}>
+                <Card className="flex h-full flex-col gap-1.5 p-3 shadow-none">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-semibold text-sm">{t.connectors[connector.id].name}</span>
+                    <StatusBadge status={connector.status}>
+                      {t.shell.status.states[connector.status]}
+                    </StatusBadge>
+                  </div>
+                  <span className="text-xs">{t.connectors[connector.id].description}</span>
+                  <span className="text-xs tabular-nums">
+                    {t.connectors.latency(connector.latencyMs)}
+                  </span>
+                </Card>
               </li>
             ))}
           </ul>

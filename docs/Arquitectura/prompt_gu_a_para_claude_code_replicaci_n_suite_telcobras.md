@@ -1,5 +1,5 @@
 # GUÍA RÁPIDA DE IMPLEMENTACIÓN FRONTEND: ARCHITECTURE & DESIGN SPEC (PARA CLAUDE CODE)
-**Proyecto: Suite Empresarial Telcobras (Arquitectura Reactiva de 5 Zonas: 0 a 4)**  
+**Proyecto: OrveX.IA (Arquitectura Reactiva de 5 Zonas: 0 a 4)**  
 *Instrucciones directas de ingeniería para replicar exactamente la interfaz visual, layout, paleta y reactividad.*
 
 ---

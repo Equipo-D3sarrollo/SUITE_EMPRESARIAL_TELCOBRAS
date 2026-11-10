@@ -5,5 +5,5 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 export const buildOpenApiDocument = (app: INestApplication) =>
   SwaggerModule.createDocument(
     app,
-    new DocumentBuilder().setTitle('Suite Empresarial Telcobras API').setVersion('1').build(),
+    new DocumentBuilder().setTitle('OrveX.IA API').setVersion('1').build(),
   );

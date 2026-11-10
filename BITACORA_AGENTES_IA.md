@@ -42,9 +42,9 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-08, hora de Colombia (UTC-05:00) |
+| Corte de este estado | 2026-11-10, hora de Colombia (UTC-05:00) |
 | Etapa | **Etapa 1 — Fundaciones, en curso** |
-| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. |
+| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. Producto renombrado a OrveX.IA. Una cuenta puede registrar varias organizaciones desde el menú de usuario (`/organizaciones/nueva`). Tarjetas al 80% de transparencia; prueba del efecto «haz con cola + onda» (`TailRippleCard`) solo en la tarjeta del Dashboard General. |
 | Próximo foco | Administración de miembros y roles en la interfaz → E2E autenticado → Verificaciones de salida de Etapa 1. |
 | Etapa 2 | Especificada, pero **no iniciar** hasta cumplir los criterios de salida de Etapa 1. |
 | Commit | La implementación visual quedó registrada en commits de `main`; esta actualización documental queda pendiente de commit. |
@@ -147,6 +147,132 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — cierre documental de sus cambios
+
+- **Etapa y objetivo:** Etapa 1; dejar documentado lo que esta sesión cambió (código OTP por correo,
+  renombre a OrveX.IA con logotipo animado y varias organizaciones por cuenta). Sus entradas de detalle
+  ya están más abajo en este registro.
+- **Cambios:** `docs/PENDIENTES.md` (§3): logo gráfico y eslogan propio de OrveX.IA, NIT repetido al
+  crear organizaciones (sin restricción única; error genérico en el formulario) y acceso a «Registrar
+  otra organización» desde el selector. `README.md` (Comprobaciones): no ejecutar `pnpm build` con
+  `pnpm dev` encendido, las pruebas de API comparten la base local y `pnpm db:seed` recrea las
+  organizaciones demo.
+- **Validaciones:** cambio solo documental; no se ejecutaron pruebas.
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — prueba del efecto «haz con cola + onda»
+
+- **Etapa y objetivo:** Etapa 1; prueba visual pedida por el usuario en UNA tarjeta: la del
+  Dashboard General («Disponible en la etapa 1», Zona 2 de `/app/dashboard/overview`).
+- **Resultado:** nuevo `TailRippleCard` (envuelve `Card`): un haz verde de 2 px recorre el borde
+  (3 s por vuelta) con estela; al hacer clic nace una onda de 24 px que crece 18× en 0,85 s y el
+  contorno destella 0,7 s. Con `prefers-reduced-motion` el haz no gira.
+- **Cambios:** creado `packages/ui/src/components/tail-ripple-card.tsx`; exportado en
+  `packages/ui/src/index.ts`; estilos `.tail-ripple*`, `@property --tail-angle` y keyframes al
+  final de `packages/ui/src/styles/theme.css`; `module-placeholder.tsx` usa `TailRippleCard` solo
+  cuando la ruta es `dashboard/overview`.
+- **Ajustes al documento del usuario:** no existe `--color-primary`; se usa `--color-tb-verde`
+  (primario de marca) en una sola variable `--tail-color`, y el blanco oficial en vez de `white`.
+  La tarjeta no lleva `overflow: hidden` (recortaba el haz sobre el borde y el destello): las ondas
+  se recortan en una capa interna `.tail-ripple__waves`. El id de las ondas usa `useRef`. El
+  proyecto no tiene tema oscuro: la captura «oscura» (emulada) se ve igual que la clara.
+- **Validaciones:** typecheck ui/web ✓; Biome en archivos tocados ✓; knip sin hallazgos nuevos;
+  `check:palette` sin violaciones nuevas (las 7 previas siguen); Vitest ui 19/19, web 46/47 (falla
+  `command-search.test.tsx` por tiempo, como antes de este cambio; no usa tarjetas). Playwright con
+  Edge del sistema: 1 sola tarjeta con el efecto, animación `tail-spin` 3 s, 10 clics → 10 ondas,
+  0 tras 1,5 s; ninguna en otros submódulos; con movimiento reducido la animación es `none`; único
+  error de consola: 404 de `favicon.ico` (preexistente).
+- **Datos de prueba:** se creó en la base local un usuario `efecto-tarjeta-…@example.com` con la
+  organización «Prueba Efecto» (y quizá un usuario sin organización de un intento anterior).
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — varias organizaciones por cuenta
+
+- **Etapa y objetivo:** Etapa 1; que «Registrar otra organización» del menú de usuario funcione.
+  Decisión del usuario (opción A): una persona = una cuenta con varias organizaciones (modelo
+  Slack/Notion); no multi-sesión ni otro correo.
+- **Resultado:** el menú abre `/organizaciones/nueva`, un formulario para crear otra organización con
+  la cuenta actual, sin volver a iniciar sesión. Al guardar, la API la crea con quien la registra como
+  Administrador de empresa (rol semilla `owner`), la web la activa y entra a `/app`; el selector lista
+  todas las organizaciones donde la cuenta es miembro, sin filtrar por rol. `/onboarding` (primera
+  organización) no cambió: sigue devolviendo a `/app` si ya hay alguna.
+- **Cambios:** nueva ruta `apps/web/src/app/routes/organizaciones.nueva.tsx` (exige sesión y al menos
+  una organización; sin ninguna lleva a `/onboarding`) y `routeTree.gen.ts` regenerado; nuevas
+  `features/onboarding/new-organization-page.tsx` y `organization-form.tsx` (formulario compartido con
+  `onboarding-page.tsx`); `shell/zone0-topbar/user-menu.tsx` navega a `/organizaciones/nueva` en vez de
+  `/registro`; textos `newOrganization` en `i18n/es-CO.ts`; READMEs de rutas, onboarding y pruebas. Sin
+  cambios en el código de la API: `POST /organizations` y `GET /me/organizations` ya lo permitían.
+- **Pruebas nuevas:** `apps/web/test/new-organization.test.tsx` (guardas, menú, formulario, error de la
+  API) y `apps/api/test/multiple-organizations.test.ts` (una sesión crea varias organizaciones, las
+  lista todas, incluida una por invitación con otro rol, y cambia la activa; no lista ajenas). La prueba
+  de API crea su propia cuenta y la borra al terminar.
+- **Validaciones (comprobadas en el cierre):** `pnpm typecheck` pasa; `pnpm exec biome check` limpio en
+  los 8 archivos de código tocados; `pnpm build` pasa. `pnpm test` completo falló solo por tiempos de
+  espera (CPU del equipo al 99-100 %): repetido con más tiempo, API 9 archivos y 48/48 pruebas
+  (`vitest run --testTimeout=60000 --hookTimeout=120000`); web 46/47 con el tiempo por defecto, y la
+  que faltaba (`command-search.test.tsx`, Ctrl+K) pasa sola con `--testTimeout=30000`. Base local
+  revisada después: solo queda la cuenta real y la organización TELCOBRAS.
+- **Validaciones (según el informe de implementación, no repetidas):** `check:bundle` y prueba en vivo
+  en Edge del recorrido menú → formulario → panel.
+- **Precaución:** `pnpm build` ejecuta `nest build` con `deleteOutDir: true`, que borra
+  `apps/api/dist` y tumba la API de un `pnpm dev` en curso. Se recuperó sin reiniciar el `dev`:
+  cambiando solo la fecha de `apps/api/src/main.ts` el vigilante de Nest la relanzó (health 200).
+- **Pendientes/bloqueos:** ninguno propio. Siguen los fallos preexistentes de lint/paleta/knip de los
+  fondos interactivos y archivos del otro equipo.
+- **Siguiente paso exacto:** continuar con administración de miembros y roles
+  (`apps/api/src/modules/members/`, `apps/web/src/features/members-settings/`).
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — tarjetas al 80% de transparencia
+
+- **Resultado:** a pedido del usuario, la transparencia de todas las tarjetas sube del 70% al 80%:
+  `Card` pasa de `bg-tb-blanco/30` a `bg-tb-blanco/20`. Ninguna tarjeta sobrescribe el fondo, así
+  que todas quedan iguales; texto y datos siguen al 100%.
+- **Cambios:** `packages/ui/src/components/card.tsx`, Documento Madre §12.4.1 y Plan de implementación.
+- **Validaciones:** cambio de una clase CSS; las pruebas no comprueban el valor del fondo. No se
+  revisó en el navegador.
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — tarjetas al 70% de transparencia
+
+- **Etapa y objetivo:** Etapa 1; que las tarjetas dejen ver mejor los fondos interactivos de la Zona 2.
+- **Resultado:** todas las tarjetas (`Card` y lo que lo usa, como `KpiCard`) tienen fondo blanco al
+  30% (70% de transparencia) con el mismo `backdrop-blur-sm`. Es un color con alfa, no `opacity`:
+  texto y datos se ven al 100%.
+- **Cambios:** `packages/ui/src/components/card.tsx` (`bg-tb-blanco/60` → `/30`);
+  `module-placeholder.tsx` deja de sobrescribir el fondo (`/50`) y hereda la medida común;
+  actualizados el Documento Madre §12.4.1 y el Plan de implementación.
+- **Validaciones:** `typecheck` de ui y web pasa. Con el límite por defecto de 5 s las pruebas de
+  `packages/ui` fallan por tiempo agotado en este equipo (una prueba tarda ~33 s en jsdom), no por
+  lógica; con `--testTimeout=120000`: ui 19/19 ✓; web 45/47. Las 2 que fallan son de
+  `command-search.test.tsx` (no encuentra `role="dialog"` del diálogo Ctrl+K, que se carga diferido);
+  ese flujo no usa `Card` y el archivo de prueba ya traía cambios sin commit de antes.
+- **Pendientes/bloqueos:** revisar en el navegador la legibilidad del texto sobre los efectos más
+  intensos con la nueva transparencia.
+- **Git:** sin commit.
+
+### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5)
+
+- **Etapa y objetivo:** Etapa 1; renombrar el producto de «Suite Empresarial Telcobras» a
+  «OrveX.IA» en código y documentación, con logotipo de texto animado (el logo gráfico llega después).
+- **Resultado:** nombre visible, título de pestaña, correos, emisor TOTP, `appName` de Better Auth,
+  título OpenAPI y documentos actualizados. `Logo` (`apps/web/src/shell/zone0-topbar/logo.tsx`) es
+  ahora un logotipo de texto: barrido de luz en azul, X verde con resplandor y punto como indicador
+  amarillo; estilos `.orvex-*` en `apps/web/src/styles.css`, solo con colores de la paleta y sin
+  animación con `prefers-reduced-motion`. Se quitó la etiqueta «Suite» de la Zona 0.
+- **Se mantiene «Telcobras»** donde nombra a la empresa: copyright, colores `tb-*`, alcance
+  `@telcobras/*`, base `telcobras`, nombres de archivos/carpetas y el repositorio. El eslogan
+  «Una nueva forma de entender las redes» sigue bajo el logotipo en las pantallas de acceso.
+- **Corrección incidental:** faltaba `t.shell.organization.add` (commit `0de286b`), que rompía el
+  typecheck de la web; se añadió «Registrar otra organización».
+- **Validaciones:** `pnpm typecheck` pasa; pruebas web 37/37 y API 44/44; Biome limpio en los
+  archivos tocados. `check:palette` y `biome check` fallan solo en archivos llegados del otro equipo
+  (`components/interactive-backgrounds/*`, `theme.css` con `#a0d8f5`, `status-bar.tsx`, pruebas).
+  Capturas en Edge del login y la barra superior.
+- **Pendientes/bloqueos:** logo gráfico de OrveX.IA; decidir si el eslogan cambia; los fallos de
+  paleta/lint de los fondos interactivos.
+- **Git:** sin commit.
 
 ### 2026-11-08 — Claude Code — actualización documental de la versión visual aprobada
 

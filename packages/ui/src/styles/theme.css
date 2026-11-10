@@ -128,3 +128,127 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/*
+ * Efecto "haz con cola + onda al clic" de todas las tarjetas (Card, components/card.tsx).
+ * Solo usa el verde primario y el blanco de la paleta (§12.4.1).
+ */
+@property --tail-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes tail-spin {
+  to {
+    --tail-angle: 360deg;
+  }
+}
+
+@keyframes tail-ripple-wave {
+  from {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  to {
+    transform: scale(18);
+    opacity: 0;
+  }
+}
+
+@keyframes tail-ripple-flash {
+  0% {
+    border-color: var(--tail-color);
+    box-shadow:
+      0 0 0 1px var(--tail-color),
+      0 0 30px color-mix(in oklab, var(--tail-color) 50%, transparent);
+  }
+  100% {
+    border-color: transparent;
+    box-shadow: none;
+  }
+}
+
+@layer components {
+  .tail-ripple {
+    /* Un solo color de origen: cambiarlo aquí cambia el haz, la onda y el destello. */
+    --tail-color: var(--color-tb-verde);
+    --tail-from: var(--tail-color);
+    --tail-to: color-mix(in oklab, var(--tail-color) 60%, var(--color-tb-blanco));
+
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* 1. Haz con cola: anillo cónico de 2 px que gira en sentido horario. */
+  .tail-ripple::after {
+    content: "";
+    position: absolute;
+    inset: -1px; /* se monta sobre el borde de 1 px de la tarjeta */
+    border-radius: inherit;
+    padding: 2px; /* grosor del haz */
+    pointer-events: none;
+    background: conic-gradient(
+      from var(--tail-angle),
+      transparent 0 55%,
+      var(--tail-from) 85%,
+      var(--tail-to) 100%
+    );
+    /* Recorta el interior y deja solo el anillo. */
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    animation: tail-spin 3s linear infinite;
+  }
+
+  /* Capa que recorta las ondas dentro de la tarjeta (sin recortar el haz ni el destello). */
+  .tail-ripple__waves {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* 2a. Onda: anillo de 24 px que nace en el punto del clic. */
+  .tail-ripple__wave {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    margin: -12px 0 0 -12px; /* centra la onda en left/top */
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      transparent 52%,
+      color-mix(in oklab, var(--tail-color) 85%, transparent) 58%,
+      transparent 68%
+    );
+    animation: tail-ripple-wave 0.85s ease-out forwards;
+  }
+
+  /* 2b. Destello del contorno al hacer clic. */
+  .tail-ripple__flash {
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    border: 1px solid transparent;
+    pointer-events: none;
+    animation: tail-ripple-flash 0.7s ease-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tail-ripple::after {
+      animation: none;
+    }
+
+    .tail-ripple__wave,
+    .tail-ripple__flash {
+      animation-duration: 0.01s;
+    }
+  }
+}

@@ -8,5 +8,6 @@
 | `command-search.test.tsx` | Comprueba la búsqueda rápida del shell. |
 | `format-co.test.ts` | Comprueba los formateadores regionales colombianos. |
 | `guards.test.ts` | Comprueba las reglas de acceso y redirección de rutas. |
+| `new-organization.test.tsx` | Verifica registrar otra organización: guardas de `/organizaciones/nueva` y `/onboarding`, menú de usuario y formulario. |
 | `sidebar.test.tsx` | Verifica la navegación lateral. |
 

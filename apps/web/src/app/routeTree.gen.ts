@@ -16,6 +16,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as InvitacionTokenRouteImport } from './routes/invitacion.$token'
+import { Route as OrganizacionesNuevaRouteImport } from './routes/organizaciones.nueva'
 import { Route as AppModuleSubmoduleRouteImport } from './routes/app.$module.$submodule'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const InvitacionTokenRoute = InvitacionTokenRouteImport.update({
   path: '/invitacion/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrganizacionesNuevaRoute = OrganizacionesNuevaRouteImport.update({
+  id: '/organizaciones/nueva',
+  path: '/organizaciones/nueva',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppModuleSubmoduleRoute = AppModuleSubmoduleRouteImport.update({
   id: '/$module/$submodule',
   path: '/$module/$submodule',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/registro': typeof RegistroRoute
   '/invitacion/$token': typeof InvitacionTokenRoute
+  '/organizaciones/nueva': typeof OrganizacionesNuevaRoute
   '/app/': typeof AppIndexRoute
   '/app/$module/$submodule': typeof AppModuleSubmoduleRoute
 }
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/registro': typeof RegistroRoute
   '/invitacion/$token': typeof InvitacionTokenRoute
+  '/organizaciones/nueva': typeof OrganizacionesNuevaRoute
   '/app': typeof AppIndexRoute
   '/app/$module/$submodule': typeof AppModuleSubmoduleRoute
 }
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/registro': typeof RegistroRoute
   '/invitacion/$token': typeof InvitacionTokenRoute
+  '/organizaciones/nueva': typeof OrganizacionesNuevaRoute
   '/app/': typeof AppIndexRoute
   '/app/$module/$submodule': typeof AppModuleSubmoduleRoute
 }
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/registro'
     | '/invitacion/$token'
+    | '/organizaciones/nueva'
     | '/app/'
     | '/app/$module/$submodule'
   fileRoutesByTo: FileRoutesByTo
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/registro'
     | '/invitacion/$token'
+    | '/organizaciones/nueva'
     | '/app'
     | '/app/$module/$submodule'
   id:
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/registro'
     | '/invitacion/$token'
+    | '/organizaciones/nueva'
     | '/app/'
     | '/app/$module/$submodule'
   fileRoutesById: FileRoutesById
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   RegistroRoute: typeof RegistroRoute
   InvitacionTokenRoute: typeof InvitacionTokenRoute
+  OrganizacionesNuevaRoute: typeof OrganizacionesNuevaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvitacionTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/organizaciones/nueva': {
+      id: '/organizaciones/nueva'
+      path: '/organizaciones/nueva'
+      fullPath: '/organizaciones/nueva'
+      preLoaderRoute: typeof OrganizacionesNuevaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/$module/$submodule': {
       id: '/app/$module/$submodule'
       path: '/$module/$submodule'
@@ -210,6 +230,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   RegistroRoute: RegistroRoute,
   InvitacionTokenRoute: InvitacionTokenRoute,
+  OrganizacionesNuevaRoute: OrganizacionesNuevaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

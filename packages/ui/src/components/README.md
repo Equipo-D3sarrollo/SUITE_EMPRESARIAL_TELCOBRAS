@@ -25,5 +25,6 @@ Cada archivo implementa un control o patrón visual para componer pantallas del 
 | `status-badge.tsx` | Etiquetas visuales de estado. |
 | `switch.tsx` | Control booleano de activación. |
 | `tabs.tsx` | Navegación entre paneles de una vista. |
+| `tail-ripple-card.tsx` | `Card` con un haz de luz que recorre el borde y una onda al hacer clic (prueba visual; estilos `.tail-ripple*` en `styles/theme.css`). |
 | `tooltip.tsx` | Ayuda breve contextual. |
 
