@@ -20,7 +20,7 @@ const dotColor: Record<ConnectorStatus, string> = {
 /** Zona 4: barra fija de 48 px; al hacer clic despliega el detalle por conector (ADR-007). */
 export function StatusBar() {
   return (
-    <footer className="relative z-20 h-12 shrink-0 border-tb-gris/40 border-t bg-tb-blanco">
+    <footer className="relative z-20 h-12 shrink-0 border-tb-gris/40 border-t bg-tb-superficie">
       <Popover>
         <PopoverTrigger className="group flex h-full w-full cursor-pointer items-center gap-5 px-4 text-left text-sm outline-tb-azul hover:bg-tb-gris/15 focus-visible:outline-2 focus-visible:-outline-offset-2">
           <Activity aria-hidden="true" className="size-4 shrink-0 text-tb-azul" />

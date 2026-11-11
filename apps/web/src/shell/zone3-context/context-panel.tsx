@@ -6,7 +6,7 @@ export function ContextPanel({ routeKey, children }: { routeKey: string; childre
   return (
     <aside
       aria-label={t.shell.regions.context}
-      className="min-w-0 basis-[28%] overflow-y-auto border-tb-gris/40 border-l bg-tb-blanco p-5"
+      className="min-w-0 basis-[28%] overflow-y-auto border-tb-gris/40 border-l bg-tb-superficie p-5"
     >
       <div key={routeKey} className="space-y-4 motion-safe:animate-fade-in">
         {children}

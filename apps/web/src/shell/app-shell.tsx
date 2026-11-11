@@ -6,7 +6,7 @@ import { Sidebar } from './zone1-sidebar/sidebar';
 import { StatusBar } from './zone4-status/status-bar';
 
 const skipLink =
-  'sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-tb-amarillo focus:px-3 focus:py-2 focus:font-medium focus:text-sm';
+  'sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-tb-amarillo focus:text-tb-negro focus:px-3 focus:py-2 focus:font-medium focus:text-sm';
 
 /**
  * Layout maestro de 5 zonas (documento madre §12.1): sin scroll global; cada zona tiene el suyo.

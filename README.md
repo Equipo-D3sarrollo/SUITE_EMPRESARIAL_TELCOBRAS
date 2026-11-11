@@ -26,16 +26,22 @@ Los pendientes conocidos se registran en [PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Inicio local
 
-Desde la raíz del repositorio:
+Desde la raíz del repositorio, un solo comando:
 
 ```powershell
-Copy-Item .env.example .env
-pnpm install
-pnpm infra:up
-pnpm db:migrate
-pnpm db:seed
-pnpm dev
+pnpm local
 ```
+
+`tools/local.mjs` crea `.env` desde `.env.example` si no existe, instala dependencias, inicia Docker
+Desktop si está apagado, levanta PostgreSQL, Valkey, SeaweedFS y Mailpit, ejecuta migraciones y
+semillas (idempotentes) y arranca web y API. `Ctrl+C` detiene web y API; `pnpm local:stop` apaga
+los contenedores sin borrar datos. Opciones: `pnpm local --skip-install` y `pnpm local --no-dev`.
+En Windows también sirve doble clic en `start-docker-and-setup.bat`.
+
+Si el puerto 5432 está ocupado (por ejemplo, por un PostgreSQL de Windows), en `.env` pon
+`POSTGRES_PORT=5433` y cambia `:5432` por `:5433` en `DATABASE_URL` y `DATABASE_OWNER_URL`.
+
+Paso a paso, equivalente: `pnpm install`, `pnpm infra:up`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev`.
 
 La aplicación web queda en `http://localhost:5173`; la API en `http://localhost:3000/api/v1`.
 La documentación OpenAPI queda en `http://localhost:3000/api/v1/docs`. Mailpit, para leer
@@ -76,7 +82,7 @@ Caribe).
 - `.env.example`: plantilla de variables locales; `.env` contiene configuración local y no se debe compartir.
 - `BITACORA_AGENTES_IA.md` y `CLAUDE.md`: bitácora y contexto de trabajo para agentes de desarrollo.
 - `LICENSE`: términos de licencia del repositorio.
-- `setup-project.ps1`, `SETUP_COMPLETE.md`, `SETUP_DOCKER.md` y `start-docker-and-setup.bat`: automatización e instrucciones auxiliares de instalación local en Windows.
+- `start-docker-and-setup.bat`: acceso de doble clic en Windows a `pnpm local`.
 
 ### Carpetas
 

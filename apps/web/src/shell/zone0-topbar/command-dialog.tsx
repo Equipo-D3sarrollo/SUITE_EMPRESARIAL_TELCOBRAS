@@ -38,7 +38,7 @@ export function CommandDialog({ modules, open, onOpenChange }: CommandDialogProp
               value={query}
               onValueChange={setQuery}
               placeholder={t.shell.search.placeholder}
-              className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-tb-negro/60"
+              className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-tb-texto/60"
             />
           </div>
           <Command.List className="max-h-80 overflow-y-auto p-2">

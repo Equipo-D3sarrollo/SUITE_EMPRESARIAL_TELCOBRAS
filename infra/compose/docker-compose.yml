@@ -13,7 +13,8 @@ services:
       APP_OWNER_PASSWORD: ${APP_OWNER_PASSWORD:-app_owner_dev}
       APP_USER_PASSWORD: ${APP_USER_PASSWORD:-app_user_dev}
     ports:
-      - "127.0.0.1:5432:5432"
+      # POSTGRES_PORT cambia el puerto del host (p. ej. 5433 si Windows ya tiene PostgreSQL en 5432).
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker: se monta el directorio padre.
       - postgres-data:/var/lib/postgresql

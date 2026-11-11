@@ -3,9 +3,14 @@
 > **Decisiones tomadas después de este análisis (10-nov-2026, [ADR-013](../../../decisions/ADR-013-datadian-y-nueva-ruta.md)):**
 > - La herramienta se llama **DataDian** y ocupa el lugar del Centro Documental, que desaparece.
 > - Se construye un **listado de recibidos propio**; no se licencia la edición Enterprise.
-> - DataDian se replica en TypeScript dentro del monolito, sobre el código MIT de APIDIAN Community. Eso equivale a la opción B de §8.2, no a la A que recomendaba este análisis.
+> - DataDian se construye en TypeScript dentro del monolito, con APIDIAN Community como referencia de comportamiento. Eso equivale a la opción B de §8.2, no a la A que recomendaba este análisis.
 > - DataDian es la **etapa 2**. Donde este texto dice "etapa 4", hoy es la etapa 2.
 > - Especificación: `docs/etapas/ETAPA_2_DATADIAN.md`.
+>
+> **Correcciones del 11-nov-2026, tras auditar el código clonado y consultar a la DIAN y a Odoo:**
+> - **Las secciones 1 a 7 describen la edición completa** de APIDIAN, según su manual y su colección Postman. **El código clonado es la edición Community del 14-ago-2026 y difiere** en versión, seguridad y rutas. Las diferencias están en §12.
+> - **La firma y el cliente SOAP no son MIT ni están en el clon.** Están en una librería LGPL-3.0 (§12.1). No se copia ni se traduce código.
+> - El flujo que definió el usuario y lo que se verificó en las fuentes oficiales están en §13.
 
 | Campo | Valor |
 |---|---|
@@ -35,7 +40,9 @@ documentos descargados → panel → aprobación humana → borrador en Odoo.
 5. **Hay una edición pública con licencia MIT**, la Community, en
    `github.com/facturalatam/apidian`. Ya está clonada en `repositorio-original/apidian/`. **No
    incluye el Extractor de facturas de compras**, que es de la edición Enterprise. Sí incluye los
-   eventos RADIAN y la consulta de XML por CUFE (§2).
+   eventos RADIAN y la consulta de XML por CUFE (§2). **Corrección:** la licencia MIT cubre los
+   controladores y las plantillas; la firma y el cliente SOAP están en una librería LGPL-3.0 que
+   el clon no trae (§12.1).
 
 ---
 
@@ -93,8 +100,15 @@ El índice de los 185 endpoints está en `referencia/indice-de-endpoints.md`.
 >
 > **Consecuencia para el encargo:** el paso de **listar** los documentos recibidos en la DIAN no
 > se puede copiar de este código. Hay que construirlo nosotros o licenciar la Enterprise. Todo lo
-> demás del flujo (XML por CUFE, almacenamiento de recibidos y eventos) sí tiene base en el código
-> MIT. La tabla de abajo describe el repositorio privado de la edición completa.
+> demás del flujo (XML por CUFE, almacenamiento de recibidos y eventos) tiene en este código una
+> referencia de comportamiento. La tabla de abajo describe el repositorio privado de la edición
+> completa.
+>
+> **Corrección del 11-nov-2026.** El archivo `LICENSE` es MIT, pero el `composer.json` del mismo
+> repositorio declara `LGPL-3.0`. Y las clases que firman y hablan con la DIAN
+> (`ubl21dian\XAdES\SignEvent`, `ubl21dian\Templates\SOAP\GetXmlByDocumentKey`, `SendEvent`,
+> `GetStatusEvents`) pertenecen al paquete `ubl21dian/torresoftware`, **LGPL-3.0**, que no está en
+> el clon porque no trae `vendor/`. Ver §12.1.
 
 | Hecho comprobado el 10-nov-2026 | Consecuencia |
 |---|---|
@@ -407,7 +421,11 @@ decisión final depende de §2 y de D-14, y la toma el arquitecto.
 
 | # | Riesgo o vacío | Impacto | Qué hacer |
 |---|---|---|---|
-| R1 | La edición pública MIT no trae el extractor (es Enterprise) | El listado de documentos recibidos hay que construirlo o licenciarlo | Decidir entre construir el listado propio o comprar la Enterprise. El resto del flujo se puede adaptar del código MIT conservando su aviso |
+| R1 | La edición pública no trae el extractor (es Enterprise) | El listado de documentos recibidos hay que construirlo o licenciarlo | Decidido: listado propio a partir del Excel que exporta el catálogo de la DIAN (§13). El resto del flujo se construye con el código como referencia, sin copiarlo |
+| R11 | La firma y el cliente SOAP son de una librería LGPL-3.0 que no está en el clon | Traducirla a TypeScript sería obra derivada | Escribir la firma desde el anexo técnico y el WSDL de la DIAN (§12.1) |
+| R12 | El clon es anterior a las correcciones de seguridad de octubre de 2026 | Desplegarlo expondría documentos y credenciales | No desplegarlo; solo leerlo (§12.2) |
+| R13 | Desde el 28-jul-2026 el catálogo de la DIAN bloquea robots y pide validación humana | Un robot sobre el portal puede dejar de funcionar sin aviso | Ningún paso depende solo del robot: Excel importado, XML por web service y carga manual como respaldo (§13) |
+| R14 | En Odoo Online la API externa exige el plan Custom | Sin ese plan no hay borrador por API | Confirmar el plan de Telcobras antes de construir el conector |
 | R2 | El envío de eventos exige un software propio habilitado por organización | Choca con D-14, abierta: figura ante la DIAN | Decidir D-14 antes de prometer eventos. Descargar sí es posible sin software |
 | R3 | El listado depende de un enlace por token que pide una persona | La extracción semanal no se automatiza del todo | Confirmar cómo se emite y cuánto dura. Evaluar el modo `.p12` cuando salga de pruebas |
 | R4 | Scraping del portal | Un cambio de la DIAN rompe el listado en silencio, como en septiembre de 2026 | Alertar cuando un rango devuelva cero documentos de forma inesperada. Conciliar con el modo 4 |
@@ -451,3 +469,91 @@ decisión final depende de §2 y de D-14, y la toma el arquitecto.
 - Se recortaron los base64 de más de 400 caracteres.
 - Los enlaces e imágenes del manual quedaron absolutos.
 - Gitleaks, con la configuración del proyecto, no encuentra hallazgos en la carpeta.
+
+---
+
+## 12. Auditoría del código clonado (11-nov-2026)
+
+Se leyó el clon `repositorio-original/apidian/` (commit `da4ed76`, 14-ago-2026) y los archivos
+públicos de la librería `ubl21dian/torresoftware`.
+
+### 12.1 Dónde está cada cosa y con qué licencia
+
+| Pieza | Dónde está | Licencia |
+|---|---|---|
+| Controladores, modelos, plantillas XML y catálogos CSV | En el clon | `LICENSE` MIT (su `composer.json` dice LGPL-3.0) |
+| Cliente SOAP con WS-Security, firma XAdES, cálculo del CUDE | Paquete `ubl21dian/torresoftware`, fuente `gitlab.com/torresoftware/ubl21dian`. **No está en el clon** | **LGPL-3.0** según Packagist y su `composer.json`. El repositorio no tiene archivo de licencia |
+| Extractor de facturas de compras (listado del catálogo, token) | En ninguna parte del código público | Enterprise |
+
+**Consecuencia:** APIDIAN es referencia de comportamiento. La firma se escribe a partir del anexo
+técnico y del WSDL públicos de la DIAN. Esto no es asesoría legal; si se quisiera traducir la
+librería, hay que revisarlo con un abogado.
+
+### 12.2 Diferencias entre el clon y lo que describen las secciones 1 a 7
+
+| Tema | Edición completa (manual, oct-2026) | Clon Community (ago-2026) |
+|---|---|---|
+| Versión | PHP 8.3 | PHP ^8.1, Laravel 10 |
+| Descargas por NIT (`receivedfile`, `invoice`, `download`, `view`, `information`) | Exigen token | **Sin autenticación.** `ALLOW_PUBLIC_DOWNLOAD=true` por defecto |
+| Rutas de planes y administradores | Exigen `X-Admin-Token` | Sin autenticación |
+| `POST /api/accept-reject-document` | Ya no existe | Existe y es pública |
+| `api_token` | — | Se guarda sin hash (`'hash' => false`) |
+| Certificado | Contraseña enmascarada en respuestas y registros | Contraseña en texto plano en la base de datos; `.p12` en disco local |
+| TLS contra la DIAN | — | Verificación desactivada, en la librería y en `verificarEstadoDIAN` |
+| Consultar por CUFE sin software registrado | Permitido desde octubre de 2026 | Exige que exista el registro `software`, aunque solo usa su URL |
+| Pruebas automáticas | — | Ninguna |
+
+Además, el parámetro `GuardarEn` deja que quien llama elija la ruta del servidor donde se escriben
+archivos. **El clon no se despliega.**
+
+### 12.3 Cómo habla con la DIAN (lo que hay que construir)
+
+| Operación | Detalle técnico |
+|---|---|
+| Canal | SOAP 1.2 contra `https://vpfe.dian.gov.co/WcfDianCustomerServices.svc` (producción) o `vpfe-hab` (habilitación) |
+| Seguridad | WS-Addressing (`Action`, `To`) y WS-Security: `Timestamp`, `BinarySecurityToken` X509v3 y firma RSA-SHA256 sobre `wsa:To`, con canonicalización exclusiva y digest SHA-256 |
+| XML por CUFE | Operación `GetXmlByDocumentKey` con `trackId` = CUFE. La respuesta trae `Code` (`100` es éxito) y `XmlBytesBase64`. **No entrega PDF** |
+| Eventos de un documento | Operación `GetStatusEvents` |
+| Enviar un evento | `ApplicationResponse` UBL 2.1 (plantilla `resources/templates/xml/88.blade.php`), firmado con XAdES, con CUDE-SHA384 calculado con el PIN del software, comprimido en ZIP y enviado en base64 por `SendEventUpdateStatus` |
+| Solo necesita certificado | `GetXmlByDocumentKey` y `GetStatusEvents` |
+| Necesita además ID y PIN de software | Enviar eventos |
+
+No se revisó `SignInvoice.php` de la librería, donde están el cálculo del CUDE y la política XAdES.
+Hay que leerlo antes de diseñar el envío de eventos.
+
+### 12.4 Errores del código que no se deben heredar
+
+En `SendEventController::sendeventdata` y `RadianEventController`:
+
+- la validación de que el XML es una factura nunca se cumple;
+- hay un `case` duplicado y una variable sin definir;
+- al `switch` de planes le faltan los `break`;
+- el reenvío usa un dígito al azar como consecutivo;
+- el impuesto total se calcula como `TaxInclusiveAmount − LineExtensionAmount`;
+- los duplicados se detectan por NIT, prefijo y número, no por CUFE;
+- el aislamiento entre empresas es solo una columna con el NIT;
+- la consulta de eventos por CUFE en el portal lee posiciones fijas de una tabla HTML.
+
+---
+
+## 13. Flujo definido por el usuario y verificación oficial (11-nov-2026)
+
+El plan completo está en `docs/etapas/ETAPA_2_DATADIAN.md`. Aquí queda lo que se verificó.
+
+**Flujo:** listado de facturas recibidas exportado a Excel desde el catálogo de la DIAN, descarga
+del PDF de cada factura por su CUFE, gestión en la suite con aprobación o rechazo y trazabilidad,
+y borrador en Odoo 19 Online con el PDF adjunto.
+
+| Hecho | Fuente |
+|---|---|
+| Al catálogo (`catalogo-vpfe.dian.gov.co`) se entra con un enlace con token que llega al correo del RUT; para una empresa, al del representante legal. Dura 60 minutos. Esto resuelve la duda de §3 y de R3 | Portal DIAN; guías de Dataico y Forvis Mazars |
+| El catálogo ofrece documentos enviados y recibidos y la opción *Descargar listados* por rango de fechas | Portal DIAN |
+| Desde el 28-jul-2026, *Buscar documento* pide el NIT del emisor o del receptor para consultar y otra vez para descargar | Comunicado DIAN del 23-jul-2026 |
+| El catálogo bloquea robots, automatizaciones y agentes de IA y pide una comprobación humana | Comunicado DIAN del 23-jul-2026 |
+| El anexo técnico vigente de factura electrónica es el 1.9 (Resolución 000165 de 2023). RADIAN se rige por la Resolución 000085 de 2022 | DIAN |
+| Odoo 19: API JSON-2 en `/json/2/<modelo>/<método>` con API key como `Bearer`. En Odoo Online solo en el plan Custom | Documentación oficial de Odoo 19 |
+| Otros proveedores resuelven el token con una persona: Dataico pide reenviar el correo del token y limita cada consulta a 7 días | Dataico |
+
+**No verificado:** las columnas del Excel de la DIAN, si la descarga del portal entrega PDF suelto
+o ZIP con PDF y XML, y si existe algún PDF protegido con clave. Se resuelve en la fase 0 con
+archivos reales.

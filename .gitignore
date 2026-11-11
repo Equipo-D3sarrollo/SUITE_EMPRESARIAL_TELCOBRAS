@@ -13,6 +13,8 @@ docs/modules/documents/apidian/repositorio-original/*
 node_modules/
 dist/
 .env
+# Ajustes locales de Compose de cada equipo (el puerto se cambia con POSTGRES_PORT en .env)
+infra/compose/docker-compose.override.yml
 .env.*
 !.env.example
 

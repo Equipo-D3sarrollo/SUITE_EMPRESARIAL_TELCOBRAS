@@ -147,6 +147,10 @@ export const t = {
       emptyTitle: 'No tienes notificaciones',
       emptyDescription: 'Aquí verás los avisos de tus módulos.',
     },
+    theme: {
+      label: 'Apariencia',
+      options: { light: 'Claro', dark: 'Oscuro', system: 'Según el sistema' },
+    },
     userMenu: {
       label: 'Menú de usuario',
       signOut: 'Cerrar sesión',

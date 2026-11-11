@@ -45,7 +45,7 @@ export function Logo({ withSlogan = false, className }: LogoProps) {
       {withSlogan && (
         <span
           aria-hidden="true"
-          className="mt-1.5 font-normal text-tb-negro/70 text-xs tracking-wide"
+          className="mt-1.5 font-normal text-tb-texto/70 text-xs tracking-wide"
         >
           {t.brand.slogan}
         </span>

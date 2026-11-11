@@ -33,6 +33,12 @@
     format("woff2");
 }
 
+/*
+ * Modo oscuro: la clase .dark en <html> (la pone apps/web/public/theme-init.js antes de pintar).
+ * Habilita la variante dark: de Tailwind para los pocos casos que no resuelven los tokens semánticos.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* La app solo escanea su propia carpeta: hay que registrar las clases de los componentes de este paquete. */
 @source "..";
 
@@ -48,6 +54,13 @@
   --color-tb-negro: #000000;
   /* Solo errores, estados críticos y acciones destructivas; siempre con icono y texto. */
   --color-tb-error: #c62828;
+  /*
+   * Tokens semánticos: no son colores nuevos, apuntan a la paleta y se invierten en modo oscuro.
+   * superficie = fondo de páginas, barras, tarjetas, campos y menús; texto = texto general.
+   * tb-blanco y tb-negro quedan fijos: el texto negro sobre verde o amarillo sigue negro en oscuro.
+   */
+  --color-tb-superficie: var(--color-tb-blanco);
+  --color-tb-texto: var(--color-tb-negro);
 
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
 
@@ -119,9 +132,23 @@
     border-color: var(--color-tb-gris);
   }
 
+  :root {
+    color-scheme: light;
+  }
+
+  /*
+   * Misma paleta oficial invertida. El fondo es azul noche: el azul de marca al 18% sobre negro
+   * (un azul casi negro), un derivado como las transparencias, no un tono nuevo. Texto blanco: 17:1.
+   */
+  :root.dark {
+    color-scheme: dark;
+    --color-tb-superficie: color-mix(in srgb, var(--color-tb-azul) 18%, var(--color-tb-negro));
+    --color-tb-texto: var(--color-tb-blanco);
+  }
+
   body {
-    background-color: var(--color-tb-blanco);
-    color: var(--color-tb-negro);
+    background-color: var(--color-tb-superficie);
+    color: var(--color-tb-texto);
   }
 
   table {

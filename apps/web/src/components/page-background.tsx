@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  type BackgroundVariant,
-  InteractiveBackground,
-  variants,
-} from './interactive-backgrounds';
+import { type BackgroundVariant, InteractiveBackground, variants } from './interactive-backgrounds';
 
 const ROTATION_MS = 30_000;
 
@@ -55,7 +51,7 @@ export function PageBackground() {
         onClick={changeVariant}
         aria-label="Cambiar fondo interactivo"
         title="Cambiar fondo interactivo"
-        className="pointer-events-auto absolute right-4 top-4 z-10 rounded border border-tb-gris/50 bg-tb-blanco/85 px-2 py-1 text-xs text-tb-azul shadow-sm backdrop-blur-sm transition hover:bg-tb-blanco focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tb-azul"
+        className="pointer-events-auto absolute right-4 top-4 z-10 rounded border border-tb-gris/50 bg-tb-superficie/85 px-2 py-1 text-xs text-tb-azul shadow-sm backdrop-blur-sm transition hover:bg-tb-superficie focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tb-azul"
       >
         Cambiar fondo
       </button>

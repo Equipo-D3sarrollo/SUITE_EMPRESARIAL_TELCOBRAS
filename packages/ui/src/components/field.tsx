@@ -32,7 +32,10 @@ export function Field({ label, description, error, className, children }: FieldP
         </p>
       )}
       {error && (
-        <p id={errorId} className="flex items-center gap-1 text-tb-error text-xs">
+        <p
+          id={errorId}
+          className="flex items-center gap-1 text-tb-error text-xs dark:text-tb-texto dark:[&_svg]:text-tb-error"
+        >
           <CircleAlert aria-hidden="true" className="size-3.5 shrink-0" />
           {error}
         </p>

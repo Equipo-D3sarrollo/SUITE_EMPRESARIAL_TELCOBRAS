@@ -19,7 +19,7 @@ export function DialogContent({ className, children, closeLabel, ...props }: Dia
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-tb-negro/45 motion-safe:animate-fade-in" />
       <DialogPrimitive.Content
         className={cn(
-          '-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg gap-4 rounded-lg border border-tb-gris/40 bg-tb-blanco p-6 text-tb-negro shadow-lg outline-none motion-safe:animate-fade-in',
+          '-translate-x-1/2 -translate-y-1/2 fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg gap-4 rounded-lg border border-tb-gris/40 bg-tb-superficie p-6 text-tb-texto shadow-lg outline-none motion-safe:animate-fade-in',
           className,
         )}
         {...props}

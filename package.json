@@ -20,7 +20,9 @@
     "db:migrate": "pnpm --filter @telcobras/api db:migrate",
     "db:seed": "pnpm --filter @telcobras/api db:seed",
     "infra:up": "docker compose -f infra/compose/docker-compose.yml up -d --wait",
-    "infra:down": "docker compose -f infra/compose/docker-compose.yml down"
+    "infra:down": "docker compose -f infra/compose/docker-compose.yml down",
+    "local": "node tools/local.mjs",
+    "local:stop": "docker compose -f infra/compose/docker-compose.yml --env-file .env down"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.5",

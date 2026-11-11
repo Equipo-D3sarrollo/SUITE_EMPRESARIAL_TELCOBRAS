@@ -17,7 +17,7 @@
 | ID | Qué falta decidir | Quién | Bloquea |
 |---|---|---|---|
 | D-13 | Proveedor y región del VPS y del S3; transferencia internacional (Ley 1581) si quedan fuera de Colombia | Gerencia + arquitecto | Producción (etapa 6) |
-| D-14 | Figura ante la DIAN: PT tercero, mandato (evento 043), habilitación propia o solo descarga | Arquitecto + contabilidad/legal | Etapa 2 (solo el envío de eventos de DataDian) |
+| D-14 | Figura ante la DIAN: PT tercero, mandato (evento 043), habilitación propia o solo descarga | Arquitecto + contabilidad/legal | Etapa 2, solo la fase C de DataDian (envío de eventos). El flujo de listado, descarga, aprobación y Odoo no depende de ella |
 | D-16 | Versión exacta, edición y hosting de Odoo; si su RADIAN nativo duplica el módulo | Arquitecto | Etapa 2 (borrador en Odoo de DataDian) |
 | D-18 | Lenguaje de los agentes (Python o TS), tracing propio, ZDR y retención con OpenAI | Arquitecto | Etapa 7 |
 | D-19 | WhatsApp multi-tenant (WABA por organización o número compartido) | Arquitecto | Etapa 4+ |
@@ -31,7 +31,9 @@
 | Acceso al repositorio de LeadGen (+ Harvey) | Inventario de stack, API, fuentes y datos (D-21) |
 | Acceso a la herramienta RADIAN | Cómo obtiene documentos de la DIAN (D-14) |
 | Acceso de lectura a Make | Inventario de escenarios y credenciales; plan de salida |
-| Datos de la instancia de Odoo | D-16 y diseño del conector |
+| Datos de la instancia de Odoo, incluido **el plan de Odoo Online** (la API externa exige el plan Custom) | D-16 y diseño del conector |
+| Certificado digital `.p12` vigente de Telcobras y su contraseña | XML por CUFE por el web service de la DIAN (DataDian, fase 0) |
+| Un Excel real exportado del catálogo de la DIAN y un PDF real descargado por CUFE | Fijar las columnas del importador y aclarar el "PDF desencriptado con el NIT" (DataDian, fase 0) |
 
 ## 3. Temas que el documento madre no define todavía
 

@@ -823,6 +823,10 @@ Todas las cifras son [EJEMPLO].
 - **Botón primario:** fondo verde y texto negro.
 - **Botón secundario:** borde azul y texto negro o azul grande.
 - **Texto blanco:** solo sobre azul, en tamaño grande y en negrilla (3,5:1).
+
+**Modo oscuro (11-nov-2026, a pedido del usuario):** usa la misma paleta, sin colores nuevos. Dos tokens semánticos en `packages/ui/src/styles/theme.css` se invierten con la clase `.dark` en `<html>`: `--color-tb-superficie` (blanco → azul noche: fondos, barras, tarjetas, campos y menús) y `--color-tb-texto` (negro → blanco). El azul noche no es un tono nuevo: es el azul de marca al 18 % sobre negro (`color-mix(in srgb, var(--color-tb-azul) 18%, var(--color-tb-negro))`, ≈ #071a25), un derivado igual que las transparencias; se eligió a pedido del usuario porque el negro puro se veía demasiado oscuro. `tb-blanco` y `tb-negro` quedan fijos, así el texto sobre verde o amarillo sigue negro. Sobre el azul noche el texto blanco da 17:1 y el gris y el azul siguen sirviendo para iconos, bordes y texto grande; el rojo de error no llega a 4,5:1, por eso en oscuro el botón y la insignia de error pasan a relleno rojo con texto blanco (5,6:1) y los mensajes de error van en blanco con el icono en rojo. El usuario elige Claro, Oscuro o Según el sistema en la Zona 0 (icono junto a la campana); la preferencia se guarda en el navegador (`orvex-theme`) y `apps/web/public/theme-init.js` la aplica antes del primer pintado (script externo por la CSP `script-src 'self'`). Componentes nuevos: usar `bg-tb-superficie` y `text-tb-texto` para fondo y texto general, nunca `bg-tb-blanco`/`text-tb-negro`.
+
+**Barras de scroll (11-nov-2026, a pedido del usuario):** ocultas en toda la web (`apps/web/src/styles.css`); el desplazamiento se conserva.
 - **Nota sobre el logo:** el manual pinta el logo con los colores de muestra (#008AC7, #20AE67, #F3D02A). La interfaz usa los códigos escritos y el archivo del logo no se modifica, así que hay una diferencia leve y aceptada.
 
 #### 12.4.2 Referencia histórica (ya no aplica)

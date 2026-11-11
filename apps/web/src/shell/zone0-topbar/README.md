@@ -8,5 +8,6 @@
 | `command-dialog.tsx` | Diálogo que contiene la búsqueda/acciones de comandos. |
 | `command-search.tsx` | Búsqueda rápida de comandos y destinos. |
 | `notifications-button.tsx` | Acceso a notificaciones. |
+| `theme-menu.tsx` | Selector de apariencia: claro, oscuro o según el sistema. |
 | `user-menu.tsx` | Menú de cuenta y acciones del usuario. |
 

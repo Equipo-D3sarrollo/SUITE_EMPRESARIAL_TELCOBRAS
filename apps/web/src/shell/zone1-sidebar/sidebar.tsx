@@ -30,7 +30,7 @@ export function Sidebar({ modules }: { modules: readonly ModuleNode[] }) {
     <nav
       id="module-navigation"
       aria-label={t.shell.regions.navigation}
-      className="flex w-64 shrink-0 flex-col border-tb-gris/40 border-r bg-tb-blanco"
+      className="flex w-64 shrink-0 flex-col border-tb-gris/40 border-r bg-tb-superficie"
     >
       <div className="relative p-3">
         <Search
@@ -72,7 +72,8 @@ export function Sidebar({ modules }: { modules: readonly ModuleNode[] }) {
                             params={{ module: module.id, submodule: sub.id }}
                             className="block rounded-sm px-2 py-1.5 outline-tb-azul hover:bg-tb-gris/15 focus-visible:outline-2"
                             activeProps={{
-                              className: 'bg-tb-verde font-semibold hover:bg-tb-verde',
+                              className:
+                                'bg-tb-verde font-semibold text-tb-negro hover:bg-tb-verde',
                             }}
                           >
                             {submoduleLabel(module.id, sub.id)}

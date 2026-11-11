@@ -1,6 +1,6 @@
 # ADR-013: DataDian como etapa 2 y nueva ruta de etapas
 
-- **Estado:** Aceptado
+- **Estado:** Aceptado. Enmendado el 11 de noviembre de 2026 (ver la sección Enmienda)
 - **Fecha:** 10 de noviembre de 2026
 - **Decide:** usuario y arquitecto del producto
 - **Decisiones:** cambia la ruta de abordaje (documento madre §15) y el módulo 04 (§3, §4.4, §4.7 y §12.2). Reemplaza parcialmente a [ADR-011](ADR-011-alcance-funcional.md) en el momento de RADIAN y el conector Odoo, y a [ADR-002](ADR-002-estilo-arquitectonico.md) en lo que toca a RADIAN como servicio Python aparte
@@ -30,6 +30,14 @@ El análisis de APIDIAN (FacturaLatam), en `docs/modules/documents/apidian/ANALI
 | 7 | Agentes propios (final) | 6 |
 
 Los ADR anteriores conservan la numeración vieja como registro histórico. Para leerlos se usa la columna "Antes era".
+
+## Enmienda del 11 de noviembre de 2026
+
+La auditoría del código clonado y la consulta a las fuentes oficiales de la DIAN y de Odoo corrigen tres puntos de la decisión. El detalle está en `docs/modules/documents/apidian/ANALISIS_APIDIAN.md` §12 y §13.
+
+1. **Licencia (corrige el punto 3).** Solo los controladores, las plantillas y los catálogos de APIDIAN Community son MIT. La firma XAdES y el cliente SOAP de la DIAN están en la librería `ubl21dian/torresoftware`, con licencia **LGPL-3.0**, que no viene en el clon. APIDIAN queda como **referencia de comportamiento**. Lo que se construya en TypeScript se escribe a partir del anexo técnico y del WSDL públicos de la DIAN, no como traducción de esa librería.
+2. **Flujo de la etapa 2 (precisa la tabla de etapas).** El usuario lo definió así: listado de facturas recibidas exportado del catálogo de la DIAN, descarga del PDF de cada factura por su CUFE, gestión en la suite con aprobación o rechazo y trazabilidad, y borrador en Odoo 19 Online con el PDF adjunto. Los eventos RADIAN 030 a 033 siguen en el alcance, como fase posterior sujeta a D-14.
+3. **Listado de recibidos (precisa el punto 3).** El catálogo de la DIAN exige un token que llega al correo del representante legal y dura 60 minutos, y desde el 28-jul-2026 bloquea robots. Por eso el listado propio parte de **importar el Excel** que exporta el catálogo, con la sesión asistida por token como respaldo. El XML de cada factura se obtiene por el web service oficial con el certificado.
 
 ## Consecuencias
 - La especificación del CRM pasa a `docs/etapas/ETAPA_3_ESPECIFICACION.md`. Conserva sus identificadores E2-1 a E2-13.

@@ -37,7 +37,7 @@ export function Card({ className, children, onPointerDown, ...props }: Component
   return (
     <div
       className={cn(
-        'tail-ripple rounded-lg border border-tb-gris/40 bg-tb-blanco/20 backdrop-blur-sm shadow-sm',
+        'tail-ripple rounded-lg border border-tb-gris/40 bg-tb-superficie/20 backdrop-blur-sm shadow-sm',
         className,
       )}
       onPointerDown={handlePointerDown}

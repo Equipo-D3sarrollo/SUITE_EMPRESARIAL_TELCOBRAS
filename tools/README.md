@@ -8,4 +8,5 @@ Scripts ejecutables desde los comandos del paquete raíz; comprueban restriccion
 | `check-palette.test.mjs` | Pruebas del verificador de paleta. |
 | `check-bundle-size.mjs` | Verifica límites de tamaño del bundle web. |
 | `check-bundle-size.test.mjs` | Pruebas del verificador de tamaño. |
+| `local.mjs` | `pnpm local`: levanta Docker, infraestructura, base de datos, web y API con un comando. |
 

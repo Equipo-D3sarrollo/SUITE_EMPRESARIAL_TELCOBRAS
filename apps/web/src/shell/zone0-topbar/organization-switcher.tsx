@@ -73,7 +73,10 @@ export function OrganizationSwitcher() {
         </DropdownMenuContent>
       </DropdownMenu>
       {switchOrganization.isError && (
-        <span role="alert" className="text-tb-error text-xs">
+        <span
+          role="alert"
+          className="text-tb-error text-xs dark:text-tb-texto dark:underline dark:decoration-tb-error dark:decoration-2"
+        >
           {t.shell.organization.switchError}
         </span>
       )}

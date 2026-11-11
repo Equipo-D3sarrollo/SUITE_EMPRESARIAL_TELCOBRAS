@@ -2,6 +2,21 @@
 @import "@telcobras/ui/theme.css";
 
 /*
+ * Barras de scroll ocultas en toda la aplicación (decisión del usuario, 2026-11-11). Solo se ocultan:
+ * el contenido sigue desplazándose con rueda, táctil, teclado y arrastre de selección.
+ * scrollbar-width cubre Firefox, Chrome 121+ y Edge; ::-webkit-scrollbar, Safari y Chromium anteriores.
+ */
+@layer base {
+  * {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
  * Logotipo de OrveX.IA (shell/zone0-topbar/logo.tsx). Solo colores de la paleta oficial (ADR-007):
  * un degradado azul que recorre un destello de luz, la X en verde y azul con resplandor, y el punto
  * en amarillo que late como un indicador encendido.

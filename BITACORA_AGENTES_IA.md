@@ -48,15 +48,14 @@ documento que corresponda y dejar constancia aquí.
 | Próximo foco | Diseñar los submódulos de DataDian en `docs/etapas/ETAPA_2_DATADIAN.md` (Zonas 2–4, modelo de datos, permisos, técnica del listado de recibidos) y, después, aplicar el menú completo. No implementar antes. Los criterios no verificados de la etapa 1 están en `docs/PENDIENTES.md` §3. |
 | Etapa 2 | **DataDian** (módulo 04, id `documents`): alcance aprobado, diseño pendiente. El CRM pasó a la etapa 3 (`docs/etapas/ETAPA_3_ESPECIFICACION.md`). |
 | Commit | La implementación visual quedó registrada en commits de `main`; esta actualización documental queda pendiente de commit. |
-| Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. PostgreSQL del proyecto en `localhost:5433` para no interferir con PostgreSQL de Windows en `localhost:5432`; Valkey, SeaweedFS y Mailpit saludables. |
+| Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. Arranque local con un comando: `pnpm local` (`tools/local.mjs`). El puerto de PostgreSQL en el host sale de `POSTGRES_PORT` en `.env` (por defecto 5432; 5433 en equipos con PostgreSQL de Windows). |
 
 ### Último punto técnico verificado
 
 **Estado de infraestructura (2026-11-07):**
 - Docker y Docker Compose instalados, activos y verificados
 - `docker-compose.yml` en `infra/compose/` define 4 servicios: postgres:18, valkey:9, seaweedfs:4.50, mailpit:v1.33.0
-- `infra/compose/docker-compose.override.yml` publica PostgreSQL en `127.0.0.1:5433`, dejando libre el PostgreSQL de Windows en `5432`
-- `.env` usa `localhost:5433` en `DATABASE_URL` y `DATABASE_OWNER_URL`
+- (Reemplazado el 2026-11-11) El override de 5433 se eliminó del repo; ahora el puerto se fija con `POSTGRES_PORT` en `.env`
 - Migraciones y seed ejecutados correctamente
 - Web y API levantadas con `npx pnpm@latest dev`
 - node_modules instalado completamente (985 paquetes resueltos, 731 añadidos, supply-chain policies OK)
@@ -147,6 +146,26 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-11 (UTC-05:00) — Claude Code (Opus 5.5) — modo oscuro y barras de scroll ocultas
+
+- **Etapa y objetivo:** Etapa 2 (preparación); a pedido del usuario, ocultar las barras de scroll y añadir modo oscuro a todo el front sin cambiar el modo claro.
+- **Resultado:** barras de scroll ocultas globalmente (se sigue desplazando). Modo oscuro con la paleta oficial: tokens `tb-superficie`/`tb-texto` que se invierten con `.dark`; el fondo oscuro es azul noche (azul de marca al 18 % sobre negro), no negro puro, por pedido del usuario; selector Claro/Oscuro/Según el sistema en la Zona 0. Detalle y reglas de contraste en el documento madre §12.4.1.
+- **Cambios:** `packages/ui/src/styles/theme.css` (tokens, `@custom-variant dark`, `color-scheme`), `lib/styles.ts`, `button`, `badge`, `status-badge`, `card`, `dialog`, `label`, `tabs`, `field`; en la web: zonas 0/1/3/4, `app-shell` (skip link), `command-dialog`, `logo`, `page-background`, `form-error`, `organization-switcher`, `styles.css`; nuevos `public/theme-init.js`, `src/lib/theme.ts`, `shell/zone0-topbar/theme-menu.tsx`; textos en `i18n/es-CO.ts`; `index.html` carga el script.
+- **Validaciones:** typecheck web y ui ✓; vitest ui 19/19 ✓ y web 47/47 ✓ (`--testTimeout=120000`); `vite build` ✓ y `check-bundle-size` ✓; `check:palette` sin violaciones nuevas (siguen las 7 previas de los fondos interactivos y `--color-tb-azul-claro`); Playwright con Edge en modo oscuro: acceso, onboarding, panel, menú de apariencia, cambio a Claro persistente tras recargar ✓.
+- **Pendientes/bloqueos:** el selector solo está en el shell; en acceso y registro se sigue la preferencia guardada o la del sistema. Quedó un usuario de prueba local (`prueba.oscuro.*@ejemplo.test`, organización «Oscura Pruebas») en la base de desarrollo.
+- **Siguiente paso exacto:** continuar con el diseño de DataDian (`docs/etapas/ETAPA_2_DATADIAN.md`).
+- **Git:** sin commit.
+
+### 2026-11-11 (UTC-05:00) — Claude Code (Opus 5.5) — arranque local con un comando
+
+- **Etapa y objetivo:** Etapa 2 (preparación); corregir el fallo de conexión a PostgreSQL y automatizar el arranque local.
+- **Resultado:** `pnpm local` levanta todo: crea `.env` si falta, `pnpm install`, inicia Docker Desktop si está apagado, Compose `up --wait`, migraciones, semillas y `pnpm dev`. `pnpm local:stop` apaga los contenedores sin borrar volúmenes.
+- **Cambios:** causa del fallo: `docker-compose.override.yml` (versionado) publicaba PostgreSQL en 5433 y el `.env` de este equipo apunta a 5432. Se eliminó el override del repo (queda ignorado en `.gitignore` para ajustes locales) y `docker-compose.yml` publica `${POSTGRES_PORT:-5432}`; `.env.example` y `.env` documentan `POSTGRES_PORT`. Nuevo `tools/local.mjs` (valida que el puerto de `DATABASE_URL`/`DATABASE_OWNER_URL` coincida con `POSTGRES_PORT`). Scripts `local` y `local:stop` en `package.json`. `start-docker-and-setup.bat` ahora solo llama a `pnpm local`. Eliminados `setup-project.ps1` (tenía la ruta fija `C:\SUITE-TELCOBRAS` y usaba `npx pnpm@latest`), `SETUP_DOCKER.md` y `SETUP_COMPLETE.md` (obsoletos); README actualizado. `infra:up` no cambia (lo usa CI).
+- **Validaciones:** `pnpm local:stop` y luego `pnpm local` desde cero ✓; `GET /api/v1/health` → `{"status":"ok"}` con postgres/valkey/s3 `up`; web HTTP 200. `biome check` sobre los archivos tocados ✓ (los errores restantes del repo son previos, en `Background_effects/` y `.vscode/`).
+- **Pendientes/bloqueos:** en el equipo con PostgreSQL de Windows hay que poner `POSTGRES_PORT=5433` y el puerto 5433 en las dos URL del `.env`.
+- **Siguiente paso exacto:** continuar con el diseño de DataDian (`docs/etapas/ETAPA_2_DATADIAN.md`).
+- **Git:** sin commit.
 
 ### 2026-11-10 (UTC-05:00) — Claude Code (Opus 5.5) — documentación: DataDian y nueva ruta de etapas
 
