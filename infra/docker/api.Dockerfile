@@ -25,6 +25,8 @@ CMD ["pnpm", "db:migrate"]
 
 FROM ${NODE_IMAGE} AS runtime
 ENV NODE_ENV=production
+# qpdf abre los PDF de la DIAN protegidos con el NIT (DataDian).
+RUN apk add --no-cache qpdf
 WORKDIR /app
 # Archivos de root y solo lectura para el usuario que ejecuta la API.
 COPY --from=build /out ./

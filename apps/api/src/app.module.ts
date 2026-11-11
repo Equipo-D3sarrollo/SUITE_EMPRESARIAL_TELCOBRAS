@@ -9,6 +9,7 @@ import { S3Module } from './common/s3.module.js';
 import { ValkeyModule } from './common/valkey.module.js';
 import { ConfigModule, ENV } from './config/config.module.js';
 import { DbModule } from './database/db.module.js';
+import { DocumentsModule } from './modules/documents/documents.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { InvitationsModule } from './modules/invitations/invitations.module.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
@@ -21,6 +22,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     DbModule,
     ValkeyModule,
     S3Module,
+    DocumentsModule,
     HealthModule,
     InvitationsModule,
     OrganizationsModule,

@@ -51,6 +51,8 @@ export const SEED_ROLE_PERMISSIONS: Readonly<Record<SeedRoleKey, readonly Permis
   accountant: [
     'dashboard:view',
     'documents:view',
+    'documents:import',
+    'documents:decide',
     'integrations:view',
     'analytics:view',
     'help:view',

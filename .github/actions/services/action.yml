@@ -9,6 +9,9 @@ runs:
     - name: Servicios de Compose
       shell: bash
       run: pnpm infra:up
+    - name: qpdf (DataDian abre con él los PDF de la DIAN)
+      shell: bash
+      run: sudo apt-get update -qq && sudo apt-get install -y -qq qpdf
     - name: Variables de .env.example
       shell: bash
       # NODE_ENV queda fuera: el build usa production y cada paso de pruebas fija el suyo.

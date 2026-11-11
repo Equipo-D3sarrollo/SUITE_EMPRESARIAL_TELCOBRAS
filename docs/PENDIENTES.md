@@ -31,9 +31,9 @@
 | Acceso al repositorio de LeadGen (+ Harvey) | Inventario de stack, API, fuentes y datos (D-21) |
 | Acceso a la herramienta RADIAN | Cómo obtiene documentos de la DIAN (D-14) |
 | Acceso de lectura a Make | Inventario de escenarios y credenciales; plan de salida |
-| Datos de la instancia de Odoo, incluido **el plan de Odoo Online** (la API externa exige el plan Custom) | D-16 y diseño del conector |
-| Certificado digital `.p12` vigente de Telcobras y su contraseña | XML por CUFE por el web service de la DIAN (DataDian, fase 0) |
-| Un Excel real exportado del catálogo de la DIAN y un PDF real descargado por CUFE | Fijar las columnas del importador y aclarar el "PDF desencriptado con el NIT" (DataDian, fase 0) |
+| Datos de la instancia de Odoo 19 Online y el detalle de la petición HTTP del **escenario de Make.com** que hoy le envía los PDF y los datos (URL, modelo, campos, credencial). El acceso ya está confirmado; la suite replica esa lógica | D-16 y diseño del conector |
+| Certificado digital `.p12` de Telcobras y su contraseña. **Pendiente por decisión del usuario (11-nov-2026)** | XML por CUFE por el web service de la DIAN y eventos RADIAN (DataDian, fases B y C). No bloquea la fase A |
+| El archivo Excel real del listado (ya hay captura con los 18 campos) y un PDF real protegido con el NIT. **Pendientes por decisión del usuario (11-nov-2026)** | Fijar las columnas del importador y probar la apertura del PDF (DataDian, fase 0) |
 
 ## 3. Temas que el documento madre no define todavía
 

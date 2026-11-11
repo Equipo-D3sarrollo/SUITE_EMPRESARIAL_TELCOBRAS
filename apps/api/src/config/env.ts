@@ -8,40 +8,49 @@ const optional = z
   .transform((value) => value || undefined);
 
 /** Variables de entorno de la API (ver .env.example). Si una falta o es inválida, la API no arranca. */
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']),
-  API_PORT: z.coerce.number().int().min(1).max(65_535),
-  WEB_ORIGIN: z.url(),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'test', 'production']),
+    API_PORT: z.coerce.number().int().min(1).max(65_535),
+    WEB_ORIGIN: z.url(),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']),
 
-  DATABASE_URL: z.url(),
-  VALKEY_URL: z.url(),
+    DATABASE_URL: z.url(),
+    VALKEY_URL: z.url(),
 
-  S3_ENDPOINT: z.url(),
-  S3_REGION: z.string().min(1),
-  S3_BUCKET: z.string().min(1),
-  S3_ACCESS_KEY_ID: z.string().min(1),
-  S3_SECRET_ACCESS_KEY: z.string().min(1),
-  S3_FORCE_PATH_STYLE: flag,
+    S3_ENDPOINT: z.url(),
+    S3_REGION: z.string().min(1),
+    S3_BUCKET: z.string().min(1),
+    S3_ACCESS_KEY_ID: z.string().min(1),
+    S3_SECRET_ACCESS_KEY: z.string().min(1),
+    S3_FORCE_PATH_STYLE: flag,
 
-  SMTP_HOST: z.string().min(1),
-  SMTP_PORT: z.coerce.number().int().min(1).max(65_535),
-  SMTP_SECURE: flag,
-  SMTP_USER: optional,
-  SMTP_PASSWORD: optional,
-  MAIL_FROM: z.string().min(3),
+    SMTP_HOST: z.string().min(1),
+    SMTP_PORT: z.coerce.number().int().min(1).max(65_535),
+    SMTP_SECURE: flag,
+    SMTP_USER: optional,
+    SMTP_PASSWORD: optional,
+    MAIL_FROM: z.string().min(3),
 
-  BETTER_AUTH_SECRET: z.string().min(32),
-  BETTER_AUTH_URL: z.url(),
-  GOOGLE_CLIENT_ID: optional,
-  GOOGLE_CLIENT_SECRET: optional,
+    // Llave maestra del cifrado envolvente de credenciales de clientes (ADR-009): 32 bytes en base64.
+    CREDENTIALS_MASTER_KEY: z
+      .base64()
+      .refine((value) => Buffer.from(value, 'base64').length === 32, 'must be 32 bytes in base64'),
+    // Binario de qpdf para abrir los PDF de la DIAN protegidos con el NIT (DataDian).
+    QPDF_PATH: z.string().min(1).default('qpdf'),
 
-  // Sesión de prueba para E2E (ver README): solo existe con NODE_ENV=test y ENABLE_TEST_AUTH=1.
-  ENABLE_TEST_AUTH: z.enum(['0', '1']).default('0'),
-}).refine((env) => env.NODE_ENV !== 'production' || env.ENABLE_TEST_AUTH === '0', {
-  path: ['ENABLE_TEST_AUTH'],
-  error: 'must be 0 in production',
-});
+    BETTER_AUTH_SECRET: z.string().min(32),
+    BETTER_AUTH_URL: z.url(),
+    GOOGLE_CLIENT_ID: optional,
+    GOOGLE_CLIENT_SECRET: optional,
+
+    // Sesión de prueba para E2E (ver README): solo existe con NODE_ENV=test y ENABLE_TEST_AUTH=1.
+    ENABLE_TEST_AUTH: z.enum(['0', '1']).default('0'),
+  })
+  .refine((env) => env.NODE_ENV !== 'production' || env.ENABLE_TEST_AUTH === '0', {
+    path: ['ENABLE_TEST_AUTH'],
+    error: 'must be 0 in production',
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

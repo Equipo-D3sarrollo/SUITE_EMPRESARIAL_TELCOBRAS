@@ -119,12 +119,8 @@
           "tableFrom": "audit_logs",
           "tableTo": "organizations",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -243,12 +239,8 @@
           "tableFrom": "accounts",
           "tableTo": "users",
           "schemaTo": "app",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -355,12 +347,8 @@
           "tableFrom": "passkeys",
           "tableTo": "users",
           "schemaTo": "app",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -370,9 +358,7 @@
         "passkeys_credential_id_key": {
           "name": "passkeys_credential_id_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "credential_id"
-          ]
+          "columns": ["credential_id"]
         }
       },
       "policies": {},
@@ -452,12 +438,8 @@
           "tableFrom": "two_factors",
           "tableTo": "users",
           "schemaTo": "app",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -533,9 +515,7 @@
         "users_email_key": {
           "name": "users_email_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -638,14 +618,8 @@
           "tableFrom": "invitations",
           "tableTo": "roles",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id",
-            "role_id"
-          ],
-          "columnsTo": [
-            "organization_id",
-            "id"
-          ],
+          "columnsFrom": ["organization_id", "role_id"],
+          "columnsTo": ["organization_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -655,9 +629,7 @@
         "invitations_token_hash_key": {
           "name": "invitations_token_hash_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -759,12 +731,8 @@
           "tableFrom": "memberships",
           "tableTo": "organizations",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -774,18 +742,12 @@
         "memberships_organization_id_user_id_key": {
           "name": "memberships_organization_id_user_id_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "organization_id",
-            "user_id"
-          ]
+          "columns": ["organization_id", "user_id"]
         },
         "memberships_organization_id_id_key": {
           "name": "memberships_organization_id_id_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "organization_id",
-            "id"
-          ]
+          "columns": ["organization_id", "id"]
         }
       },
       "policies": {},
@@ -936,14 +898,8 @@
           "tableFrom": "membership_roles",
           "tableTo": "memberships",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id",
-            "membership_id"
-          ],
-          "columnsTo": [
-            "organization_id",
-            "id"
-          ],
+          "columnsFrom": ["organization_id", "membership_id"],
+          "columnsTo": ["organization_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -952,14 +908,8 @@
           "tableFrom": "membership_roles",
           "tableTo": "roles",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id",
-            "role_id"
-          ],
-          "columnsTo": [
-            "organization_id",
-            "id"
-          ],
+          "columnsFrom": ["organization_id", "role_id"],
+          "columnsTo": ["organization_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -967,11 +917,7 @@
       "compositePrimaryKeys": {
         "membership_roles_organization_id_membership_id_role_id_pk": {
           "name": "membership_roles_organization_id_membership_id_role_id_pk",
-          "columns": [
-            "organization_id",
-            "membership_id",
-            "role_id"
-          ]
+          "columns": ["organization_id", "membership_id", "role_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1028,12 +974,8 @@
           "tableFrom": "role_permissions",
           "tableTo": "permissions",
           "schemaTo": "app",
-          "columnsFrom": [
-            "permission_key"
-          ],
-          "columnsTo": [
-            "key"
-          ],
+          "columnsFrom": ["permission_key"],
+          "columnsTo": ["key"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1042,14 +984,8 @@
           "tableFrom": "role_permissions",
           "tableTo": "roles",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id",
-            "role_id"
-          ],
-          "columnsTo": [
-            "organization_id",
-            "id"
-          ],
+          "columnsFrom": ["organization_id", "role_id"],
+          "columnsTo": ["organization_id", "id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1057,11 +993,7 @@
       "compositePrimaryKeys": {
         "role_permissions_organization_id_role_id_permission_key_pk": {
           "name": "role_permissions_organization_id_role_id_permission_key_pk",
-          "columns": [
-            "organization_id",
-            "role_id",
-            "permission_key"
-          ]
+          "columns": ["organization_id", "role_id", "permission_key"]
         }
       },
       "uniqueConstraints": {},
@@ -1161,12 +1093,8 @@
           "tableFrom": "roles",
           "tableTo": "organizations",
           "schemaTo": "app",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1176,18 +1104,12 @@
         "roles_organization_id_key_key": {
           "name": "roles_organization_id_key_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "organization_id",
-            "key"
-          ]
+          "columns": ["organization_id", "key"]
         },
         "roles_organization_id_id_key": {
           "name": "roles_organization_id_id_key",
           "nullsNotDistinct": false,
-          "columns": [
-            "organization_id",
-            "id"
-          ]
+          "columns": ["organization_id", "id"]
         }
       },
       "policies": {},

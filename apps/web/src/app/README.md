@@ -8,5 +8,6 @@
 | `guards.ts` | Reglas de acceso y redirección de rutas. |
 | `providers.tsx` | Ensambla providers globales de React. |
 | `route-states.tsx` | Vistas para estados de carga, error u otros estados de navegación. |
+| `module-pages.tsx` | Elige la página de cada submódulo construido; los demás usan la vista de reserva. |
 | `routes/` | Componentes que representan las páginas y rutas de la aplicación. |
 

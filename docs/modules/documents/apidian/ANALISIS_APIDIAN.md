@@ -425,7 +425,7 @@ decisión final depende de §2 y de D-14, y la toma el arquitecto.
 | R11 | La firma y el cliente SOAP son de una librería LGPL-3.0 que no está en el clon | Traducirla a TypeScript sería obra derivada | Escribir la firma desde el anexo técnico y el WSDL de la DIAN (§12.1) |
 | R12 | El clon es anterior a las correcciones de seguridad de octubre de 2026 | Desplegarlo expondría documentos y credenciales | No desplegarlo; solo leerlo (§12.2) |
 | R13 | Desde el 28-jul-2026 el catálogo de la DIAN bloquea robots y pide validación humana | Un robot sobre el portal puede dejar de funcionar sin aviso | Ningún paso depende solo del robot: Excel importado, XML por web service y carga manual como respaldo (§13) |
-| R14 | En Odoo Online la API externa exige el plan Custom | Sin ese plan no hay borrador por API | Confirmar el plan de Telcobras antes de construir el conector |
+| R14 | En Odoo Online la API externa exige el plan Custom | Sin ese plan no hay borrador por API | Resuelto el 11-nov-2026: el usuario confirmó que el Odoo de Telcobras ya recibe envíos de una automatización existente |
 | R2 | El envío de eventos exige un software propio habilitado por organización | Choca con D-14, abierta: figura ante la DIAN | Decidir D-14 antes de prometer eventos. Descargar sí es posible sin software |
 | R3 | El listado depende de un enlace por token que pide una persona | La extracción semanal no se automatiza del todo | Confirmar cómo se emite y cuánto dura. Evaluar el modo `.p12` cuando salga de pruebas |
 | R4 | Scraping del portal | Un cambio de la DIAN rompe el listado en silencio, como en septiembre de 2026 | Alertar cuando un rango devuelva cero documentos de forma inesperada. Conciliar con el modo 4 |
@@ -554,6 +554,19 @@ y borrador en Odoo 19 Online con el PDF adjunto.
 | Odoo 19: API JSON-2 en `/json/2/<modelo>/<método>` con API key como `Bearer`. En Odoo Online solo en el plan Custom | Documentación oficial de Odoo 19 |
 | Otros proveedores resuelven el token con una persona: Dataico pide reenviar el correo del token y limita cada consulta a 7 días | Dataico |
 
-**No verificado:** las columnas del Excel de la DIAN, si la descarga del portal entrega PDF suelto
-o ZIP con PDF y XML, y si existe algún PDF protegido con clave. Se resuelve en la fase 0 con
-archivos reales.
+**Confirmado por el usuario el 11-nov-2026:**
+
+- El Odoo 19 Online de Telcobras permite el envío: una automatización existente ya lo hace. R14
+  queda resuelto.
+- El PDF de la DIAN es la Representación Gráfica estándar y **llega protegido con clave**. El NIT
+  se usa dos veces: en el portal para descargar y como clave para abrir el archivo.
+- Los campos del listado están en `docs/etapas/ETAPA_2_DATADIAN.md` §1.1. Todos vienen de la
+  DIAN, solo se guardan esos 18 y no se modifican. El identificador único es el CUFE.
+- "Pendiente" lo define la DIAN: la factura aún no se ha pagado.
+- La automatización actual hacia Odoo es un escenario de Make.com con una petición HTTP. La suite
+  replica esa lógica desde su propio conector.
+- El certificado `.p12` queda pendiente. El flujo principal no depende de él.
+
+**No verificado:** los nombres exactos de los encabezados del Excel y si la descarga del portal
+entrega PDF suelto o ZIP con PDF y XML. Se resuelve en la fase 0 con los archivos reales, que
+quedan pendientes.

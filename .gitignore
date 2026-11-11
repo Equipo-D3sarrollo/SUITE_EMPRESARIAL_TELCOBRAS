@@ -26,3 +26,6 @@ test-results/
 
 # Cachés de herramientas
 *.tsbuildinfo
+
+# Sesiones grabadas del portal de la DIAN (cookies y tokens): nunca se versionan
+tools/dian/sesion/

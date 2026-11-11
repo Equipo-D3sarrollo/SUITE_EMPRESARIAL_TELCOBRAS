@@ -55,9 +55,10 @@ export const NAVIGATION = [
     icon: 'file-text',
     permission: 'documents:view',
     submodules: [
-      { id: 'document-center', permission: 'documents:view' },
-      { id: 'radian-invoices', permission: 'documents:view' },
-      { id: 'odoo-approvals', permission: 'documents:view' },
+      // DataDian (ADR-013): tablero de facturas recibidas, carga de documentos de la DIAN y configuración.
+      { id: 'invoices', permission: 'documents:view' },
+      { id: 'dian', permission: 'documents:import' },
+      { id: 'settings', permission: 'documents:configure' },
     ],
   },
   {

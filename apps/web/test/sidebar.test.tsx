@@ -56,12 +56,23 @@ describe('Sidebar (Zona 1)', () => {
       target: { value: 'odoo' },
     });
 
-    expect(within(nav).getAllByRole('button').map((button) => button.textContent)).toEqual([
-      '4. Documentos',
-      '5. Integraciones',
-    ]);
-    expect(within(nav).getByRole('link', { name: 'Aprobaciones Odoo' })).toBeInTheDocument();
-    expect(within(nav).queryByRole('link', { name: 'Centro Documental' })).not.toBeInTheDocument();
+    expect(
+      within(nav)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['5. Integraciones']);
+    expect(within(nav).getByRole('link', { name: 'Odoo ERP' })).toBeInTheDocument();
+    expect(
+      within(nav).queryByRole('link', { name: 'Tablero de facturas' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(within(nav).getByRole('searchbox'), { target: { value: 'FACTURAS' } });
+    expect(
+      within(nav)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['4. DataDian']);
+    expect(within(nav).getByRole('link', { name: 'Tablero de facturas' })).toBeInTheDocument();
 
     fireEvent.change(within(nav).getByRole('searchbox'), { target: { value: 'ANALITICA' } });
     expect(within(nav).getByText('Ningún módulo coincide con el filtro.')).toBeInTheDocument();
