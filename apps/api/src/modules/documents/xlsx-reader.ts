@@ -2,8 +2,8 @@ import { XMLParser } from 'fast-xml-parser';
 import { unzipSync } from 'fflate';
 
 /**
- * Lector mínimo de .xlsx (OOXML) para los listados de la DIAN. Su exportador escribe las etiquetas con
- * el prefijo `x:` (<x:workbook>, <x:row>…), que exceljs no reconoce; aquí los prefijos se ignoran.
+ * Lector mínimo de .xlsx (OOXML). Acepta también los archivos cuyas etiquetas llevan el prefijo `x:`
+ * (<x:workbook>, <x:row>…), que exceljs no reconoce; aquí los prefijos se ignoran.
  * Devuelve la primera hoja como filas de valores simples: texto, número o null. Las fechas con formato
  * de Excel llegan como su número de serie; quien lee la columna decide cómo convertirlo.
  */

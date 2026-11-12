@@ -6,7 +6,6 @@ export const PERMISSIONS = [
   'commercial:view',
   'leadgen:view',
   'documents:view',
-  'documents:import',
   'documents:decide',
   'documents:configure',
   'integrations:view',

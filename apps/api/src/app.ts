@@ -11,12 +11,6 @@ import { AUTH } from './auth/auth.module.js';
 import { correlationIdFor, exposeCorrelationId } from './common/correlation-id.js';
 import { ENV } from './config/config.module.js';
 import type { Env } from './config/env.js';
-import {
-  MAX_LISTING_BYTES,
-  MAX_PDF_BYTES,
-  PDF_CONTENT_TYPE,
-  XLSX_CONTENT_TYPE,
-} from './modules/documents/received-documents.controller.js';
 import { buildOpenApiDocument } from './openapi.js';
 
 /** Crea y configura la API sin abrir el puerto: la usan main.ts, las pruebas y la exportación de OpenAPI. */
@@ -39,18 +33,6 @@ export async function createApp(): Promise<NestFastifyApplication> {
     },
   });
   await app.register(fastifyCookie);
-  // DataDian: el listado de la DIAN (.xlsx) y los PDF llegan como cuerpo binario, cada uno con su límite.
-  const fastify = app.getHttpAdapter().getInstance();
-  for (const [contentType, bodyLimit] of [
-    [XLSX_CONTENT_TYPE, MAX_LISTING_BYTES],
-    [PDF_CONTENT_TYPE, MAX_PDF_BYTES],
-  ] as const) {
-    fastify.addContentTypeParser(
-      contentType,
-      { parseAs: 'buffer', bodyLimit },
-      (_request, body, done) => done(null, body),
-    );
-  }
   const auth = app.get<Auth>(AUTH);
   app
     .getHttpAdapter()

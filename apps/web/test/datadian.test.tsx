@@ -24,6 +24,7 @@ const document = (overrides: Partial<ReceivedDocument>): ReceivedDocument => ({
   prefix: 'R',
   paymentMethod: '1',
   issueDate: '2026-11-01',
+  receivedAt: '2026-11-01T15:00:00.000Z',
   issuerNit: '800153993',
   issuerName: 'PROVEEDOR UNO S A S',
   iva: '12439.00',
@@ -52,7 +53,6 @@ const withoutPdf = document({ id: 'd2', folio: '1172766071', cufe: 'b'.repeat(96
 
 const summary: ReceivedDocumentSummary = {
   byStatus: { imported: 2, draft: 0, approved: 0, rejected: 0 },
-  withoutPdf: 1,
   odooFailed: 0,
   pendingTotal: '155802.00',
 };
@@ -101,18 +101,28 @@ beforeEach(() => {
 });
 
 describe('DataDian: tablero de facturas', () => {
-  it('muestra cifras y facturas, y solo deja aprobar las que tienen PDF', async () => {
+  it('muestra cifras y facturas, y deja aprobar con o sin PDF', async () => {
     renderPage(['documents:view', 'documents:decide']);
 
-    const withoutPdfKpi = await screen.findByRole('group', { name: 'Sin PDF' });
-    await waitFor(() => expect(withoutPdfKpi).toHaveTextContent('1'));
-    const ready = await rowOf('R1172766070');
-    const missing = await rowOf('R1172766071');
-    expect(within(ready).getByRole('button', { name: 'Aprobar' })).toBeEnabled();
-    expect(within(missing).getByRole('button', { name: 'Aprobar' })).toBeDisabled();
-    expect(within(missing).getByRole('button', { name: 'Aprobar' })).toHaveAttribute(
-      'title',
-      'Cargue el PDF de la factura antes de aprobarla',
+    const pendingKpi = await screen.findByRole('group', { name: 'Pendientes' });
+    await waitFor(() => expect(pendingKpi).toHaveTextContent('2'));
+    expect(screen.queryByRole('group', { name: 'Sin PDF' })).toBeNull();
+    for (const invoice of ['R1172766070', 'R1172766071']) {
+      expect(within(await rowOf(invoice)).getByRole('button', { name: 'Aprobar' })).toBeEnabled();
+    }
+  });
+
+  it('el detalle muestra la fecha de recepción y el PDF solo si la factura lo tiene', async () => {
+    renderPage(['documents:view']);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'R1172766071' }));
+    expect(await screen.findByText('Fecha de recepción')).toBeVisible();
+    expect(screen.getByText('Esta factura no tiene PDF.')).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: 'R1172766070' }));
+    expect(await screen.findByRole('link', { name: 'Ver PDF' })).toHaveAttribute(
+      'href',
+      '/api/v1/documents/received/d1/pdf',
     );
   });
 

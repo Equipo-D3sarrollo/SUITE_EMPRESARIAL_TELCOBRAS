@@ -13,9 +13,6 @@ const PAGES: Partial<Record<string, Page>> = {
   'documents/invoices': lazy(() =>
     import('@/features/datadian/invoices-page').then((m) => ({ default: m.InvoicesPage })),
   ),
-  'documents/dian': lazy(() =>
-    import('@/features/datadian/dian-page').then((m) => ({ default: m.DianPage })),
-  ),
   'documents/settings': lazy(() =>
     import('@/features/datadian/settings-page').then((m) => ({ default: m.SettingsPage })),
   ),

@@ -1,9 +1,5 @@
 import type {
   CursorPage,
-  DianExtractionJob,
-  DianExtractionRequest,
-  DianSession,
-  DianTokenLink,
   DocumentsSettings,
   OdooConnectionInput,
   OrganizationCreate,
@@ -63,7 +59,7 @@ export interface paths {
       responses: { 200: Json<{ organizationId: string }>; default: Problem };
     };
   };
-  // DataDian. Las cargas de archivos (.xlsx y PDF) van por fetch directo: el cuerpo es binario.
+  // DataDian.
   '/api/v1/documents/received': {
     get: {
       parameters: {
@@ -71,7 +67,6 @@ export interface paths {
           cursor?: string;
           limit?: number;
           status?: ReceivedDocumentStatus;
-          importId?: string;
         };
       };
       responses: { 200: Json<CursorPage<ReceivedDocument>>; default: Problem };
@@ -97,30 +92,6 @@ export interface paths {
     get: {
       parameters: { path: { id: string } };
       responses: { 200: Json<ReceivedDocumentHistoryEntry[]>; default: Problem };
-    };
-  };
-  '/api/v1/documents/dian/session': {
-    get: { responses: { 200: Json<DianSession>; default: Problem } };
-    put: {
-      requestBody: Json<DianTokenLink>;
-      responses: { 200: Json<DianSession>; default: Problem };
-    };
-    delete: { responses: { 204: NoContent; default: Problem } };
-  };
-  '/api/v1/documents/dian/extractions': {
-    get: {
-      parameters: { query?: { cursor?: string; limit?: number } };
-      responses: { 200: Json<CursorPage<DianExtractionJob>>; default: Problem };
-    };
-    post: {
-      requestBody: Json<DianExtractionRequest>;
-      responses: { 202: Json<DianExtractionJob>; default: Problem };
-    };
-  };
-  '/api/v1/documents/dian/extractions/{id}': {
-    get: {
-      parameters: { path: { id: string } };
-      responses: { 200: Json<DianExtractionJob>; default: Problem };
     };
   };
   '/api/v1/documents/settings': {

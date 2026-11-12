@@ -42,13 +42,13 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-10, hora de Colombia (UTC-05:00) |
-| Etapa | **Etapa 1 — Fundaciones, cerrada el 10-nov-2026 por decisión del usuario (ADR-013).** Siguiente: **Etapa 2 — DataDian**, en diseño |
-| Punto alcanzado | Infraestructura Docker levantada, migraciones y seed ejecutados, aplicación web/API funcionando localmente y sistema visual global de fondos/tarjetas aplicado. Producto renombrado a OrveX.IA. Una cuenta puede registrar varias organizaciones desde el menú de usuario (`/organizaciones/nueva`). Tarjetas al 80% de transparencia y con el efecto «haz con cola + onda al clic» en todas (integrado en `Card`). Optimización de carga: zod fuera del JS inicial, 3 pesos de Poppins precargados y animaciones decorativas solo en el compositor. |
-| Próximo foco | Diseñar los submódulos de DataDian en `docs/etapas/ETAPA_2_DATADIAN.md` (Zonas 2–4, modelo de datos, permisos, técnica del listado de recibidos) y, después, aplicar el menú completo. No implementar antes. Los criterios no verificados de la etapa 1 están en `docs/PENDIENTES.md` §3. |
-| Etapa 2 | **DataDian** (módulo 04, id `documents`): alcance aprobado, diseño pendiente. El CRM pasó a la etapa 3 (`docs/etapas/ETAPA_3_ESPECIFICACION.md`). |
-| Commit | La implementación visual quedó registrada en commits de `main`; esta actualización documental queda pendiente de commit. |
-| Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. Arranque local con un comando: `pnpm local` (`tools/local.mjs`). El puerto de PostgreSQL en el host sale de `POSTGRES_PORT` en `.env` (por defecto 5432; 5433 en equipos con PostgreSQL de Windows). |
+| Corte de este estado | 2026-11-12 16:05, hora de Colombia (UTC-05:00). Trabajo pausado por el usuario; se retoma el 13-nov |
+| Etapa | **Etapa 2 — Base de datos de DataDian, en curso.** Orden definitivo fijado por el usuario el 12-nov-2026: 1 Fundaciones (cerrada), 2 Base de datos de DataDian, 3 Frontend de DataDian, 4 Backend (Telco y API), 5 Integración con Odoo 19, 6 CRM y notificaciones; de la 7 a la 10, Integration Hub y LeadGen, Make, analítica y piloto, agentes |
+| Punto alcanzado | DataDian se reinició sobre el blueprint oficial (`docs/modules/documents/DataDian/`, ADR-014). Se retiró la vía descartada (scraping del portal, importación del Excel, carga manual del PDF, `tools/dian`) con la migración `0009`. Hay cuatro documentos de arquitectura (general, base de datos, frontend y backend) y la ruta `docs/modules/documents/RUTA_DE_TRABAJO_DATADIAN.md`. **Subetapas 2.1 (rol `app_worker`, convención `DD0xx`) y 2.2 (calendario de festivos y plazos, migración `0010`) implementadas y auditadas. La auditoría no encontró defectos de severidad alta; quedan correcciones de severidad media y baja sin aplicar (ver la entrada del 12-nov, 16:05)** |
+| Próximo foco | 1) Aplicar las correcciones de la auditoría de 2.1 y 2.2: M1, M2, B2, B3, B5, las pruebas inestables y `stages.ts`. 2) Implementar la **2.3** (migración `0011`: `dian_settings`, `dian_certificates`, `imap_mailboxes`). Antes de la 2.3 conviene decidir el sobre sellado del `.pfx` (decisión 6 del backend: hoy la API tendría la KEK) |
+| Etapa 2 | 2.1 y 2.2 implementadas y auditadas, con correcciones pendientes; 2.3 a 2.9 pendientes (la `0011` no se empezó). Decisiones 1 a 9 de la §12 del documento de base de datos aceptadas el 12-nov-2026 |
+| Commit | **Sin commits.** Hay muchos cambios sin commitear (código retirado, migraciones `0009` y `0010`, `app-worker.sql`, documentos de arquitectura, reorganización de `docs/etapas/`) |
+| Estado de infraestructura local | Docker Desktop activo (v29.9.2), Docker Compose v5.6.1. Arranque local con un comando: `pnpm local` (`tools/local.mjs`), que también corre `infra/compose/postgres/app-worker.sql`. El puerto de PostgreSQL en el host sale de `POSTGRES_PORT` en `.env` (por defecto 5432; 5433 en equipos con PostgreSQL de Windows). Migraciones `0009` y `0010` aplicadas en la base local |
 
 ### Último punto técnico verificado
 
@@ -78,19 +78,16 @@ Archivos de referencia: `apps/api/src/modules/invitations/`,
 
 ### Validaciones recientes
 
-Pasaron en la última intervención:
+Última verificación (2026-11-12, intervención de DataDian):
 
-- `pnpm.cmd --filter @telcobras/api typecheck`
-- `pnpm.cmd exec biome check apps/api/src/auth/auth.module.ts apps/api/src/app.module.ts apps/api/src/modules/invitations apps/api/test/invitations.test.ts apps/api/test/app.test.ts`
-- `pnpm.cmd --filter @telcobras/api openapi:export`
-- Pruebas seleccionadas de invitaciones y API: 9 pasaron y 1 se omitió por filtro; después,
-  la prueba de salud omitida pasó al ejecutarse aisladamente.
-- `graphify update .`
-
-Los servicios de PostgreSQL, Valkey, S3 y Mailpit aparecían saludables en Compose. No se volvió a
-ejecutar la suite completa, build ni E2E en esta intervención. Validaciones previas de la etapa
-están resumidas en el historial y no sustituyen volver a ejecutar los checks después de cambios
-posteriores.
+- Tras el retiro de la vía anterior: `pnpm typecheck` en verde; pruebas de `apps/api` 11 archivos y
+  64 pruebas, `apps/web` 10 y 54, `packages/contracts` 3 y 17, `packages/ui` 6 y 19, `tools` 6, todas
+  en verde. Migración `0009` aplicada en local.
+- Tras las subetapas 2.1 y 2.2: migración `0010_datadian_calendar` aplicada en local (con su
+  `0010_datadian_calendar.reverse.sql`); pruebas de `apps/api` 13 archivos y 94 de 94;
+  `packages/contracts` 17 de 17; `pnpm typecheck` en verde; `drizzle-kit check`: "Everything's fine".
+- `pnpm lint`, `pnpm knip` y `pnpm check:palette` fallan solo por problemas previos ajenos a DataDian
+  (`docs/PENDIENTES.md` §7.3).
 
 ### Trabajo pendiente para cerrar Etapa 1
 
@@ -146,6 +143,104 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-12 16:05 (UTC-05:00) — Claude Code (orquestador) — auditoría de 2.1/2.2 y pausa
+
+- **Etapa y objetivo:** Etapa 2. Auditar de forma independiente las subetapas 2.1 y 2.2, corregir los hallazgos y seguir con la 2.3. El usuario pausó el trabajo a las 16:00.
+- **Resultado de la auditoría (solo lectura, por un agente independiente):** **ningún defecto de severidad alta.**
+  - Las 286 fechas de festivos de 2020 a 2035 coinciden con un oráculo independiente que calcula la Pascua con el algoritmo de Knuth (`festivos.py`, en el scratchpad de la sesión; no está en el repositorio). 2025 y 2030 tienen 17 festivos, y es correcto.
+  - `radian_deadline` da bien en todos los casos límite probados: fines de semana, Semana Santa, cruce de año, 23:59 de Bogotá, `TimeZone` de la sesión distinta, el límite de 2035 y DD006.
+  - En seguridad, `app_worker` es NOBYPASSRLS, sin pertenencias y con privilegios mínimos. No hay funciones SECURITY DEFINER, el `search_path` es seguro y se revocó EXECUTE a PUBLIC.
+  - Sin deriva entre Drizzle y la migración, y el reverso funciona. Las migraciones 0005 a 0008 están intactas.
+- **Hallazgos PENDIENTES DE CORREGIR** (no se aplicó ninguno; el agente se detuvo mientras reproducía las pruebas inestables):
+  - **M1 (media):** la contraseña de `app_worker` aparece en la línea de comandos de `docker exec`, en `tools/local.mjs:123` y en `.github/actions/services/action.yml:27`, y se recomienda escrita literal en el comentario de `infra/compose/postgres/app-worker.sql:8`. Hay que pasar `-e APP_WORKER_PASSWORD` sin valor y entregarla por `env`.
+  - **M2 (media):** la prueba de semilla de 2020 a 2035 (`apps/api/test/datadian-calendar.test.ts`) se valida contra la misma función que la generó. Hay que agregar listas literales de 2025, 2030 y 2035.
+  - **B2:** la guarda de la `0010` y `app-worker.sql` no revisan `pg_auth_members`. Se agrega en la `0011` y en el script; **no se edita la `0010`, que ya está aplicada.**
+  - **B3:** la regla v2, inactiva, devuelve las 00:00 del día siguiente cuando el plazo cae en el fin del día. Basta con documentarlo.
+  - **B4 (observación):** el campo `rule` guarda una sola regla cuando dos festivos caen el mismo día.
+  - **B5:** falta aplicar a `app_user` el inventario exacto de privilegios sobre las tablas globales.
+  - **B6:** `timezone` de `radian_deadline_rules` no se valida.
+  - **B1 (informativo):** en la base local, el hash de la `0010` aplicada difiere del archivo actual porque solo cambiaron comentarios. Se verificó que el catálogo es idéntico. Se arregla recreando la base local.
+- **Pruebas inestables (preexistentes, no las causa DataDian):** con las pruebas de la API en paralelo fallan entre 2 y 13 por timeout de 5 s, sobre todo en `documents.test.ts`; pasa también excluyendo `datadian-*.test.ts`. En corrida secuencial (`vitest run --no-file-parallelism`): **13 archivos, 94/94 en 130,7 s.** `pnpm typecheck` en verde.
+- **Otros pendientes:** `apps/web/src/features/module-placeholder/stages.ts` sigue con la numeración vieja (por ejemplo, `commercial: 9`, `ai: 13`). La tabla correcta está en `docs/PENDIENTES.md` §3.
+- **Cambios en esta intervención:** solo esta bitácora. La corrección se interrumpió sin dejar ediciones aplicadas de los hallazgos.
+- **Siguiente paso exacto:** con un solo agente implementador, en este orden:
+  1. M1, M2, B2 (en la `0011`), B5 y `stages.ts`;
+  2. diagnosticar los timeouts en paralelo y validar con 3 corridas paralelas en verde, o dejar la ejecución secuencial justificada;
+  3. implementar la 2.3 según la §5, la §9 y la §10.2 de `docs/modules/documents/ARQUITECTURA_DB_DATADIAN.md`;
+  4. auditar con un agente independiente.
+- **Git:** sin commits. Hay muchos cambios sin commitear: el retiro de la vía anterior, las migraciones `0009` y `0010`, `app-worker.sql`, los documentos de arquitectura y la reorganización de `docs/etapas/`. Conviene commitear antes de la 2.3.
+
+### 2026-11-12 (UTC-05:00) — Claude Code (Opus 5.5, orquestador con subagentes) — reinicio de DataDian, arquitectura por etapas y Etapa 2
+
+- **Etapa y objetivo:** a pedido del usuario, auditar DataDian, reiniciarlo sobre su blueprint
+  oficial, documentar la arquitectura por etapas con el orden definitivo y empezar la Etapa 2 (base
+  de datos).
+- **Resultado:**
+  - **Auditoría y reinicio.** La auditoría de DataDian concluyó que la vía construida (scraping
+    del portal de la DIAN, importación del Excel del listado y carga manual del PDF) no seguía el
+    blueprint; el usuario decidió reiniciar.
+  - **Blueprint.** Se adoptó el blueprint DataDian/Telco (`docs/modules/documents/DataDian/arquitectura
+    Eventos RADIAN DIAN.md`) con sus tres informes de soporte (automatización de eventos RADIAN,
+    facturación electrónica y certificado `.pfx`), de solo lectura. ADR-014 registra la adopción.
+  - **Retiro de la implementación descartada:** servicio, controlador, cliente del portal, lector
+    del listado y del PDF de la DIAN (`dian-*.ts`), sus pruebas y falsos, los endpoints de
+    importación del Excel y de carga del PDF, la página de cargas de la web, el contrato
+    `dian-extraction`, `tools/dian` y la migración `0009_datadian_drop_dian_extraction.sql`, que
+    elimina `dian_sessions` y `dian_extraction_jobs`. Las migraciones `0005` a `0008` no se tocaron.
+  - **Conservado:** `received_documents` y su servicio, controlador y contrato; la decisión interna
+    (aprobar o rechazar con motivo); el tablero (`invoices-page`, `invoice-detail`,
+    `document-status`, `reject-dialog`); `xlsx-reader.ts`; el cliente y la configuración de Odoo
+    (`odoo.client.ts`, `odoo-vendor-bill.ts`, `documents-settings.*`, `settings-page.tsx`,
+    `odoo_connections`); la columna `received_at`.
+  - **Numeración nueva** (enmienda de ADR-014): 2 base de datos, 3 frontend contra contratos y
+    mocks, 4 backend (Telco y API), 5 Odoo, 6 CRM; de la 7 a la 10, las etapas que seguían.
+  - **Documentos de arquitectura:** `ARQUITECTURA_DB_DATADIAN.md` (Etapa 2),
+    `ARQUITECTURA_FRONTEND_DATADIAN.md` (Etapa 3), `ARQUITECTURA_BACKEND_DATADIAN.md` (Etapa 4),
+    `ARQUITECTURA_DATADIAN_TELCO.md` (visión general) y la ruta `RUTA_DE_TRABAJO_DATADIAN.md`.
+  - **Etapa 2 en curso:** 2.1 (rol `app_worker` en `init.sql` y `app-worker.sql`, CI,
+    `workerDatabase()`, convención `DD0xx`) y 2.2 (`0010`: `co_holidays`, `co_holiday_years`,
+    `radian_deadline_rules`, `co_easter_sunday`, `co_holidays_compute`, `is_business_day`,
+    `radian_deadline`, festivos de 2020 a 2035) implementadas y en auditoría. Desviaciones frente al
+    diseño en `ARQUITECTURA_DB_DATADIAN.md` §10.3 (entre otras: 2025 y 2030 tienen 17 días festivos;
+    `radian_deadline` con `p_version`; regla inexistente → `P0002`).
+- **Cambios (documentación de cierre):**
+  - nuevos: `docs/modules/documents/RUTA_DE_TRABAJO_DATADIAN.md`, `docs/etapas/ETAPA_2_BASE_DE_DATOS.md`,
+    `ETAPA_3_FRONTEND.md` y `ETAPA_4_BACKEND.md` (fichas cortas que remiten a su arquitectura);
+  - `ETAPA_8_INTEGRACION_ODOO.md` → `ETAPA_5_INTEGRACION_ODOO.md`; `git mv` de
+    `ETAPA_9_ESPECIFICACION.md` a `ETAPA_6_ESPECIFICACION.md` con sus autoreferencias;
+  - borradas las fichas del orden anterior (`ETAPA_2_NUCLEO_CRIPTOGRAFICO`,
+    `ETAPA_3_INTEROPERABILIDAD_SOAP`, `ETAPA_4_INGESTA_RPA`, `ETAPA_5_DATOS_Y_RESTRICCIONES`,
+    `ETAPA_6_UBL_Y_TRANSMISION`, `ETAPA_7_FRONTEND_DATADIAN`), con lo útil trasladado a las fichas
+    nuevas;
+  - alineados ADR-014 (enmienda fechada, sin borrar decisiones), ADR-011, ADR-013, índice de ADR,
+    `ARQUITECTURA_DATADIAN_TELCO.md` (mapa de etapas), los documentos de base de datos (estado de la
+    2.1 y la 2.2, §10.3 y decisiones aceptadas), frontend y backend, `docs/modules/documents/README.md`,
+    documento madre (v1.4), plan inicial, `docs/README.md`, `docs/Arquitectura/README.md`,
+    `docs/etapas/README.md`, `README.md` y `docs/PENDIENTES.md` (reorganizado por etapa nueva, PV-1 a
+    PV-20).
+  - `CLAUDE.md` se borró por accidente durante la intervención y se restauró sin cambios.
+- **Validaciones:**
+  - tras el retiro: `pnpm typecheck` ✓; pruebas `apps/api` 11 archivos / 64 ✓, `apps/web` 10 / 54 ✓,
+    `packages/contracts` 3 / 17 ✓, `packages/ui` 6 / 19 ✓, `tools` 6 ✓; `0009` aplicada en local;
+  - tras la 2.1 y la 2.2: `0010` aplicada en local; `apps/api` 13 archivos / 94 ✓; `packages/contracts`
+    17 / 17 ✓; `pnpm typecheck` ✓; `drizzle-kit check` "Everything's fine";
+  - `pnpm lint`, `pnpm knip` y `pnpm check:palette` fallan solo por problemas previos ajenos
+    (`Background_effects/`, `interactive-backgrounds`, `no-modules-view.tsx`, `theme.css:50`);
+  - documentación: búsqueda de numeración vieja y comprobación de enlaces relativos en `docs/`.
+- **Incidencias:** algunos subagentes se cortaron por el límite de uso y su trabajo se retomó en
+  otra pasada.
+- **Pendientes/bloqueos:** auditoría de la 2.1 y la 2.2; correr `app-worker.sql` con
+  `APP_WORKER_PASSWORD` antes de aplicar la `0010` en un entorno existente; `drizzle-kit generate`
+  falla con `meta/README.md` dentro de `meta/`; posibles cambios a la Etapa 2 si se confirman PV-12 y
+  PV-13; sobre sellado del `.pfx` (la API tiene la KEK); la paleta no tiene naranja para el 032;
+  `stages.ts` sigue con la numeración vieja; bloqueos externos (certificado `.pfx` de pruebas,
+  SoftwareID y PIN, D-14, revisión legal del RPA, PV-1 a PV-20). Todo en `docs/PENDIENTES.md` §3 y §7.
+- **Siguiente paso exacto:** auditar las subetapas 2.1 y 2.2 (`infra/compose/postgres/`,
+  `apps/api/src/database/migrations/0010_*`, `apps/api/test/datadian-calendar.test.ts` y
+  `datadian-worker-role.test.ts`) contra `ARQUITECTURA_DB_DATADIAN.md` §10.2; luego implementar la
+  **2.3** (`0011_datadian_settings.sql`).
+- **Git:** sin commits; hay muchos cambios sin commitear. Commit creado: no.
 
 ### 2026-11-11 (UTC-05:00) — Claude Code (Opus 5.5) — modo oscuro y barras de scroll ocultas
 

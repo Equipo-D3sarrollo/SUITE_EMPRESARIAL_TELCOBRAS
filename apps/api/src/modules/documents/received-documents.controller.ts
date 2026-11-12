@@ -10,18 +10,15 @@ import {
   Query,
   Req,
   StreamableFile,
-  UnsupportedMediaTypeException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import {
   type CursorPage,
   type ReceivedDocument,
   type ReceivedDocumentDecision,
   type ReceivedDocumentHistoryEntry,
-  type ReceivedDocumentImportSummary,
   type ReceivedDocumentListQuery,
-  type ReceivedDocumentPdfUpload,
   type ReceivedDocumentSummary,
   receivedDocumentDecisionSchema,
   receivedDocumentListQuerySchema,
@@ -32,17 +29,7 @@ import { currentActor, OrganizationGuard, SessionGuard } from '../../auth/sessio
 import { ZodPipe } from '../../common/zod.pipe.js';
 import { ReceivedDocumentsService } from './received-documents.service.js';
 
-/** El listado (.xlsx) y los PDF viajan como cuerpo binario, sin multipart. */
-export const XLSX_CONTENT_TYPE =
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-export const PDF_CONTENT_TYPE = 'application/pdf';
-export const MAX_LISTING_BYTES = 10 * 1024 * 1024;
-export const MAX_PDF_BYTES = 20 * 1024 * 1024;
-
-const fileNameQuery = (fallback: string) =>
-  z.object({ fileName: z.string().trim().min(1).max(255).default(fallback) });
-const importQuerySchema = fileNameQuery('listado-dian.xlsx');
-const pdfQuerySchema = fileNameQuery('factura-dian.pdf');
+const PDF_CONTENT_TYPE = 'application/pdf';
 const idParamSchema = z.uuid();
 
 @ApiTags('documents')
@@ -52,40 +39,6 @@ export class ReceivedDocumentsController {
   constructor(
     @Inject(ReceivedDocumentsService) private readonly documents: ReceivedDocumentsService,
   ) {}
-
-  @Post('imports')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Importar el listado de facturas recibidas que exporta la DIAN' })
-  @ApiConsumes(XLSX_CONTENT_TYPE)
-  @ApiBody({ schema: { type: 'string', format: 'binary' } })
-  importListing(
-    @Query(new ZodPipe(importQuerySchema)) query: z.infer<typeof importQuerySchema>,
-    @Req() request: FastifyRequest,
-  ): Promise<ReceivedDocumentImportSummary> {
-    return this.documents.importListing(
-      currentActor(request),
-      query.fileName,
-      binaryBody(request, XLSX_CONTENT_TYPE),
-    );
-  }
-
-  @Post('pdfs')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: 'Cargar el PDF de una factura: se abre con el NIT y se asocia por su CUFE',
-  })
-  @ApiConsumes(PDF_CONTENT_TYPE)
-  @ApiBody({ schema: { type: 'string', format: 'binary' } })
-  uploadPdf(
-    @Query(new ZodPipe(pdfQuerySchema)) query: z.infer<typeof pdfQuerySchema>,
-    @Req() request: FastifyRequest,
-  ): Promise<ReceivedDocumentPdfUpload> {
-    return this.documents.uploadPdf(
-      currentActor(request),
-      query.fileName,
-      binaryBody(request, PDF_CONTENT_TYPE),
-    );
-  }
 
   @Get()
   @ApiOperation({ summary: 'Listar las facturas recibidas de la organización activa' })
@@ -112,7 +65,7 @@ export class ReceivedDocumentsController {
   }
 
   @Get(':id/pdf')
-  @ApiOperation({ summary: 'PDF de la factura, ya abierto' })
+  @ApiOperation({ summary: 'PDF de la factura, si está guardado' })
   @ApiProduces(PDF_CONTENT_TYPE)
   async pdf(
     @Param('id', new ZodPipe(idParamSchema)) id: string,
@@ -157,11 +110,4 @@ export class ReceivedDocumentsController {
   ): Promise<ReceivedDocumentHistoryEntry[]> {
     return this.documents.history(currentActor(request), id);
   }
-}
-
-function binaryBody(request: FastifyRequest, contentType: string): Buffer {
-  if (!Buffer.isBuffer(request.body)) {
-    throw new UnsupportedMediaTypeException(`Send the file as ${contentType}`);
-  }
-  return request.body;
 }

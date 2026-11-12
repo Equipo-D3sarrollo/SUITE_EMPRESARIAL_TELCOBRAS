@@ -6,7 +6,7 @@ export type ConnectorStatus = 'ok' | 'warning' | 'error';
 type ConnectorHealth = { id: ConnectorId; status: ConnectorStatus; latencyMs: number };
 
 // shortcut: telemetría simulada (plan §1.3: la Zona 4 usa datos de ejemplo en la etapa 1).
-// Se reemplaza por el estado real de cada conector cuando llegue el Integration Hub (etapa 3).
+// Se reemplaza por el estado real de cada conector cuando llegue el Integration Hub (etapa 10).
 export const CONNECTORS: readonly ConnectorHealth[] = [
   { id: 'radian', status: 'ok', latencyMs: 34 },
   { id: 'odoo', status: 'ok', latencyMs: 12 },

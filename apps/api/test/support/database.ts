@@ -12,6 +12,10 @@ export const appDatabase = (max: number) =>
 /** Conexión como app_owner (dueño de las tablas; FORCE RLS también lo restringe). */
 export const ownerDatabase = () => createDatabase(z.url().parse(process.env.DATABASE_OWNER_URL), 1);
 
+/** Conexión como app_worker, el rol de Telco (DataDian): NOBYPASSRLS y solo con lo que otorgan las migraciones. */
+export const workerDatabase = (max = 1) =>
+  createDatabase(z.url().parse(process.env.DATABASE_WORKER_URL), max);
+
 /** Crea una organización de prueba por el camino del onboarding: como app_user y a nombre de userId. */
 export async function createOrganization(db: Database, scope: TenantScope): Promise<void> {
   await withTenant(db, scope, (tx) =>

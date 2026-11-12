@@ -1,6 +1,6 @@
 # Referencias de arquitectura
 
-Esta carpeta conserva documentos de diseño técnico y referencias de implementación que complementan el documento rector.
+Esta carpeta conserva documentos de diseño técnico y referencias de implementación que complementan el documento rector. Son fuentes originales: no se editan, y donde chocan con una decisión posterior manda el documento rector o el ADR. En particular, lo que estos archivos dicen del módulo 04 (RADIAN, «Documentos») lo reemplaza la arquitectura de DataDian y Telco: [ARQUITECTURA_DATADIAN_TELCO.md](../modules/documents/ARQUITECTURA_DATADIAN_TELCO.md) (visión general), [ARQUITECTURA_DB_DATADIAN.md](../modules/documents/ARQUITECTURA_DB_DATADIAN.md) (Etapa 2), [ARQUITECTURA_FRONTEND_DATADIAN.md](../modules/documents/ARQUITECTURA_FRONTEND_DATADIAN.md) (Etapa 3), [ARQUITECTURA_BACKEND_DATADIAN.md](../modules/documents/ARQUITECTURA_BACKEND_DATADIAN.md) (Etapa 4), la [ruta de trabajo](../modules/documents/RUTA_DE_TRABAJO_DATADIAN.md) y [ADR-014](../decisions/ADR-014-arquitectura-datadian-telco.md). Las fases y etapas que citan estos archivos no siguen la ruta vigente, que es la del documento madre §15.
 
 | Archivo | Propósito |
 |---|---|

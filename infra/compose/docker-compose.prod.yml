@@ -95,6 +95,8 @@ services:
       POSTGRES_DB: telcobras
       APP_OWNER_PASSWORD: ${APP_OWNER_PASSWORD:?Falta APP_OWNER_PASSWORD}
       APP_USER_PASSWORD: ${APP_USER_PASSWORD:?Falta APP_USER_PASSWORD}
+      # Opcional: sin ella init.sql crea app_worker sin LOGIN; infra/compose/postgres/app-worker.sql la fija luego.
+      APP_WORKER_PASSWORD: ${APP_WORKER_PASSWORD:-}
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro

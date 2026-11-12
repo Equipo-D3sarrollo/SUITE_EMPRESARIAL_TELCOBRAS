@@ -12,11 +12,26 @@ infraestructura local, el núcleo de identidad, el alta de organizaciones, RBAC 
 invitaciones por correo y el shell web. La administración de miembros y roles desde la interfaz,
 el E2E autenticado y Lighthouse en la CI pasaron a pendientes.
 
-La **Etapa 2 es DataDian**: el módulo 04, antes «Documentos», que trae de la DIAN las facturas
-recibidas, registra sus eventos RADIAN y las envía con aprobación a Odoo. Su alcance está en
-[ETAPA_2_DATADIAN.md](docs/etapas/ETAPA_2_DATADIAN.md) y el diseño de submódulos va antes de
-implementar. El CRM y las notificaciones pasan a la Etapa 3.
-Los pendientes conocidos se registran en [PENDIENTES.md](docs/PENDIENTES.md).
+Las **Etapas 2 a 5 construyen DataDian**, el módulo 04, antes «Documentos». DataDian es la
+interfaz y la API; **Telco** es su motor en segundo plano: descubre en la DIAN las facturas
+recibidas entrando con el certificado de la organización, descarga su XML oficial por el web
+service SOAP, firma y transmite los eventos RADIAN (030, 032, 033 y 031) y, con la aceptación,
+deja el borrador en Odoo 19. El orden, fijado por el usuario el 12-nov-2026, es: **Etapa 2**, base
+de datos; **Etapa 3**, frontend contra contratos y mocks; **Etapa 4**, backend (Telco y API);
+**Etapa 5**, integración con Odoo 19. El CRM y las notificaciones son la **Etapa 6**.
+
+**La Etapa 2 está en curso:** las subetapas 2.1 (rol `app_worker`) y 2.2 (calendario de festivos y
+plazos, migración `0010`) están implementadas y en auditoría; sigue la 2.3.
+
+- Ruta de trabajo de DataDian:
+  [RUTA_DE_TRABAJO_DATADIAN.md](docs/modules/documents/RUTA_DE_TRABAJO_DATADIAN.md).
+- Arquitectura: [visión general](docs/modules/documents/ARQUITECTURA_DATADIAN_TELCO.md),
+  [base de datos](docs/modules/documents/ARQUITECTURA_DB_DATADIAN.md),
+  [frontend](docs/modules/documents/ARQUITECTURA_FRONTEND_DATADIAN.md) y
+  [backend](docs/modules/documents/ARQUITECTURA_BACKEND_DATADIAN.md);
+  decisión en [ADR-014](docs/decisions/ADR-014-arquitectura-datadian-telco.md).
+- Etapas: [docs/etapas/README.md](docs/etapas/README.md).
+- Pendientes conocidos: [PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Requisitos
 

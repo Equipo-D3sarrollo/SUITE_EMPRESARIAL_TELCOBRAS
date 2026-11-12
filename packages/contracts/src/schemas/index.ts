@@ -1,4 +1,3 @@
-export * from './dian-extraction.js';
 export * from './invitation.js';
 export * from './nit.js';
 export * from './organization.js';

@@ -1,7 +1,7 @@
 // Falla si apps/ o packages/ usan un color fuera de la paleta oficial (doc madre §12.4.1, ADR-007).
 // Uso: node tools/check-palette.mjs
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -118,9 +118,13 @@ function listFiles() {
     ['ls-files', '--cached', '--others', '--exclude-standard', '-z', '--', 'apps', 'packages'],
     { cwd: ROOT, encoding: 'utf8' },
   );
+  // --cached también lista los archivos borrados del árbol que aún siguen en el índice: se omiten.
   return output
     .split('\0')
-    .filter((file) => SCANNED_EXTENSIONS.test(file) && !GENERATED.test(file));
+    .filter(
+      (file) =>
+        SCANNED_EXTENSIONS.test(file) && !GENERATED.test(file) && existsSync(join(ROOT, file)),
+    );
 }
 
 function main() {

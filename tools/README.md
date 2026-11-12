@@ -9,5 +9,3 @@ Scripts ejecutables desde los comandos del paquete raíz; comprueban restriccion
 | `check-bundle-size.mjs` | Verifica límites de tamaño del bundle web. |
 | `check-bundle-size.test.mjs` | Pruebas del verificador de tamaño. |
 | `local.mjs` | `pnpm local`: levanta Docker, infraestructura, base de datos, web y API con un comando. |
-
-| `dian/` | Grabación de sesiones del catálogo de la DIAN para construir el extractor de DataDian (ver `dian/README.md`). |

@@ -124,10 +124,6 @@ export function SettingsPage() {
             <StatusBadge status="warning">{text.notConfigured}</StatusBadge>
           )}
         </Card>
-        <Card className="space-y-2 p-4 text-sm">
-          <p className="font-medium">{text.pdfTitle}</p>
-          <p>{text.pdfDescription}</p>
-        </Card>
       </ContextPanel>
     </>
   );

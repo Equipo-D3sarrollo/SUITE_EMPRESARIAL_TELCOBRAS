@@ -1,7 +1,8 @@
 # Repositorio original de APIDIAN
 
-Copia local del código original de APIDIAN (FacturaLatam), para estudiarlo y replicar en OrveX.IA
-lo que necesita DataDian (módulo 04). El análisis está en `../ANALISIS_APIDIAN.md`.
+Copia local del código original de APIDIAN (FacturaLatam), para estudiarlo como referencia de
+comportamiento de DataDian (módulo 04). El análisis está en `../ANALISIS_APIDIAN.md` y la
+arquitectura de DataDian en `../../ARQUITECTURA_DATADIAN_TELCO.md`.
 
 ## Estado
 

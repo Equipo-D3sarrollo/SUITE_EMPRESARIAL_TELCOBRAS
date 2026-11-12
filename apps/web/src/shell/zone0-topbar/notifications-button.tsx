@@ -2,7 +2,7 @@ import { Button, EmptyState, Popover, PopoverContent, PopoverTrigger } from '@te
 import { Bell } from 'lucide-react';
 import { t } from '@/i18n/es-CO';
 
-/** Campana de la Zona 0. Las notificaciones internas llegan en la etapa 2 (documento madre §4.8). */
+/** Campana de la Zona 0. Las notificaciones internas llegan en la etapa 9 (documento madre §4.8). */
 export function NotificationsButton() {
   return (
     <Popover>

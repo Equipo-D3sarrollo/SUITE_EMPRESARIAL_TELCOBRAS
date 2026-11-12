@@ -36,8 +36,6 @@ const envSchema = z
     CREDENTIALS_MASTER_KEY: z
       .base64()
       .refine((value) => Buffer.from(value, 'base64').length === 32, 'must be 32 bytes in base64'),
-    // Binario de qpdf para abrir los PDF de la DIAN protegidos con el NIT (DataDian).
-    QPDF_PATH: z.string().min(1).default('qpdf'),
 
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),

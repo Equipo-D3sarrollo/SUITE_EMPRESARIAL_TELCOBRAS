@@ -1,7 +1,7 @@
 name: Servicios y base de datos
 description: >-
   Levanta los servicios de infra/compose igual que en local (PostgreSQL 18 con init.sql, Valkey, S3 y Mailpit),
-  exporta las variables de .env.example y aplica migraciones y semillas.
+  exporta las variables de .env.example, comprueba los tres roles de la aplicación y aplica migraciones y semillas.
 
 runs:
   using: composite
@@ -9,9 +9,6 @@ runs:
     - name: Servicios de Compose
       shell: bash
       run: pnpm infra:up
-    - name: qpdf (DataDian abre con él los PDF de la DIAN)
-      shell: bash
-      run: sudo apt-get update -qq && sudo apt-get install -y -qq qpdf
     - name: Variables de .env.example
       shell: bash
       # NODE_ENV queda fuera: el build usa production y cada paso de pruebas fija el suyo.
@@ -22,6 +19,17 @@ runs:
         const { NODE_ENV, ...env } = parseEnv(readFileSync('.env.example', 'utf8'));
         appendFileSync(process.env.GITHUB_ENV, Object.entries(env).map(([k, v]) => `${k}=${v}\n`).join(''));
         EOF
+    - name: Roles de PostgreSQL (app_owner, app_user, app_worker)
+      shell: bash
+      # init.sql ya creó los tres roles; el script de operación corre igual para probar que es idempotente.
+      run: |
+        compose="docker compose -f infra/compose/docker-compose.yml"
+        $compose exec -T -e "APP_WORKER_PASSWORD=$APP_WORKER_PASSWORD" postgres \
+          psql -U postgres -d telcobras -f - < infra/compose/postgres/app-worker.sql
+        roles=$($compose exec -T postgres psql -U postgres -d telcobras -tAc \
+          "select count(*) from pg_roles where rolname in ('app_owner', 'app_user', 'app_worker')
+             and rolcanlogin and not rolbypassrls and not rolsuper")
+        test "$roles" = 3 || { echo "Se esperaban 3 roles de aplicación con LOGIN y sin BYPASSRLS: $roles"; exit 1; }
     - name: Migraciones y semillas
       shell: bash
       run: |

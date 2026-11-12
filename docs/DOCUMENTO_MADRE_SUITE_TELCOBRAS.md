@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.2 — ruta y módulo 04 actualizados por ADR-013 (10-nov-2026) |
+| Versión | 1.4 — orden de etapas definitivo de DataDian (enmienda de ADR-014, 12-nov-2026) |
 | Fecha | 4 de noviembre de 2026 |
 | Estado | Aprobada por el arquitecto del producto (decisiones en §14, ADR en `docs/decisions/`) |
 | Elaborado | Con Claude Code, a partir de las fuentes de `docs/Arquitectura/` |
@@ -10,7 +10,7 @@
 
 ## Resumen ejecutivo
 
-- **Qué es:** una plataforma SaaS multiempresa de Telcobras. Reúne en una sola aplicación web un núcleo de identidad y permisos, CRM, LeadGen (prospección), **DataDian** (documentos electrónicos recibidos de la DIAN, eventos RADIAN y aprobación humana hacia Odoo), un Integration Hub, gestión de archivos, notificaciones, analítica, planes y consumo. Los agentes de IA propios llegan en la última etapa.
+- **Qué es:** una plataforma SaaS multiempresa de Telcobras. Reúne en una sola aplicación web un núcleo de identidad y permisos, CRM, LeadGen (prospección), **DataDian** (facturas electrónicas recibidas de la DIAN, eventos RADIAN firmados por la propia organización y borrador en Odoo, con el motor **Telco** en segundo plano), un Integration Hub, gestión de archivos, notificaciones, analítica, planes y consumo. Los agentes de IA propios llegan en la última etapa.
 - **Interfaz:** shell de 5 zonas (0 topbar, 1 sidebar con 10 módulos, 2 workspace ~72 %, 3 panel contextual ~28 %, 4 barra de estado). Al cambiar de submódulo no se recarga la página.
 - **No partimos de cero:** el repositorio es nuevo, pero LeadGen (Python), la herramienta RADIAN, la automatización Make→Odoo y los agentes en Make ya existen (~80 %). El PDF prohíbe reescribirlos sin inspeccionarlos (H-01).
 - **Las fuentes se contradicen en lo esencial:** framework frontend (H-02), estilo de backend (H-03), tecnología de agentes (H-04), papel de n8n (H-05), momento de los agentes (H-06), roles, pipeline y estados fijos frente a configurables (H-07), autenticación (H-08), infraestructura y SLA (H-09) y marca (H-15).
@@ -30,15 +30,15 @@
 
   **Ninguna bloquea la etapa 1.** El arquitecto decidió **diferirlas** y empezar con lo que ya está decidido.
 - **Rendimiento (§19):** los estándares de frontend, red, base de datos, monitoreo y pruebas en móvil y con red lenta son obligatorios desde la etapa 1. Se descartan SSR/SSG por chocar con D-02.
-- **Ruta** (§15, sin fechas; actualizada por ADR-013 el 10-nov-2026):
-  0. Decisiones y descubrimiento.
-  1. Fundaciones (cerrada).
-  2. DataDian.
-  3. CRM y notificaciones.
-  4. Integration Hub y LeadGen.
-  5. Puente Make y Automatización.
-  6. Analítica, planes, panel global y piloto.
-  7. Agentes propios.
+- **Ruta** (§15, sin fechas; actualizada por ADR-014 el 12-nov-2026):
+  - 0: decisiones y descubrimiento.
+  - 1: fundaciones (cerrada).
+  - 2 a 8: DataDian (núcleo criptográfico, interoperabilidad SOAP, ingesta RPA, datos y restricciones, ensamble UBL y transmisión, frontend y E2E, integración con Odoo 19).
+  - 9: CRM y notificaciones.
+  - 10: Integration Hub y LeadGen.
+  - 11: puente Make y Automatización.
+  - 12: analítica, planes, panel global y piloto.
+  - 13: agentes propios.
 
 > **Pendientes:** todo lo que este documento aún no define está en [`docs/PENDIENTES.md`](PENDIENTES.md).
 
@@ -62,6 +62,7 @@
 | CAPT | `screenshot_20261103_*` | 3-nov-2026 23:36 y 23:59 | Prototipo del dashboard (canvas) con las zonas anotadas a mano por el usuario |
 | MARCA | Manual de marca Telcobras 2026 (resumen interno) | 2026 | Colores, tipografía, logo y eslogan oficiales |
 | AUD | Auditoría web de tecnologías del 4-nov-2026 | 5 categorías | Estado actual de versiones, licencias y normas. **Sin verificación cruzada**: confirmar antes de convertirla en ADR |
+| DATADIAN | `docs/modules/documents/DataDian/` | 12-nov-2026 | **Blueprint oficial de DataDian y Telco** («arquitectura Eventos RADIAN DIAN.md») y tres informes de soporte: eventos RADIAN, UBL 2.1 y validación de la DIAN, y certificado `.pfx`. Manda en el módulo 04 (ADR-014). Sus datos regulatorios se verifican contra fuentes primarias antes de usarlos (`PENDIENTES.md` §7.1) |
 
 ### 0.2 Jerarquía de fuentes (D-01)
 
@@ -164,7 +165,7 @@ Este documento manda sobre las fuentes originales. Cada cambio de decisión se r
 | 1 Núcleo central | 09 Administración (+ registro/onboarding) | roles_y_permisos, registro_y_acceso, registro_simple, inicio_de_sesion_recurrente, configuracion_inicial, configuracion_simplificada | Gateway + RBAC |
 | 2 CRM | 02 Comercial | crm_pipeline_kanban | Core CRM Engine |
 | 3 LeadGen | 03 Intel. Comercial | leadgen_inteligencia_comercial | LeadGen Algorítmico |
-| 4 RADIAN / Document Intelligence | 04 DataDian (id `documents`; ADR-013) | radian_facturas_dian_y_aprobaciones | RADIAN/DIAN Engine |
+| 4 RADIAN / Document Intelligence | 04 DataDian (id `documents`; ADR-013) | radian_facturas_dian_y_aprobaciones | RADIAN/DIAN Engine → motor Telco (ADR-014) |
 | 5 Integration Hub | 05 Integraciones | hub_de_integraciones | Integration Hub |
 | 6 API Gateway | (transversal) | — | Capa 2 |
 | 7 Agent Management (final) | 07 Intel. Artificial | agent_management_runtime_layer | AI Agent Sandboxes |
@@ -286,7 +287,11 @@ Este documento manda sobre las fuentes originales. Cada cambio de decisión se r
 
 ### 4.4 RADIAN / Document Intelligence (PDF §7)
 
-> **DataDian (ADR-013, 10-nov-2026).** Este módulo se presenta al usuario como **DataDian** y se construye en la etapa 2. El listado de documentos recibidos es propio; del código MIT de APIDIAN (FacturaLatam) se replican la consulta del XML por CUFE, los documentos recibidos y los eventos RADIAN. Análisis en `docs/modules/documents/apidian/ANALISIS_APIDIAN.md`; especificación en `docs/etapas/ETAPA_2_DATADIAN.md`.
+> **DataDian y Telco (ADR-013 y ADR-014).** Este módulo se presenta al usuario como **DataDian** y se construye en las etapas 2 a 5 ([índice](etapas/README.md) y [ruta de trabajo](modules/documents/RUTA_DE_TRABAJO_DATADIAN.md)): base de datos (2), frontend (3), backend con Telco y la API (4) e integración con Odoo (5). Sigue el [blueprint oficial](<modules/documents/DataDian/arquitectura Eventos RADIAN DIAN.md>), adaptado al stack en [ARQUITECTURA_DATADIAN_TELCO.md](modules/documents/ARQUITECTURA_DATADIAN_TELCO.md) y propuesto en [ADR-014](decisions/ADR-014-arquitectura-datadian-telco.md). Tiene dos componentes:
+> - **DataDian:** la interfaz y la API (módulo `documents`).
+> - **Telco:** el motor en segundo plano. Descubre las facturas recibidas en el catálogo de la DIAN entrando con el certificado de la organización (RPA con mTLS), descarga su XML oficial por CUFE (SOAP con WS-Security), arma, firma y transmite los eventos 030, 032, 033 y 031 (UBL 2.1, CUDE con SHA-384 y XAdES-EPES) y lleva los plazos.
+>
+> La aceptación expresa (033) genera el borrador en Odoo (etapa 5; disparador por confirmar). APIDIAN queda solo como referencia de comportamiento. Los submódulos del PDF quedan así: A (conector DIAN/RADIAN) → Telco, etapa 4 (subetapas 4.2 a 4.4); B (Document Manager) → servicio interno de archivos y tabla `dian_files` (etapa 2); C (Extraction Engine) → lectura del XML en la subetapa 4.3, sin OCR; D (Validation Engine) → validaciones del XML (subetapa 4.3) y reglas de la base de datos (etapa 2) y de la API (subetapa 4.5); E (Odoo Connector) → etapa 5; F (Human Approval) → decisión humana de los eventos 033 y 031 en la interfaz (etapa 3).
 
 - **Responsabilidades:**
   - Consultar y descargar por mecanismos autorizados.
@@ -481,7 +486,7 @@ Usuario → Web React+TS → API Gateway → Backend central Node/NestJS
 - **[DECIDIDO D-06]** Un **monolito modular en NestJS**, con un módulo por dominio y fronteras estrictas (ningún módulo toca las tablas de otro).
   - No se introducen Python y Node indiscriminadamente: Python solo donde ya existe o donde sea claramente conveniente, como LeadGen, el procesamiento documental existente o los agentes si D-18 elige Python (PDF §17.3).
   - El frontend no contiene lógica de negocio sensible ni se conecta a la base de datos: todo pasa por APIs autorizadas (PDF §17.1).
-  - Los **servicios Python existentes** (LeadGen, RADIAN) quedan aparte, detrás de contratos HTTP o eventos.
+  - Los **servicios Python existentes** (LeadGen) quedan aparte, detrás de contratos HTTP o eventos. RADIAN ya no se integra como servicio Python: DataDian vive en el módulo `documents` de la API (ADR-013) y su motor Telco se propone como app TypeScript aparte del monorepo, `apps/telco` (ADR-014, pendiente de confirmar).
   - **REST + OpenAPI** para la comunicación síncrona y **SSE o WebSocket** para el tiempo real.
   - gRPC-Web se descarta, porque el PDF §9.2 pide REST (AUD).
 
@@ -560,7 +565,7 @@ Columnas: lo que dicen las fuentes, el estado verificado por AUD (4-nov-2026, si
 | Assistants SDK | BP | **Retirada el 26-ago-2026** | Eliminar del BP |
 | n8n | PDF: validación [ACORDADO]; BP: motor productivo [CONFLICTO H-05] | n8n 3.0 (27-oct-2026); licencia SUL | Solo laboratorio interno; confirmar por escrito con n8n |
 | Make | PDF: temporal [ACORDADO] | Webhooks con límites y cola máx. 10.000 elementos; cobro por créditos | Adaptador asíncrono con idempotencia; inventario y plan de salida |
-| Seguridad LLM | PDF §23.4–23.5 | OWASP LLM Top 10 2025 | Controles concretos en la etapa 7 |
+| Seguridad LLM | PDF §23.4–23.5 | OWASP LLM Top 10 2025 | Controles concretos en la etapa 10 |
 
 ---
 
@@ -653,6 +658,7 @@ Internet → reverse proxy → frontend web → API gateway → {backend, LeadGe
 - **Contenedores:** imagen reproducible, dependencias controladas, variables de entorno, health checks, logs, política de reinicio, red y límites de recursos.
 - **Orquestación:** Compose basta al inicio; algo más complejo solo con justificación.
 - **[DECIDIDO D-13]** VPS alquilado con Docker Compose, SLO del piloto de 99,5 %.
+- **[ADR-014, propuesto]** Telco, el motor de DataDian, corre como proceso aparte junto a los workers, sin exposición pública, y solo sale hacia los servicios de la DIAN.
 - **Pendientes:**
   - proveedor y región del VPS (Ley 1581), diferido;
   - backups con restauración probada (etapa 1);
@@ -665,12 +671,12 @@ Internet → reverse proxy → frontend web → API gateway → {backend, LeadGe
 
 | Sistema | Uso | Estado y riesgos (AUD) | Pendiente |
 |---|---|---|---|
-| DIAN / RADIAN | Descarga de documentos, eventos 030–034 y título valor | Para registrar eventos por terceros hace falta **PT habilitado, mandato (evento 043) o software habilitado por NIT** [H-13]. Firma XAdES-EPES y CUFE SHA-384. Calendario de días hábiles | D-14, D-15 |
-| Odoo | ERP y borradores contables | **v16 sin soporte**; hoy tienen soporte 18, 19 y 20. XML-RPC/JSON-RPC deprecados (se eliminan en Odoo 22); el reemplazo es JSON-2 con API key. En Odoo Online, la API exige el plan Custom. **Odoo 19 ya trae eventos RADIAN nativos** [H-11] | D-16 |
+| DIAN / RADIAN | Descubrimiento de facturas recibidas en el catálogo VPFE, XML por CUFE (`GetXmlByDocumentKey`) y eventos 030–033 como adquirente; el 034 lo registra el emisor y el título valor queda fuera (D-15) | Para registrar eventos por terceros hace falta **PT habilitado, mandato (evento 043) o software habilitado por NIT** [H-13]. Certificado `.pfx` para la firma XAdES-EPES, WS-Security y mTLS; CUFE y CUDE con SHA-384; calendario de días hábiles. El catálogo bloquea robots desde el 28-jul-2026 (PV-7) | D-14, D-15; PV-1 a PV-20 (`PENDIENTES.md` §7.1); etapas 2 a 4 |
+| Odoo | ERP y borradores contables | **v16 sin soporte**; hoy tienen soporte 18, 19 y 20. XML-RPC/JSON-RPC deprecados (se eliminan en Odoo 22); el reemplazo es JSON-2 con API key. En Odoo Online, la API exige el plan Custom. **Odoo 19 ya trae eventos RADIAN nativos** [H-11] | D-16; etapa 5 |
 | WhatsApp Cloud API | Notificaciones, agentes | La v18 de Stitch venció; vigente v26. Cobro por mensaje. **Desde el 15-ene-2026 están prohibidos los chatbots de IA de propósito general** | D-19 |
-| Google Drive / OneDrive | Documentos | Scopes mínimos; verificación CASA | Etapa 4+ |
-| Shopify | Pedidos | Versión de API fija vencida en Stitch (2024-04) | Etapa 4+ |
-| Correo | Campañas, notificaciones | Requisitos de Google, Yahoo y Microsoft: SPF, DKIM, DMARC, baja con un clic; separar prospección de transaccional | Etapa 4+ |
+| Google Drive / OneDrive | Documentos | Scopes mínimos; verificación CASA | Etapa 7+ |
+| Shopify | Pedidos | Versión de API fija vencida en Stitch (2024-04) | Etapa 7+ |
+| Correo | Campañas, notificaciones | Requisitos de Google, Yahoo y Microsoft: SPF, DKIM, DMARC, baja con un clic; separar prospección de transaccional | Etapa 7+ |
 | Make | Agentes existentes, RADIAN→Odoo | Límites de webhooks; cobro por créditos | Inventario y plan de salida |
 | n8n | Laboratorio de agentes | Licencia (§4.11) | D-17 |
 | OpenAI | Agentes | Retención de 30 días por defecto; ZDR con aprobación; sin región en Latinoamérica | D-18 |
@@ -742,7 +748,7 @@ Internet → reverse proxy → frontend web → API gateway → {backend, LeadGe
 | 1. Inicio | Dashboard General · Métricas Rápidas · Resumen Operativo | Dashboard General |
 | 2. Comercial | CRM Empresas · Contactos · Leads · Oportunidades · Actividades · Pipeline Kanban | CRM Kanban, Contactos, Oportunidades |
 | 3. Inteligencia Comercial | LeadGen & Prospección · Campañas · Enriquecimiento de Datos | "Enriquecimiento IA" |
-| 4. DataDian (id `documents`; antes "Documentos") | Los servicios de DataDian, a definir en `docs/etapas/ETAPA_2_DATADIAN.md`. Sale el Centro Documental (ADR-013) | Documentos |
+| 4. DataDian (id `documents`; antes "Documentos") | Bandeja de facturas recibidas (grilla, vista dividida y línea de tiempo RADIAN) y Configuración (certificado, software y Odoo), según `docs/modules/documents/ARQUITECTURA_FRONTEND_DATADIAN.md` (etapa 3). Sale el Centro Documental (ADR-013) | Documentos |
 | 5. Integraciones | Hub de Conectores · Odoo ERP · WhatsApp Cloud API · Webhooks & Logs | Odoo v16, WhatsApp, DIAN SOAP |
 | 6. Automatización | Flujos de Proceso · Disparadores en Vivo · Colas y Monitoreo | Flujos n8n, Colas BullMQ, Logs (ver D-17) |
 | 7. Inteligencia Artificial | Agent Management · Runtime Docker · Logs del Agents SDK | Agentes Docker, OpenAI SDK |
@@ -910,7 +916,7 @@ Severidad: C = crítica, A = alta, M = media. Los hallazgos con fuente AUD está
 | H-15 | A | La UI (#0A66C2, Plus Jakarta/Inter) no sigue la marca (#008AC7 + verde + amarillo, Arial Rounded/Poppins); el logo trae el eslogan en portugués | LIB; DESIGN.md; MARCA | D-04 |
 | H-16 | M | Stitch muestra afirmaciones sin respaldo: ISO 27001, SOX, FIPS, SLA 99,99 %, K8s, Celery/RabbitMQ, multi-schema, "LLM en red privada", XAdES-BES | Stitch; AUD | No son especificación; retirarlas del diseño final |
 | H-17 | A | El scraping del RUES no tiene base legal clara; los datos de personas caen bajo la Ley 1581 | BP; AUD | D-21 |
-| H-18 | M | Notificaciones sin diseño de UI | PDF §13 | Etapa 3 |
+| H-18 | M | Notificaciones sin diseño de UI | PDF §13 | Etapa 6 |
 | H-19 | M | Analítica ambigua: ¿del tenant o del negocio SaaS (MRR/CAC)? | BP; PDF §14 | D-20 |
 | H-20 | M | "NOC 24/7" y SLA en Ayuda sin un responsable real | BP; Stitch | D-13 |
 | H-21 | M | Iconos: lucide (GUIA) vs Material Symbols (Stitch) | GUIA §6; Stitch | D-05 |
@@ -963,7 +969,7 @@ Severidad: C = crítica, A = alta, M = media. Los hallazgos con fuente AUD está
 | D-03 | Estilos y componentes | Tailwind v4 + shadcn/Radix · Bootstrap | **DECIDIDO (4-nov-2026): Tailwind v4 + shadcn/ui con Radix fijado explícitamente.** Se descarta Bootstrap | Arquitecto | ✅ Cerrada |
 | D-04 | Identidad visual de la UI | Paleta de marca · derivada de la marca · paleta actual #0A66C2 | **DECIDIDO (4-nov-2026): paleta oficial ESTRICTA, solo 6 colores** (ver §12.4.1). Verde primario #88BD4C, azul secundario #2491CC, amarillo de acento #F3CB35, gris #888D91, blanco y negro. Prohibidos otros tonos. Se descarta #0A66C2. **D-04b:** única excepción, rojo #C62828 solo para errores. **D-04c:** Poppins en toda la UI | Arquitecto | ✅ Cerrada |
 | D-05 | Iconos y Zona 4 | lucide · Material Symbols; barra de 48 px · franja de tarjetas | **DECIDIDO (4-nov-2026): solo lucide-react** (strokeWidth 1.75 o 2; los logos de terceros con SVG oficiales). **Zona 4 = barra fija de 48 px** con indicadores; al hacer clic se despliega el detalle por conector (tarjetas del prototipo) | Arquitecto | ✅ Cerrada |
-| D-06 | Estilo arquitectónico | Monolito modular · microservicios | **DECIDIDO (4-nov-2026): monolito modular NestJS** con un módulo por dominio y fronteras estrictas. LeadGen y RADIAN (Python) quedan como servicios aparte, detrás de contratos. REST + OpenAPI; sin gRPC ni Kubernetes | Arquitecto | ✅ Cerrada |
+| D-06 | Estilo arquitectónico | Monolito modular · microservicios | **DECIDIDO (4-nov-2026): monolito modular NestJS** con un módulo por dominio y fronteras estrictas. LeadGen (Python) queda como servicio aparte, detrás de contratos. RADIAN: cambiado por ADR-013 (DataDian en el monolito) y por ADR-014 (motor Telco como app TypeScript aparte, propuesto). REST + OpenAPI; sin gRPC ni Kubernetes | Arquitecto | ✅ Cerrada |
 | D-07 | ORM y migraciones | Drizzle · Prisma · Kysely · TypeORM | **DECIDIDO (5-nov-2026) por la prueba de RLS: Drizzle ORM + drizzle-kit.** Pasó las 7 pruebas de aislamiento con PostgreSQL 18 (ADR-005, `poc/rls/`) | Prueba de RLS | ✅ Cerrada |
 | D-08 | Multi-tenancy | RLS en esquema compartido · esquema por tenant | **DECIDIDO (4-nov-2026): tablas compartidas + RLS.** `organization_id NOT NULL` en todo, membresías usuario–organización, reglas de §7.4. Se descarta el esquema por tenant | Arquitecto | ✅ Cerrada |
 | D-09 | Identidad | Better Auth · Keycloak · gestionado (Auth0/Clerk/WorkOS); modelo de sesión; MFA; un solo flujo de registro | **DECIDIDO (4-nov-2026): Better Auth embebido en NestJS.** Acceso **sin contraseña**: Google Workspace (OIDC) o correo + **passkey**, con 2FA por **TOTP** (app). SSO corporativo (Okta/Entra) se agrega después por organización. Sesión en cookie httpOnly; límites de intentos por cuenta; suplantación del superadmin auditada. Se descartan el OTP por correo como factor y la contraseña. **Cambio (6-nov-2026, ADR-012):** la passkey y el enlace mágico se reemplazan por un código de 6 dígitos por correo (10 min, 5 intentos); TOTP se mantiene | Arquitecto | ✅ Cerrada |
@@ -971,19 +977,19 @@ Severidad: C = crítica, A = alta, M = media. Los hallazgos con fuente AUD está
 | D-11 | Almacenamiento de objetos | S3/R2 gestionado · SeaweedFS | **DECIDIDO (4-nov-2026): S3 gestionado** (R2, S3 o equivalente) a través de la API S3, con versionado. En local se emula con un contenedor S3-compatible. Se descarta MinIO. Proveedor exacto, junto con D-13 | Arquitecto | ✅ Cerrada |
 | D-12 | Secretos | Vault · OpenBao · KMS + cifrado envolvente | **DECIDIDO (4-nov-2026): cifrado envolvente en la app** (AES-256-GCM en PostgreSQL) con la llave maestra fuera de la base de datos (variable protegida del servidor al inicio; OpenBao o KMS después). Se descarta Vault por ahora | Arquitecto | ✅ Cerrada |
 | D-13 | Hosting, región y SLO | Nube · VPS · servidor propio | **DECIDIDO (4-nov-2026): VPS / servidor alquilado con Docker Compose.** Meta del piloto: **99,5 % de disponibilidad** con respaldos verificados (PITR) y restauración probada. Se descarta el 99,98 % del BP para el piloto. **Sigue abierto:** proveedor y región (si es fuera de Colombia, hay que documentar la transferencia internacional según la Ley 1581) | Gerencia + arquitecto | ✅ Cerrada (proveedor pendiente) |
-| D-14 | Figura ante la DIAN | PT tercero vía API · mandato (043) · habilitar a Telcobras como PT · solo descarga | **PENDIENTE (4-nov-2026): el arquitecto averigua cómo funciona hoy la herramienta RADIAN** y lo consulta con contabilidad/legal. Bloquea el **envío** de eventos en la etapa 2 (DataDian, ADR-013); consultar y descargar no lo necesitan | Gerencia + legal/contable | Antes de enviar eventos en la etapa 2 |
-| D-15 | Alcance RADIAN | Solo recepción (030–033) · emisor (034) · título valor (035–051) | **DECIDIDO (4-nov-2026): primera versión solo de recepción.** Facturas de proveedores: descargar, validar, eventos 030/031/032/033, aprobación humana y borrador en Odoo. El emisor (034) y el título valor (035–051) quedan fuera | Arquitecto + contable | ✅ Cerrada |
-| D-16 | Odoo | Versión, edición, API JSON-2, ¿usar RADIAN nativo de Odoo? | **DECIDIDO (4-nov-2026): Telcobras usa Odoo 19 o 20.** El conector usa la **API JSON-2 con API key** (sin XML-RPC). **Abierto para la etapa 0:** confirmar la versión exacta, la edición y el hosting, y comparar el RADIAN nativo de Odoo con el módulo de la suite para no duplicar funciones | Arquitecto | ✅ Cerrada (inventario pendiente) |
+| D-14 | Figura ante la DIAN | PT tercero vía API · mandato (043) · habilitar a Telcobras como PT · solo descarga | **PENDIENTE (4-nov-2026): el arquitecto averigua cómo funciona hoy la herramienta RADIAN** y lo consulta con contabilidad/legal. Bloquea el registro del software y el **envío** de eventos de DataDian (subetapa 4.4 y paso a producción, ADR-014); descubrir y descargar el XML no lo necesitan | Gerencia + legal/contable | Antes de la subetapa 4.4 |
+| D-15 | Alcance RADIAN | Solo recepción (030–033) · emisor (034) · título valor (035–051) | **DECIDIDO (4-nov-2026): primera versión solo de recepción.** Facturas de proveedores: descargar, validar, eventos 030/031/032/033, aprobación humana y borrador en Odoo. El emisor (034) y el título valor (035–051) quedan fuera. La suite no emite el 034, pero calcula su plazo y lo detecta (etapas 2 y 4, ADR-014) | Arquitecto + contable | ✅ Cerrada |
+| D-16 | Odoo | Versión, edición, API JSON-2, ¿usar RADIAN nativo de Odoo? | **DECIDIDO (4-nov-2026): Telcobras usa Odoo 19 o 20.** El conector usa la **API JSON-2 con API key** (sin XML-RPC). **Abierto para la etapa 0:** confirmar la versión exacta, la edición y el hosting, y comparar el RADIAN nativo de Odoo con el módulo de la suite para no duplicar funciones. El inventario bloquea la etapa 5 (ADR-014) | Arquitecto | ✅ Cerrada (inventario pendiente) |
 | D-17 | n8n y módulo 06 | Diseñador n8n (Enterprise) · catálogo gobernado | **DECIDIDO (4-nov-2026): el módulo 06 es un catálogo de procesos gobernados por Telcobras** (activar, ver historial, "Solicitar flujo personalizado"). Los clientes no diseñan flujos. n8n queda solo como laboratorio interno de Telcobras. Se retiran de los diseños "Diseñar flujo en n8n" y "+ Nuevo flujo n8n" | Arquitecto | ✅ Cerrada |
-| D-18 | Agentes: lenguaje y datos | Agents SDK en Python o TS; tracing; ZDR | Etapa 7 | Arquitecto | Diferida |
-| D-19 | WhatsApp multi-tenant | WABA por organización · número compartido | Etapa 4+ | Arquitecto | Diferida |
+| D-18 | Agentes: lenguaje y datos | Agents SDK en Python o TS; tracing; ZDR | Etapa 10 | Arquitecto | Diferida |
+| D-19 | WhatsApp multi-tenant | WABA por organización · número compartido | Etapa 7+ | Arquitecto | Diferida |
 | D-20 | Analítica | Del tenant · del negocio SaaS · ambas, separadas | **DECIDIDO (4-nov-2026): separadas.** Cada organización ve solo su analítica (comercial, documental, automatización, IA). MRR, CAC, LTV, NDR y "Junta Directiva" van solo en el Panel Global de Telcobras | Arquitecto | ✅ Cerrada |
-| D-21 | Fuentes de LeadGen | Scraping actual · datos abiertos · proveedores | **DECIDIDO (4-nov-2026): primero se revisa LeadGen.** En la etapa 0 se inventarían las fuentes que usa hoy y se validan con legal antes de integrarlo (etapa 4). Mientras tanto no se agrega scraping nuevo | Arquitecto + legal | ✅ Cerrada (validación legal pendiente) |
+| D-21 | Fuentes de LeadGen | Scraping actual · datos abiertos · proveedores | **DECIDIDO (4-nov-2026): primero se revisa LeadGen.** En la etapa 0 se inventarían las fuentes que usa hoy y se validan con legal antes de integrarlo (etapa 7). Mientras tanto no se agrega scraping nuevo | Arquitecto + legal | ✅ Cerrada (validación legal pendiente) |
 | D-22 | Idioma del código y del esquema | Inglés · español | **DECIDIDO (4-nov-2026): código, tablas y APIs en inglés; UI en español** con textos externalizados | Arquitecto | ✅ Cerrada |
 | D-23 | Repositorio y herramientas | Monorepo (pnpm workspaces) · varios repos; versión de Node | **DECIDIDO (4-nov-2026): monorepo pnpm en este repositorio** (apps/web, apps/api, packages/ui, packages/contracts); Node LTS | Arquitecto | ✅ Cerrada |
 | D-24 | Idioma de la UI e i18n | Solo español · i18n desde el inicio | **DECIDIDO (4-nov-2026): solo español de Colombia, con textos externalizados** para poder traducir después | Arquitecto | ✅ Cerrada |
 
-| D-25 | Modelo comercial (PDF §26) | Planes, límites y consumo por organización | La arquitectura lo soporta desde el núcleo (módulos habilitados, límites, medición); los valores comerciales los define Gerencia | Gerencia | Diferida (etapa 6) |
+| D-25 | Modelo comercial (PDF §26) | Planes, límites y consumo por organización | La arquitectura lo soporta desde el núcleo (módulos habilitados, límites, medición); los valores comerciales los define Gerencia | Gerencia | Diferida (etapa 9) |
 
 Pendientes del PDF §26 y dónde quedaron:
 - Microservicios: D-06.
@@ -991,7 +997,7 @@ Pendientes del PDF §26 y dónde quedaron:
 - Autenticación: D-09.
 - Cola: D-10.
 - Modelo comercial: D-25.
-- Tecnología de analítica: D-20, con la herramienta concreta a definir en la etapa 6.
+- Tecnología de analítica: D-20, con la herramienta concreta a definir en la etapa 9.
 
 ---
 
@@ -1003,14 +1009,17 @@ Sin fechas, porque el PDF §29.2 prohíbe inventar cronogramas. Los agentes van 
 |---|---|---|---|
 | 0 Decisiones y descubrimiento | Cerrar lo que bloquea | Este documento aprobado; ADR-001 a ADR-011; prueba de RLS (D-07); inventario de LeadGen, RADIAN, Make y Odoo | ADR escritos, ORM elegido e inventario escrito |
 | 1 Fundaciones | Esqueleto seguro y multiempresa | Monorepo, Compose, CI; núcleo (organizaciones, usuarios, membresías, auth, RBAC configurable, auditoría, RLS); shell de 5 zonas con design system y datos simulados | Pruebas de aislamiento en verde; navegación por los 10 módulos |
-| 2 DataDian | Documentos fiscales recibidos | Listado propio de recibidos de la DIAN, XML por CUFE, almacenamiento con servicio interno de archivos, validaciones, eventos RADIAN (estados + eventos), aprobación humana → borrador en Odoo; custodia cifrada de certificados y conector Odoo mínimos (`docs/etapas/ETAPA_2_DATADIAN.md`) | Factura recibida → aprobada → borrador registrado en Odoo, en habilitación |
-| 3 CRM y notificaciones | Primer valor comercial | CRM completo (§4.2) con adjuntos, notificaciones internas (`docs/etapas/ETAPA_3_ESPECIFICACION.md`) | Flujo lead → oportunidad → actividad funcionando |
-| 4 Integration Hub y LeadGen | Conectar activos | Registry, Credential Manager y logs completos; resto de conectores; LeadGen integrado por contrato | Prospectos de LeadGen llegan al CRM |
-| 5 Puente Make y Automatización | Procesos gobernados | Adaptador Make; catálogo de procesos del módulo 06 (D-17) | Procesos de Make visibles y trazados en la suite |
-| 6 Analítica, planes y piloto | Operar con clientes | Analítica, suscripciones y consumo, Panel Global, endurecimiento, pentest, piloto | Piloto en producción con SLO acordados |
-| 7 Agentes propios (final) | Capacidad de IA propia | Agent Management, Runtime Layer, agentes con Agents SDK en Docker | Primer agente en producción |
+| 2 Base de datos de DataDian | Base multiempresa de DataDian | Subetapas 2.1 a 2.9: configuración DIAN y certificados, archivos, facturas evolucionadas, eventos RADIAN y su orden, calendario de festivos y plazos, cola de Telco en PostgreSQL, rol `app_worker` (`docs/modules/documents/ARQUITECTURA_DB_DATADIAN.md`; ficha `docs/etapas/ETAPA_2_BASE_DE_DATOS.md`). **En curso: 2.1 y 2.2 implementadas** | Migraciones `0010` a `0017` aplicadas en la CI con las pruebas de RLS, restricciones, cola concurrente y plazos en verde |
+| 3 Frontend de DataDian | Operar DataDian contra contratos y mocks | Subetapas 3.1 a 3.8: contratos zod y OpenAPI, mocks MSW, bandeja, vista dividida, línea de tiempo, acciones RADIAN, modal de reclamo, configuración, sincronizaciones (`ARQUITECTURA_FRONTEND_DATADIAN.md`; ficha `ETAPA_3_FRONTEND.md`) | Pantallas funcionando contra los mocks; pruebas unitarias, de componentes y E2E en la CI |
+| 4 Backend de DataDian (Telco y API) | Hablar con la DIAN | Subetapas 4.1 a 4.6: núcleo criptográfico, SOAP con WS-Security, ingesta RPA e IMAP, UBL y transmisión, reglas y State Tracker, E2E y paso a producción (`ARQUITECTURA_BACKEND_DATADIAN.md`; ficha `ETAPA_4_BACKEND.md`) | E2E de la Etapa 3 sin cambios contra la API y Telco; simulación de tráfico; lista de habilitación completa |
+| 5 Integración con Odoo 19 | Cerrar el ciclo contable | Borrador de factura de proveedor con el XML adjunto, disparado por el 033 (por confirmar) (`docs/etapas/ETAPA_5_INTEGRACION_ODOO.md`) | Factura aceptada → borrador en Odoo, sin duplicados |
+| 6 CRM y notificaciones | Primer valor comercial | CRM completo (§4.2) con adjuntos, notificaciones internas (`docs/etapas/ETAPA_6_ESPECIFICACION.md`) | Flujo lead → oportunidad → actividad funcionando |
+| 7 Integration Hub y LeadGen | Conectar activos | Registry, Credential Manager y logs completos; resto de conectores; LeadGen integrado por contrato | Prospectos de LeadGen llegan al CRM |
+| 8 Puente Make y Automatización | Procesos gobernados | Adaptador Make; catálogo de procesos del módulo 06 (D-17) | Procesos de Make visibles y trazados en la suite |
+| 9 Analítica, planes y piloto | Operar con clientes | Analítica, suscripciones y consumo, Panel Global, endurecimiento, pentest, piloto | Piloto en producción con SLO acordados |
+| 10 Agentes propios (final) | Capacidad de IA propia | Agent Management, Runtime Layer, agentes con Agents SDK en Docker | Primer agente en producción |
 
-**Cambio del 10-nov-2026 (ADR-013).** La etapa 1 se cerró por decisión del usuario; sus criterios no verificados pasaron a `PENDIENTES.md`. DataDian se adelantó como etapa 2 y la ruta se renumeró. Equivalencias con la numeración anterior: 2 → 3, 3 → 4, 4 → 2 (RADIAN) y 5 (Make), 5 → 6, 6 → 7. Los ADR anteriores a ADR-013 conservan la numeración vieja.
+**Cambios de la ruta.** El 10-nov-2026 (ADR-013) la etapa 1 se cerró por decisión del usuario (sus criterios no verificados pasaron a `PENDIENTES.md`) y DataDian se adelantó a la etapa 2. El 12-nov-2026 (ADR-014, propuesto) DataDian se dividió en las etapas 2 a 8, según el roadmap de su blueprint más la integración con Odoo, y el resto de la ruta se corrió seis números. Ese mismo día el usuario fijó el orden definitivo (enmienda de ADR-014): base de datos de DataDian (2), frontend (3), backend con Telco y la API (4), Odoo (5), CRM (6) y, desde la 7, las etapas siguientes; la ruta de trabajo de DataDian está en [`RUTA_DE_TRABAJO_DATADIAN.md`](modules/documents/RUTA_DE_TRABAJO_DATADIAN.md). Los ADR conservan la numeración de su fecha; las equivalencias están en [`docs/etapas/README.md`](etapas/README.md).
 
 **Diferencias con el BP (4 fases en 12 semanas):**
 - El BP da la fase 1 por "completada en canvas", pero el código no existe.
@@ -1026,9 +1035,9 @@ docs/
   DOCUMENTO_MADRE_SUITE_TELCOBRAS.md   ← este documento
   PLAN_IMPLEMENTACION_INICIAL.md
   architecture/  overview · system-context · module-map · data-flow   (se crea al avanzar)
-  decisions/     ADR-001 fuentes · 002 estilo · 003 frontend · 004 tenancy · 005 ORM (tras la prueba) · 006 identidad · 007 marca · 008 convenciones · 009 datos e infraestructura · 010 hosting · 011 alcance funcional · 012 acceso con código · 013 DataDian y nueva ruta   ← creado
-  etapas/        ETAPA_2_DATADIAN · ETAPA_3_ESPECIFICACION (CRM)   ← creado
-  modules/       documents (DataDian: análisis de APIDIAN)   ← creado · core · crm · leadgen · integration-hub · agent-management
+  decisions/     ADR-001 fuentes · 002 estilo · 003 frontend · 004 tenancy · 005 ORM (tras la prueba) · 006 identidad · 007 marca · 008 convenciones · 009 datos e infraestructura · 010 hosting · 011 alcance funcional · 012 acceso con código · 013 DataDian y nueva ruta · 014 arquitectura DataDian y Telco   ← creado
+  etapas/        README (índice) · ETAPA_2_BASE_DE_DATOS, ETAPA_3_FRONTEND, ETAPA_4_BACKEND, ETAPA_5_INTEGRACION_ODOO (DataDian) · ETAPA_6_ESPECIFICACION (CRM)   ← creado
+  modules/       documents (DataDian: ruta de trabajo, arquitectura general DataDian–Telco, de base de datos, de frontend y de backend; blueprint e informes en DataDian/; referencia de APIDIAN)   ← creado · core · crm · leadgen · integration-hub · agent-management
   api/ · database/ · security/ · deployment/
   Arquitectura/  (fuentes originales, solo lectura)
 ```
@@ -1040,19 +1049,23 @@ docs/
 | Término | Significado |
 |---|---|
 | ADR | Registro de decisión de arquitectura |
+| AttachedDocument / ApplicationResponse | Contenedor XML con el que se entrega la factura validada por la DIAN / documento UBL de las respuestas de la DIAN y de los eventos RADIAN |
 | BOLA/IDOR | Acceso a objetos de otro usuario u organización cambiando un id |
 | CUFE / CUDE | Código único de la factura o del evento electrónico (SHA-384) |
 | DIAN / RADIAN | Autoridad tributaria / su registro de facturas como título valor |
 | KEK/DEK | Llave que cifra llaves / llave que cifra datos |
+| mTLS / WS-Security | Autenticación TLS mutua con certificado / seguridad de mensajes SOAP con firma y token X.509 |
 | MRR, CAC, LTV, NDR | Ingreso recurrente mensual, costo de adquisición, valor de vida, retención neta |
 | NIT | Número de identificación tributaria |
 | OIDC / SSO / OTP / JWT | Login federado / inicio único / código de un solo uso / token firmado |
 | Organización (tenant) | Empresa cliente de la suite. "Empresa" se reserva para los registros del CRM |
 | Outbox | Tabla donde se guarda el evento en la misma transacción para publicarlo después |
+| PKCS#12 (`.pfx` / `.p12`) | Archivo cifrado con contraseña que contiene la llave privada, el certificado y su cadena |
 | PT | Proveedor tecnológico habilitado por la DIAN |
 | RLS | Seguridad por filas de PostgreSQL |
 | RPO / RTO / SLO | Pérdida máxima de datos / tiempo de recuperación / objetivo de servicio |
 | RUES | Registro Único Empresarial y Social |
+| Telco | Motor en segundo plano de DataDian: RPA, SOAP, firma y eventos ante la DIAN (ADR-014) |
 | UBL 2.1 / XAdES-EPES | Formato XML de la factura / firma digital exigida |
 
 ---
@@ -1106,9 +1119,9 @@ La columna "Etapa" usa la ruta de §15. Todos estos requisitos son **estándares
 | Requisito | Veredicto | Cómo se cumple en esta arquitectura | Etapa |
 |---|---|---|---|
 | Pantallas esqueleto | Viable | Componente `Skeleton` del design system, con la forma de cada vista; se muestra mientras carga la petición | 1 |
-| Actualizaciones optimistas | Viable | **TanStack Query** (cierra el vacío de "data fetching" de §6.1): `onMutate` actualiza la caché y `onError` revierte. Uso típico: mover tarjetas en el Kanban, aprobar facturas, interruptores de conectores | 1–3 |
+| Actualizaciones optimistas | Viable | **TanStack Query** (cierra el vacío de "data fetching" de §6.1): `onMutate` actualiza la caché y `onError` revierte. Uso típico: mover tarjetas en el Kanban, pedir eventos RADIAN, interruptores de conectores | 1, 3 y 6 |
 | Evitar renderizados innecesarios | Ajustado | **React Compiler** (memoización automática) en lugar de `memo/useMemo` a mano; Zustand con selectores; el estado del servidor vive en TanStack Query, no en Zustand | 1 |
-| Virtualizar listas largas | Viable | `@tanstack/react-virtual` en tablas, logs y feeds de más de ~100 filas. Siempre va **junto con** la paginación del servidor, nunca en su lugar | 2 |
+| Virtualizar listas largas | Viable | `@tanstack/react-virtual` en tablas, logs y feeds de más de ~100 filas. Siempre va **junto con** la paginación del servidor, nunca en su lugar | 3 |
 | Fuentes locales con pesos limitados | Ajustado | Poppins (D-04c) servida localmente con `@fontsource`, en **woff2, subset latino y solo 3 pesos: 400, 500 y 600** (reemplaza los 4 pesos de D-04c). `font-display: swap` y precarga de los 3 pesos, porque los tres se ven en la primera pantalla (10-nov-2026: con solo el 400 precargado, el 500 y el 600 llegaban tarde y movían el contenido, CLS 0,025 → 0) | 1 |
 | Animaciones decorativas sin costo de hilo principal (10-nov-2026) | Viable | Las animaciones continuas solo animan `transform`/`rotate` u `opacity`, que el navegador resuelve en el compositor. No se animan propiedades personalizadas (`@property`), sombras ni `background-position` en bucle: una animación activa recalcula y repinta en cada fotograma aunque esté quieta. Las pausas de un ciclo van como `animation-delay` (durante el retraso el navegador no trabaja). Medido con CPU 4×: en el login, estilo 1376 → 333 ms y layout 618 → 66 ms por cada 6 s | 1 |
 | Módulos sin efectos secundarios en `contracts` (10-nov-2026) | Viable | `packages/contracts` declara `"sideEffects": false` y las constantes que la web usa al arrancar viven en módulos sin zod (`schemas/page-size.ts`). Así zod sale del JS inicial y solo se descarga con los formularios: JS inicial 150,2 → 125,6 kB gzip | 1 |
@@ -1126,26 +1139,26 @@ La columna "Etapa" usa la ruta de §15. Todos estos requisitos son **estándares
 | Evitar llamadas duplicadas | Viable | TanStack Query deduplica las peticiones en vuelo y cachea con `staleTime` por recurso. En el backend, las mutaciones aceptan una `Idempotency-Key` (§5.3) | 1 |
 | Debounce en búsquedas | Viable | 300 ms en Ctrl+K y en autocompletados; las peticiones viejas se cancelan con `AbortController` | 1 |
 | Paginar todos los resultados | Ajustado | **Paginación por cursor (keyset)** en lugar de `OFFSET`, porque es estable y rápida en tablas grandes. Ningún endpoint de lista responde sin límite; el máximo por página es 100 | 1 |
-| Timeouts estrictos en APIs externas | Viable | Todo cliente del Integration Hub usa `AbortSignal.timeout`: 10 s por defecto y 30 s como máximo para la DIAN. Los reintentos con backoff exponencial los hace la cola (D-10), nunca la petición del usuario. Un circuit breaker por conector alimenta el estado de la Zona 4 | 2 |
+| Timeouts estrictos en APIs externas | Viable | Todo cliente del Integration Hub usa `AbortSignal.timeout`: 10 s por defecto y 30 s como máximo para la DIAN. Los reintentos con backoff exponencial los hace la cola (D-10), nunca la petición del usuario. Un circuit breaker por conector alimenta el estado de la Zona 4 | 4 |
 | Paralelizar peticiones independientes | Viable | Frontend: consultas paralelas en TanStack Query. Backend: `Promise.all` para llamadas independientes. Dashboards: un endpoint agregado por vista para evitar cascadas de peticiones | 1 |
-| Streaming de respuestas de IA | Viable | Token a token con **SSE**, sobre el streaming del OpenAI Agents SDK. Aplica cuando lleguen los agentes | 7 |
+| Streaming de respuestas de IA | Viable | Token a token con **SSE**, sobre el streaming del OpenAI Agents SDK. Aplica cuando lleguen los agentes | 10 |
 | Compresión Brotli/Gzip | Ajustado | En el **proxy inverso y la CDN** (Caddy `encode zstd br gzip` + Cloudflare), no en Node. Los assets se precomprimen en el build | 1 |
-| Tareas pesadas a colas | Viable, ya decidido | BullMQ + Valkey + outbox (D-10): investigaciones de LeadGen, documentos, sincronización con Odoo, reportes y campañas. La petición web responde de inmediato con un id de trabajo; el avance llega por tiempo real | 2 |
-| Caché de datos frecuentes | Ajustado | En **Valkey** (D-10), no en un Redis aparte. Las llaves llevan `organization_id`, así que nunca se mezclan organizaciones; TTL corto y se invalidan por evento. Candidatos: permisos de la sesión, catálogos, KPIs de dashboard | 2 |
+| Tareas pesadas a colas | Viable, ya decidido | BullMQ + Valkey + outbox (D-10): investigaciones de LeadGen, documentos, sincronización con Odoo, reportes y campañas. La petición web responde de inmediato con un id de trabajo; el avance llega por tiempo real. La cola de Telco es una tabla de PostgreSQL (ADR-014, aceptada con la Etapa 2) | 2 y 4 |
+| Caché de datos frecuentes | Ajustado | En **Valkey** (D-10), no en un Redis aparte. Las llaves llevan `organization_id`, así que nunca se mezclan organizaciones; TTL corto y se invalidan por evento. Candidatos: permisos de la sesión, catálogos, KPIs de dashboard | 4 |
 | Resolver consultas N+1 | Viable | El ORM (D-07) debe resolver relaciones con joins o cargas por lote; en las pruebas, un contador de queries por endpoint falla si pasa el umbral | 1 |
 | Índices para consultas frecuentes | Viable | Índices compuestos que **empiezan por `organization_id`** (por RLS), más los de cursor (`organization_id, created_at, id`). Se revisan con `pg_stat_statements` | 1 |
 | Seleccionar solo las columnas necesarias | Viable | Prohibido `SELECT *` en el código; cada endpoint proyecta las columnas que devuelve su contrato OpenAPI | 1 |
-| Pool de conexiones | Ajustado | Pool del driver de Node en la etapa 1; **PgBouncer en modo transacción** cuando haya más de una instancia de la API. Es compatible con RLS porque el tenant se fija con `set_config(..., true)` por transacción (§7.4) | 1 / 5 |
+| Pool de conexiones | Ajustado | Pool del driver de Node en la etapa 1; **PgBouncer en modo transacción** cuando haya más de una instancia de la API. Es compatible con RLS porque el tenant se fija con `set_config(..., true)` por transacción (§7.4) | 1 / 9 |
 
-### 19.3 Fase 3 — Infraestructura, monitoreo y pruebas (desde la etapa 1; HA en la etapa 6)
+### 19.3 Fase 3 — Infraestructura, monitoreo y pruebas (desde la etapa 1; HA en la etapa 9)
 
 | Requisito | Veredicto | Cómo se cumple | Etapa |
 |---|---|---|---|
 | CDN y caché del navegador | Viable | Cloudflare delante del VPS. Assets con hash en el nombre: `Cache-Control: public, max-age=31536000, immutable`; `index.html`: `no-cache`. Las respuestas de la API no se cachean en la CDN | 1 |
 | Servidores cerca de la BD | Viable | La API, los workers, PostgreSQL y Valkey en el **mismo VPS o en la misma red privada y región**. El S3 gestionado (D-11) y el proveedor del VPS (D-13) se eligen en la misma región | 1 |
-| Balanceo de carga entre instancias | Ajustado | Choca con D-13 (un VPS, 99,5 %). Se cumple por diseño: **API sin estado** (sesión en la BD/Valkey, archivos en S3, tiempo real con adaptador de Valkey). Así Caddy puede balancear varias réplicas en el mismo host, y luego entre VPS, sin cambiar código. El balanceo entre servidores se activa cuando la carga o el SLA lo pidan | 6 |
+| Balanceo de carga entre instancias | Ajustado | Choca con D-13 (un VPS, 99,5 %). Se cumple por diseño: **API sin estado** (sesión en la BD/Valkey, archivos en S3, tiempo real con adaptador de Valkey). Así Caddy puede balancear varias réplicas en el mismo host, y luego entre VPS, sin cambiar código. El balanceo entre servidores se activa cuando la carga o el SLA lo pidan | 9 |
 | Rastrear peticiones lentas con OpenTelemetry | Viable | SDK de OpenTelemetry en NestJS y en los workers (HTTP, PostgreSQL, Valkey, BullMQ), con `organization_id` y `correlation_id` en cada span. Alerta cuando el p95 de un endpoint supera su presupuesto | 1 |
-| Medir la velocidad real de los usuarios | Viable | RUM con la librería `web-vitals` (LCP, INP, CLS) enviada al backend de OpenTelemetry. Se mide el percentil 75 por ruta en producción | 5 (en staging desde la 1) |
+| Medir la velocidad real de los usuarios | Viable | RUM con la librería `web-vitals` (LCP, INP, CLS) enviada al backend de OpenTelemetry. Se mide el percentil 75 por ruta en producción | 9 (en staging desde la 1) |
 | Pruebas de rendimiento en móviles y redes lentas | Viable | **Obligatorias en la CI**: Lighthouse CI en emulación móvil con red Slow 4G y CPU 4×; Playwright con throttling para los flujos críticos. El build falla si se rompe el presupuesto | 1 |
 
 ### 19.4 Presupuestos de rendimiento (punto de partida [REC], ajustables)

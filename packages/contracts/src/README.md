@@ -2,6 +2,7 @@
 
 | Archivo o subcarpeta | Propósito |
 |---|---|
+| `datadian-database.ts` | Convenciones de base de datos de DataDian: catálogo único de `SQLSTATE` `DD0xx` y actor de sistema `SYSTEM_ACTOR_TELCO`. |
 | `index.ts` | Punto de entrada de las exportaciones del paquete. |
 | `modules.ts` | Catálogo de módulos funcionales. |
 | `navigation.ts` | Contratos de navegación y estructura de menús. |

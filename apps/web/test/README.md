@@ -6,6 +6,7 @@
 | `render-with-router.tsx` | Ayudante para renderizar componentes dentro del contexto de rutas. |
 | `auth-otp.test.tsx` | Verifica la interfaz de acceso mediante código de un solo uso. |
 | `command-search.test.tsx` | Comprueba la búsqueda rápida del shell. |
+| `datadian.test.tsx` | Verifica el tablero de DataDian: cifras, aprobar, borrador, rechazo con motivo, conexión con Odoo, permisos y el detalle de la factura. |
 | `format-co.test.ts` | Comprueba los formateadores regionales colombianos. |
 | `guards.test.ts` | Comprueba las reglas de acceso y redirección de rutas. |
 | `new-organization.test.tsx` | Verifica registrar otra organización: guardas de `/organizaciones/nueva` y `/onboarding`, menú de usuario y formulario. |

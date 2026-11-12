@@ -8,7 +8,10 @@ import { appSchema } from './app-schema.js';
 import { createdAt, id, nullableTimestamp, oneOf, updatedAt } from './columns.js';
 import { organizations } from './organizations.js';
 
-/** Una carga del listado de facturas recibidas que exporta la DIAN (DataDian, etapa 2). */
+/**
+ * Lote con el que ingresan facturas recibidas a DataDian. Se adapta en la Etapa 5
+ * (docs/modules/documents/ARQUITECTURA_DATADIAN_TELCO.md).
+ */
 export const receivedDocumentImports = appSchema.table(
   'received_document_imports',
   {
@@ -32,8 +35,8 @@ export const receivedDocumentImports = appSchema.table(
 );
 
 /**
- * Factura recibida. Los 18 campos del listado de la DIAN se guardan tal cual y no se modifican:
- * app_user solo puede actualizar las columnas de la decisión interna (ver la migración).
+ * Factura recibida. Los datos de la DIAN se guardan tal cual y no se modifican: app_user solo puede
+ * actualizar las columnas de la decisión interna, del PDF y del envío a Odoo (ver las migraciones).
  * El identificador de negocio es el CUFE, único por organización.
  */
 export const receivedDocuments = appSchema.table(
@@ -45,7 +48,7 @@ export const receivedDocuments = appSchema.table(
       .references(() => organizations.id, { onDelete: 'cascade' }),
     importId: uuid('import_id').notNull(),
 
-    // Campos del listado de la DIAN (docs/etapas/ETAPA_2_DATADIAN.md §1.1).
+    // Datos de la factura según la DIAN.
     documentType: text('document_type'),
     cufe: text('cufe').notNull(),
     folio: text('folio'),
@@ -73,7 +76,7 @@ export const receivedDocuments = appSchema.table(
     decisionReason: text('decision_reason'),
     rejectionCode: text('rejection_code', { enum: REJECTION_CODES }),
 
-    // PDF de la DIAN ya abierto con el NIT, en S3.
+    // PDF de la factura en S3 (opcional).
     pdfObjectKey: text('pdf_object_key'),
     pdfFileName: text('pdf_file_name'),
     pdfSha256: text('pdf_sha256'),

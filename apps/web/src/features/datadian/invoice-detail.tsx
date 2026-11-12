@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { DianListingFields, ReceivedDocument } from '@telcobras/contracts';
+import type { ReceivedDocument, ReceivedDocumentFields } from '@telcobras/contracts';
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@telcobras/ui';
 import { FileText } from 'lucide-react';
 import { t } from '@/i18n/es-CO';
@@ -9,14 +9,15 @@ import { DocumentStatus, OdooStatus } from './document-status';
 
 const text = t.datadian.detail;
 
-// Orden de los 18 campos del listado de la DIAN (docs/etapas/ETAPA_2_DATADIAN.md §1.1).
-const DIAN_FIELDS: readonly (keyof DianListingFields)[] = [
+// Orden en que se muestran los datos de la factura.
+const DIAN_FIELDS: readonly (keyof ReceivedDocumentFields)[] = [
   'documentType',
   'cufe',
   'folio',
   'prefix',
   'paymentMethod',
   'issueDate',
+  'receivedAt',
   'issuerNit',
   'issuerName',
   'iva',
@@ -31,13 +32,16 @@ const DIAN_FIELDS: readonly (keyof DianListingFields)[] = [
   'observations',
 ];
 
-const AMOUNTS = new Set<keyof DianListingFields>(['iva', 'inc', 'total']);
+const AMOUNTS = new Set<keyof ReceivedDocumentFields>(['iva', 'inc', 'total']);
 
-function fieldValue(document: ReceivedDocument, field: keyof DianListingFields): string {
+function fieldValue(document: ReceivedDocument, field: keyof ReceivedDocumentFields): string {
   const value = document[field];
   if (value === null || value === '') return '—';
   if (AMOUNTS.has(field)) return formatCop(Number(value));
   if (field === 'issueDate') return formatDate(`${value}T12:00:00-05:00`);
+  if (field === 'receivedAt') {
+    return new Date(value).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+  }
   return value;
 }
 

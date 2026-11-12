@@ -18,7 +18,6 @@ import {
   DataTable,
   EmptyState,
   KpiCard,
-  StatusBadge,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -27,7 +26,6 @@ import {
   CircleCheck,
   CircleX,
   Clock,
-  FileWarning,
   Inbox,
   PencilLine,
   RotateCw,
@@ -183,16 +181,6 @@ export function InvoicesPage() {
       cell: ({ row }) => row.original.costCenter ?? '—',
     }),
     column.display({
-      id: 'pdf',
-      header: text.table.pdf,
-      cell: ({ row }) =>
-        row.original.pdf ? (
-          <StatusBadge status="ok">{text.table.pdfReady}</StatusBadge>
-        ) : (
-          <StatusBadge status="warning">{text.table.pdfMissing}</StatusBadge>
-        ),
-    }),
-    column.display({
       id: 'status',
       header: text.table.status,
       cell: ({ row }) => <DocumentStatus document={row.original} />,
@@ -217,11 +205,7 @@ export function InvoicesPage() {
           );
         }
         if (!OPEN.has(document.status)) return null;
-        const approveBlocker = !document.pdf
-          ? text.actions.approveNeedsPdf
-          : !odooReady
-            ? text.actions.approveNeedsOdoo
-            : undefined;
+        const approveBlocker = odooReady ? undefined : text.actions.approveNeedsOdoo;
         return (
           <div className="flex gap-1.5">
             <Button
@@ -275,11 +259,6 @@ export function InvoicesPage() {
           <KpiCard title={text.kpis.approved} value={kpi(counts?.approved)} icon={CircleCheck} />
           <KpiCard title={text.kpis.rejected} value={kpi(counts?.rejected)} icon={CircleX} />
           <KpiCard
-            title={text.kpis.withoutPdf}
-            value={kpi(summary.data?.withoutPdf)}
-            icon={FileWarning}
-          />
-          <KpiCard
             title={text.kpis.odooFailed}
             value={kpi(summary.data?.odooFailed)}
             icon={TriangleAlert}
@@ -288,7 +267,7 @@ export function InvoicesPage() {
             title={text.kpis.pendingTotal}
             value={summary.data ? formatCop(Number(summary.data.pendingTotal)) : '—'}
             icon={Wallet}
-            className="col-span-2"
+            className="xl:col-span-3"
           />
         </section>
 

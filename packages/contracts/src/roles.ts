@@ -1,7 +1,7 @@
 import { PERMISSIONS, type Permission } from './permissions.js';
 
 // Roles semilla de cada organización (PDF §4.4). Son datos iniciales: cada organización los edita sin migraciones.
-// El Superadministrador Telcobras no es un rol de organización (etapa 5).
+// El Superadministrador Telcobras no es un rol de organización (Panel Global, etapa 12).
 export const SEED_ROLE_KEYS = [
   'owner',
   'manager',
@@ -51,7 +51,6 @@ export const SEED_ROLE_PERMISSIONS: Readonly<Record<SeedRoleKey, readonly Permis
   accountant: [
     'dashboard:view',
     'documents:view',
-    'documents:import',
     'documents:decide',
     'integrations:view',
     'analytics:view',

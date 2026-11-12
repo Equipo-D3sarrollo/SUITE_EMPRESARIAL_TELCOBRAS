@@ -79,7 +79,7 @@ if (!existsSync(ENV_FILE)) {
 
 const env = readEnv();
 const pgPort = env.POSTGRES_PORT || '5432';
-for (const key of ['DATABASE_URL', 'DATABASE_OWNER_URL']) {
+for (const key of ['DATABASE_URL', 'DATABASE_OWNER_URL', 'DATABASE_WORKER_URL']) {
   const port = env[key]?.match(/@[^:/]+:(\d+)\//)?.[1];
   if (port && port !== pgPort) {
     fail(`${key} usa el puerto ${port} pero POSTGRES_PORT es ${pgPort}. Iguálalos en .env.`);
@@ -100,12 +100,45 @@ step(`Infraestructura: PostgreSQL (:${pgPort}), Valkey, SeaweedFS, Mailpit`);
 if (!run('docker', [...COMPOSE, 'up', '-d', '--wait'])) {
   fail(
     `Compose no pudo levantar los servicios. Si el puerto ${pgPort} está ocupado (p. ej. por un ` +
-      'PostgreSQL de Windows), define POSTGRES_PORT=5433 en .env y ajusta el puerto de DATABASE_URL y DATABASE_OWNER_URL.',
+      'PostgreSQL de Windows), define POSTGRES_PORT=5433 en .env y ajusta el puerto de DATABASE_URL, ' +
+      'DATABASE_OWNER_URL y DATABASE_WORKER_URL.',
   );
 }
 ok('Servicios saludables');
 
 // --- 4. Base de datos ---
+// Rol de Telco: init.sql lo crea en volúmenes nuevos; en uno anterior lo agrega este script idempotente.
+// La migración 0010 falla si el rol no existe.
+step('Rol app_worker (idempotente)');
+if (!env.APP_WORKER_PASSWORD || !env.DATABASE_WORKER_URL) {
+  fail('Faltan APP_WORKER_PASSWORD y DATABASE_WORKER_URL en .env. Cópialas de .env.example.');
+}
+const workerRole = spawnSync(
+  'docker',
+  [
+    ...COMPOSE,
+    'exec',
+    '-T',
+    '-e',
+    `APP_WORKER_PASSWORD=${env.APP_WORKER_PASSWORD}`,
+    'postgres',
+    'psql',
+    '-U',
+    'postgres',
+    '-d',
+    'telcobras',
+    '-q',
+    '-f',
+    '-',
+  ],
+  {
+    cwd: ROOT,
+    input: readFileSync(join(ROOT, 'infra/compose/postgres/app-worker.sql')),
+    stdio: ['pipe', 'ignore', 'inherit'],
+  },
+);
+if (workerRole.status !== 0) fail('No se pudo crear o ajustar el rol app_worker.');
+ok('Rol app_worker listo');
 step('Migraciones');
 if (!run('pnpm', ['db:migrate'])) fail('Las migraciones fallaron.');
 step('Semillas (idempotentes)');

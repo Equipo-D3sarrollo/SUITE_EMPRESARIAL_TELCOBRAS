@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import {
   ConflictException,
   ForbiddenException,
@@ -13,14 +12,12 @@ import type {
   ReceivedDocument,
   ReceivedDocumentDecision,
   ReceivedDocumentHistoryEntry,
-  ReceivedDocumentImportSummary,
   ReceivedDocumentListQuery,
-  ReceivedDocumentPdfUpload,
   ReceivedDocumentStatus,
   ReceivedDocumentSummary,
 } from '@telcobras/contracts';
 import { RECEIVED_DOCUMENT_STATUSES } from '@telcobras/contracts';
-import { and, asc, count, eq, inArray, isNull, sql, sum } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, sql, sum } from 'drizzle-orm';
 import { assertPermission } from '../../auth/permissions.js';
 import { afterCursor, newestFirst, toCursorPage } from '../../common/pagination.js';
 import type { RequestActor } from '../../common/request-actor.js';
@@ -28,21 +25,12 @@ import { ENV } from '../../config/config.module.js';
 import type { Env } from '../../config/env.js';
 import type { Database } from '../../database/database.js';
 import { DB } from '../../database/db.module.js';
-import {
-  auditLogs,
-  organizations,
-  receivedDocumentImports,
-  receivedDocuments,
-} from '../../database/schema/index.js';
+import { auditLogs, receivedDocuments } from '../../database/schema/index.js';
 import { type TenantScope, type Transaction, withTenant } from '../../database/tenant.js';
-import { parseDianListing } from './dian-listing.parser.js';
-import { findCufes, nitPasswords, openDianPdf } from './dian-pdf.js';
 import { DocumentsSettingsService } from './documents-settings.service.js';
 import { OdooClient, OdooError } from './odoo.client.js';
 import { pushVendorBill } from './odoo-vendor-bill.js';
 
-const INSERT_BATCH = 500;
-const MAX_REJECTED_IN_RESPONSE = 100;
 const MAX_HISTORY_ENTRIES = 200;
 const RESOURCE_TYPE = 'received_document';
 /** Estados en los que la factura todavía espera decisión. */
@@ -51,206 +39,20 @@ const OPEN_STATUSES = ['imported', 'draft'] as const satisfies readonly Received
 type Row = typeof receivedDocuments.$inferSelect;
 
 /**
- * Facturas recibidas de DataDian: carga del listado de la DIAN y de los PDF, tablero, decisión
- * (borrador, aprobación con envío a Odoo o rechazo) e historial.
- * Los datos de la DIAN no se modifican después de importar; el identificador de negocio es el CUFE.
+ * Facturas recibidas de DataDian: tablero, decisión interna (borrador, aprobación con envío a Odoo
+ * o rechazo) e historial. Los datos de la DIAN no se modifican después de registrarse; el
+ * identificador de negocio es el CUFE.
  */
 @Injectable()
 export class ReceivedDocumentsService {
   constructor(
     @Inject(DB) private readonly db: Database,
     @Inject(S3Client) private readonly s3: S3Client,
-    @Inject(ENV) private readonly env: Pick<Env, 'S3_BUCKET' | 'QPDF_PATH'>,
+    @Inject(ENV) private readonly env: Pick<Env, 'S3_BUCKET'>,
     @Inject(DocumentsSettingsService) private readonly settings: DocumentsSettingsService,
   ) {}
 
-  /**
-   * Importa el listado. Un CUFE que ya existe en la organización no se duplica ni se sobrescribe:
-   * se cuenta como ya existente.
-   */
-  async importListing(
-    actor: RequestActor,
-    fileName: string,
-    file: Buffer,
-  ): Promise<ReceivedDocumentImportSummary> {
-    const scope = tenantScope(actor);
-    // El permiso se comprueba antes de leer el archivo: sin él no se gasta trabajo en analizarlo.
-    await withTenant(this.db, scope, (tx) =>
-      assertPermission(tx, actor.userId, 'documents:import'),
-    );
-    const listing = parseDianListing(file);
-    const fileSha256 = sha256(file);
-
-    return withTenant(this.db, scope, async (tx) => {
-      await assertPermission(tx, actor.userId, 'documents:import');
-      // Dos cargas simultáneas de la misma organización se serializan: los contadores quedan exactos.
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`received_documents:${scope.orgId}`}, 0))`,
-      );
-
-      const existing = new Set<string>();
-      for (const batch of chunks(listing.documents, INSERT_BATCH)) {
-        const rows = await tx
-          .select({ cufe: receivedDocuments.cufe })
-          .from(receivedDocuments)
-          .where(
-            inArray(
-              receivedDocuments.cufe,
-              batch.map(({ cufe }) => cufe),
-            ),
-          );
-        for (const { cufe } of rows) existing.add(cufe);
-      }
-      const fresh = listing.documents.filter(({ cufe }) => !existing.has(cufe));
-
-      const [imported] = await tx
-        .insert(receivedDocumentImports)
-        .values({
-          organizationId: scope.orgId,
-          fileName,
-          fileSha256,
-          totalRows: listing.totalRows,
-          createdCount: fresh.length,
-          existingCount: existing.size,
-          rejectedCount: listing.rejected.length,
-          importedBy: actor.userId,
-        })
-        .returning({ id: receivedDocumentImports.id });
-      if (!imported) throw new Error('Import insert returned no row');
-
-      for (const batch of chunks(fresh, INSERT_BATCH)) {
-        const created = await tx
-          .insert(receivedDocuments)
-          .values(
-            batch.map((document) => ({
-              ...document,
-              receivedAt: document.receivedAt ? new Date(document.receivedAt) : null,
-              organizationId: scope.orgId,
-              importId: imported.id,
-            })),
-          )
-          .returning({ id: receivedDocuments.id });
-        await tx.insert(auditLogs).values(
-          created.map(({ id }) => ({
-            organizationId: scope.orgId,
-            actorUserId: actor.userId,
-            action: 'received_document.import',
-            resourceType: RESOURCE_TYPE,
-            resourceId: id,
-            result: 'success' as const,
-            metadata: { importId: imported.id, fileName },
-          })),
-        );
-      }
-
-      await tx.insert(auditLogs).values({
-        organizationId: scope.orgId,
-        actorUserId: actor.userId,
-        action: 'received_document_import.create',
-        resourceType: 'received_document_import',
-        resourceId: imported.id,
-        result: 'success',
-        metadata: {
-          fileName,
-          fileSha256,
-          totalRows: listing.totalRows,
-          created: fresh.length,
-          alreadyExisting: existing.size,
-          rejected: listing.rejected.length,
-        },
-      });
-
-      return {
-        importId: imported.id,
-        fileName,
-        totalRows: listing.totalRows,
-        created: fresh.length,
-        alreadyExisting: existing.size,
-        rejected: listing.rejected.slice(0, MAX_REJECTED_IN_RESPONSE),
-      };
-    });
-  }
-
-  /**
-   * Carga el PDF de la DIAN: lo abre con el NIT de la organización, lee el CUFE impreso y lo asocia
-   * con su factura. Se guarda la copia sin clave, que es la que se envía a Odoo.
-   */
-  async uploadPdf(
-    actor: RequestActor,
-    fileName: string,
-    file: Buffer,
-  ): Promise<ReceivedDocumentPdfUpload> {
-    const scope = tenantScope(actor);
-    const nit = await withTenant(this.db, scope, async (tx) => {
-      await assertPermission(tx, actor.userId, 'documents:import');
-      const [organization] = await tx
-        .select({ nit: organizations.nit })
-        .from(organizations)
-        .where(eq(organizations.id, scope.orgId))
-        .limit(1);
-      if (!organization) throw new NotFoundException('Organization not found');
-      return organization.nit;
-    });
-
-    const opened = await openDianPdf(file, nitPasswords(nit), this.env.QPDF_PATH);
-    const cufes = await findCufes(opened);
-    if (cufes.length === 0) {
-      throw new UnprocessableEntityException('No se encontró un CUFE en el PDF');
-    }
-
-    return withTenant(this.db, scope, async (tx) => {
-      const matches = await tx
-        .select({
-          id: receivedDocuments.id,
-          cufe: receivedDocuments.cufe,
-          status: receivedDocuments.status,
-        })
-        .from(receivedDocuments)
-        .where(inArray(receivedDocuments.cufe, cufes));
-      const [document] = matches;
-      if (!document) {
-        throw new UnprocessableEntityException(
-          'El PDF no corresponde a ninguna factura cargada. Importe primero el listado de la DIAN',
-        );
-      }
-      if (matches.length > 1) {
-        throw new UnprocessableEntityException('El PDF trae el CUFE de más de una factura');
-      }
-      if (document.status === 'approved' || document.status === 'rejected') {
-        throw new ConflictException(`Document was already ${document.status}`);
-      }
-
-      const objectKey = `organizations/${scope.orgId}/datadian/received/${document.id}.pdf`;
-      await this.s3.send(
-        new PutObjectCommand({
-          Bucket: this.env.S3_BUCKET,
-          Key: objectKey,
-          Body: opened,
-          ContentType: 'application/pdf',
-        }),
-      );
-      const pdfSha256 = sha256(opened);
-      await tx
-        .update(receivedDocuments)
-        .set({
-          pdfObjectKey: objectKey,
-          pdfFileName: fileName,
-          pdfSha256,
-          pdfSizeBytes: opened.length,
-          pdfUploadedBy: actor.userId,
-          pdfUploadedAt: new Date(),
-        })
-        .where(eq(receivedDocuments.id, document.id));
-      await this.audit(tx, actor, scope, 'received_document.pdf_upload', document.id, {
-        fileName,
-        sha256: pdfSha256,
-        sizeBytes: opened.length,
-      });
-      return { documentId: document.id, cufe: document.cufe, fileName, sizeBytes: opened.length };
-    });
-  }
-
-  /** PDF ya abierto de una factura. */
+  /** PDF guardado de una factura. */
   async getPdf(actor: RequestActor, id: string): Promise<{ fileName: string; content: Buffer }> {
     const document = await withTenant(this.db, tenantScope(actor), async (tx) => {
       await assertPermission(tx, actor.userId, 'documents:view');
@@ -264,7 +66,7 @@ export class ReceivedDocumentsService {
 
   async list(
     actor: RequestActor,
-    { cursor, limit, status, importId }: ReceivedDocumentListQuery,
+    { cursor, limit, status }: ReceivedDocumentListQuery,
   ): Promise<CursorPage<ReceivedDocument>> {
     return withTenant(this.db, tenantScope(actor), async (tx) => {
       await assertPermission(tx, actor.userId, 'documents:view');
@@ -274,7 +76,6 @@ export class ReceivedDocumentsService {
         .where(
           and(
             status ? eq(receivedDocuments.status, status) : undefined,
-            importId ? eq(receivedDocuments.importId, importId) : undefined,
             afterCursor(receivedDocuments, cursor),
           ),
         )
@@ -297,15 +98,6 @@ export class ReceivedDocumentsService {
         .select({ amount: sum(receivedDocuments.total) })
         .from(receivedDocuments)
         .where(inArray(receivedDocuments.status, OPEN_STATUSES));
-      const [withoutPdf] = await tx
-        .select({ total: count() })
-        .from(receivedDocuments)
-        .where(
-          and(
-            inArray(receivedDocuments.status, OPEN_STATUSES),
-            isNull(receivedDocuments.pdfObjectKey),
-          ),
-        );
       const [odooFailed] = await tx
         .select({ total: count() })
         .from(receivedDocuments)
@@ -319,7 +111,6 @@ export class ReceivedDocumentsService {
       ) as ReceivedDocumentSummary['byStatus'];
       return {
         byStatus,
-        withoutPdf: withoutPdf?.total ?? 0,
         odooFailed: odooFailed?.total ?? 0,
         pendingTotal: Number(open?.amount ?? 0).toFixed(2),
       };
@@ -336,7 +127,7 @@ export class ReceivedDocumentsService {
   /**
    * Decide sobre una factura pendiente o en borrador:
    * - draft: queda guardada para aprobarla después;
-   * - approved: exige el PDF y la conexión con Odoo, y se envía a Odoo como borrador de factura de proveedor;
+   * - approved: exige la conexión con Odoo y se envía a Odoo como borrador de factura de proveedor;
    * - rejected: exige motivo y es definitiva.
    */
   async decide(
@@ -352,17 +143,10 @@ export class ReceivedDocumentsService {
 
       if (decision === 'approved') {
         const current = await this.findOrThrow(tx, id);
-        if (allowedFrom.includes(current.status)) {
-          if (!current.pdfObjectKey) {
-            throw new UnprocessableEntityException(
-              'Cargue el PDF de la factura antes de aprobarla',
-            );
-          }
-          if (!(await this.settings.hasOdooConnection(tx))) {
-            throw new UnprocessableEntityException(
-              'Configure la conexión con Odoo antes de aprobar facturas',
-            );
-          }
+        if (allowedFrom.includes(current.status) && !(await this.settings.hasOdooConnection(tx))) {
+          throw new UnprocessableEntityException(
+            'Configure la conexión con Odoo antes de aprobar facturas',
+          );
         }
       }
 
@@ -454,13 +238,15 @@ export class ReceivedDocumentsService {
       try {
         const config = await this.settings.odooConfig(tx);
         if (!config) throw new OdooError('No hay conexión con Odoo configurada', null);
-        if (!document.pdfObjectKey || !document.pdfFileName) {
-          throw new OdooError('La factura no tiene PDF', null);
-        }
-        const result = await pushVendorBill(new OdooClient(config), document, {
-          fileName: document.pdfFileName,
-          content: await this.readPdf(document.pdfObjectKey),
-        });
+        // El PDF es opcional: si la factura lo tiene guardado, se adjunta en Odoo.
+        const pdf =
+          document.pdfObjectKey && document.pdfFileName
+            ? {
+                fileName: document.pdfFileName,
+                content: await this.readPdf(document.pdfObjectKey),
+              }
+            : null;
+        const result = await pushVendorBill(new OdooClient(config), document, pdf);
         const [sent] = await tx
           .update(receivedDocuments)
           .set({
@@ -593,14 +379,4 @@ function toContract(row: Row): ReceivedDocument {
       : null,
     createdAt: row.createdAt.toISOString(),
   };
-}
-
-const sha256 = (content: Buffer) => createHash('sha256').update(content).digest('hex');
-
-function chunks<T>(items: readonly T[], size: number): T[][] {
-  const result: T[][] = [];
-  for (let start = 0; start < items.length; start += size) {
-    result.push(items.slice(start, start + size));
-  }
-  return result;
 }

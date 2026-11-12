@@ -55,9 +55,8 @@ export const NAVIGATION = [
     icon: 'file-text',
     permission: 'documents:view',
     submodules: [
-      // DataDian (ADR-013): tablero de facturas recibidas, carga de documentos de la DIAN y configuración.
+      // DataDian: tablero de facturas recibidas y configuración.
       { id: 'invoices', permission: 'documents:view' },
-      { id: 'dian', permission: 'documents:import' },
       { id: 'settings', permission: 'documents:configure' },
     ],
   },

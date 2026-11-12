@@ -18,20 +18,21 @@ export interface VendorBillSource {
 
 export interface VendorBillResult {
   moveId: number;
-  attachmentId: number;
+  /** Adjunto del PDF en Odoo; null si la factura no tiene PDF guardado. */
+  attachmentId: number | null;
   /** El proveedor no existe en Odoo con ese NIT: la factura queda sin proveedor para completarla allá. */
   partnerFound: boolean;
 }
 
 /**
- * Crea en Odoo la factura de proveedor en borrador y le adjunta el PDF, con la misma lógica del
- * escenario de Make: account.move y luego ir.attachment con res_model "account.move".
+ * Crea en Odoo la factura de proveedor en borrador y, si la factura tiene PDF, se lo adjunta, con la
+ * misma lógica del escenario de Make: account.move y luego ir.attachment con res_model "account.move".
  * Es idempotente: si un intento anterior ya creó la factura o el adjunto, los reutiliza.
  */
 export async function pushVendorBill(
   odoo: OdooClient,
   source: VendorBillSource,
-  pdf: { fileName: string; content: Buffer },
+  pdf: { fileName: string; content: Buffer } | null,
 ): Promise<VendorBillResult> {
   const partnerId = await findPartner(odoo, source.issuerNit);
 
@@ -48,6 +49,8 @@ export async function pushVendorBill(
       })
     )[0] ??
     (await createVendorBill(odoo, source, partnerId));
+
+  if (!pdf) return { moveId, attachmentId: null, partnerFound: partnerId !== null };
 
   const [existingAttachment] = await odoo.call<number[]>('ir.attachment', 'search', {
     domain: [

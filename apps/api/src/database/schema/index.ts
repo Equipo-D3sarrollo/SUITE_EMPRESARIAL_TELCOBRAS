@@ -3,7 +3,7 @@
 // appSchema no se exporta a propósito: así drizzle-kit no genera un CREATE SCHEMA "app" que ya existe.
 export * from './audit-logs.js';
 export * from './auth.js';
-export * from './dian-extraction.js';
+export * from './datadian-calendar.js';
 export * from './invitations.js';
 export * from './memberships.js';
 export * from './odoo-connections.js';

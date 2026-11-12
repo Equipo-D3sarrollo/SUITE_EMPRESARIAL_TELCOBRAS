@@ -2,11 +2,10 @@ import { z } from 'zod';
 import { cursorPageQuerySchema } from './pagination.js';
 
 /**
- * Factura recibida de DataDian (módulo `documents`, docs/etapas/ETAPA_2_DATADIAN.md §1.1).
- * Trece campos vienen del listado que exporta la DIAN y no se modifican en la suite (DD-12); los
- * cinco últimos (centro de costos, tipo, estado del acuse, factura y observaciones) los agrega
- * Telcobras en su hoja de trabajo y solo llegan cuando se importa esa hoja a mano.
- * El identificador de negocio es el CUFE.
+ * Factura recibida de DataDian (módulo `documents`). Los datos de la DIAN no se modifican en la
+ * suite; los cinco últimos campos (centro de costos, tipo, estado del acuse, factura y
+ * observaciones) son de Telcobras. El identificador de negocio es el CUFE. El modelo se adapta en la
+ * Etapa 5 (docs/modules/documents/ARQUITECTURA_DATADIAN_TELCO.md).
  */
 
 /** CUFE o CUDE: SHA-384 en hexadecimal, 96 caracteres. Se guarda en minúsculas. */
@@ -18,7 +17,7 @@ export const cufeSchema = z
 
 /**
  * Estado interno de la factura en la suite. No es un evento ante la DIAN.
- * imported: recién cargada, pendiente de revisión. draft: revisada y guardada para aprobar después.
+ * imported: recién registrada, pendiente de revisión. draft: revisada y guardada para aprobar después.
  * approved: aprobada y enviada (o en envío) a Odoo. rejected: rechazada con motivo.
  */
 export const RECEIVED_DOCUMENT_STATUSES = ['imported', 'draft', 'approved', 'rejected'] as const;
@@ -27,7 +26,7 @@ export type ReceivedDocumentStatus = (typeof RECEIVED_DOCUMENT_STATUSES)[number]
 /**
  * Motivos de reclamo de la factura electrónica (evento RADIAN 031), con los códigos del anexo técnico.
  * Catálogo tomado de APIDIAN (tabla type_rejections, corregida en septiembre de 2026 porque la DIAN
- * respondía AAH10). Se usa al rechazar una factura y servirá para enviar el reclamo en la fase C.
+ * respondía AAH10). Hoy se usa en el rechazo interno; el envío del evento a la DIAN es de la Etapa 6.
  */
 export const REJECTION_CODES = ['01', '02', '03', '04'] as const;
 export type RejectionCode = (typeof REJECTION_CODES)[number];
@@ -39,8 +38,8 @@ export type OdooSyncStatus = (typeof ODOO_SYNC_STATUSES)[number];
 /** Importes como texto decimal ("77901.00"): no pasan por coma flotante. */
 const amount = z.string().regex(/^-?\d+(\.\d{1,2})?$/);
 
-/** Los campos del listado, con el nombre de la columna de origen. */
-export const dianListingFieldsSchema = z.object({
+/** Datos de la factura recibida, con su nombre visible. */
+export const receivedDocumentFieldsSchema = z.object({
   /** Tipo de documento */
   documentType: z.string().nullable(),
   /** CUFE/CUDE */
@@ -69,7 +68,7 @@ export const dianListingFieldsSchema = z.object({
   dianStatus: z.string().nullable(),
   /** Grupo */
   dianGroup: z.string().nullable(),
-  // Columnas de la hoja de trabajo de Telcobras (no vienen en la exportación de la DIAN).
+  // Datos de Telcobras (no vienen de la DIAN).
   /** Centro de costos */
   costCenter: z.string().nullable(),
   /** TIPO */
@@ -82,9 +81,9 @@ export const dianListingFieldsSchema = z.object({
   observations: z.string().nullable(),
 });
 
-export type DianListingFields = z.infer<typeof dianListingFieldsSchema>;
+export type ReceivedDocumentFields = z.infer<typeof receivedDocumentFieldsSchema>;
 
-export const receivedDocumentSchema = dianListingFieldsSchema.extend({
+export const receivedDocumentSchema = receivedDocumentFieldsSchema.extend({
   id: z.uuid(),
   importId: z.uuid(),
   status: z.enum(RECEIVED_DOCUMENT_STATUSES),
@@ -93,7 +92,7 @@ export const receivedDocumentSchema = dianListingFieldsSchema.extend({
   decisionReason: z.string().nullable(),
   /** Motivo de reclamo DIAN del rechazo (01 a 04). */
   rejectionCode: z.enum(REJECTION_CODES).nullable(),
-  /** PDF de la DIAN ya abierto (sin clave). */
+  /** PDF de la factura guardado en la suite, si lo hay. */
   pdf: z
     .object({ fileName: z.string(), uploadedAt: z.iso.datetime(), sizeBytes: z.number().int() })
     .nullable(),
@@ -112,8 +111,6 @@ export type ReceivedDocument = z.infer<typeof receivedDocumentSchema>;
 
 export const receivedDocumentListQuerySchema = cursorPageQuerySchema.extend({
   status: z.enum(RECEIVED_DOCUMENT_STATUSES).optional(),
-  /** Solo las facturas de una importación (por ejemplo, las de una extracción de la DIAN). */
-  importId: z.uuid().optional(),
 });
 
 export type ReceivedDocumentListQuery = z.infer<typeof receivedDocumentListQuerySchema>;
@@ -139,18 +136,6 @@ export const receivedDocumentDecisionSchema = z
 
 export type ReceivedDocumentDecision = z.infer<typeof receivedDocumentDecisionSchema>;
 
-/** Resultado de importar un listado: nada se sobrescribe; lo que ya existía solo se cuenta. */
-export const receivedDocumentImportSummarySchema = z.object({
-  importId: z.uuid(),
-  fileName: z.string(),
-  totalRows: z.number().int(),
-  created: z.number().int(),
-  alreadyExisting: z.number().int(),
-  rejected: z.array(z.object({ row: z.number().int(), reason: z.string() })),
-});
-
-export type ReceivedDocumentImportSummary = z.infer<typeof receivedDocumentImportSummarySchema>;
-
 /** Un paso del historial de una factura (auditoría de negocio). */
 export const receivedDocumentHistoryEntrySchema = z.object({
   id: z.uuid(),
@@ -163,20 +148,9 @@ export const receivedDocumentHistoryEntrySchema = z.object({
 
 export type ReceivedDocumentHistoryEntry = z.infer<typeof receivedDocumentHistoryEntrySchema>;
 
-/** Resultado de cargar un PDF de la DIAN: a qué factura quedó asociado por su CUFE. */
-export const receivedDocumentPdfUploadSchema = z.object({
-  documentId: z.uuid(),
-  cufe: cufeSchema,
-  fileName: z.string(),
-  sizeBytes: z.number().int(),
-});
-
-export type ReceivedDocumentPdfUpload = z.infer<typeof receivedDocumentPdfUploadSchema>;
-
 /** Cifras del tablero de DataDian. */
 export const receivedDocumentSummarySchema = z.object({
   byStatus: z.record(z.enum(RECEIVED_DOCUMENT_STATUSES), z.number().int()),
-  withoutPdf: z.number().int(),
   odooFailed: z.number().int(),
   /** Suma del Total de las facturas pendientes y en borrador, como texto decimal. */
   pendingTotal: z.string(),
