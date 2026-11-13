@@ -144,6 +144,18 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 
 ## Registro de intervenciones
 
+### 2026-11-13 (UTC-05:00) — Claude Code (orquestador): pruebas de DataDian y presupuesto de carga
+
+- **Pruebas de DataDian, ejecutadas por el orquestador:**
+  - API (`vitest run test/datadian test/documents test/xlsx-reader`): 10 archivos, 98 de 99 en la primera corrida. La matriz de secuencia de `datadian-radian-events.test.ts` superó el timeout de 5 s porque corría al mismo tiempo que las pruebas web y el servidor de desarrollo. Ese archivo, corrido solo, pasa 9 de 9.
+  - Contracts (`radian-actions`): 16 de 16.
+  - Web (`datadian` y `sidebar`): 14 de 14.
+- **Corrección:** la matriz de `apps/api/test/datadian-radian-events.test.ts` ahora tiene un timeout propio de 30 s, con un comentario que explica el motivo. Se volvió a correr: 9 de 9.
+- **`pnpm check:bundle`:** cumple. El JS inicial pesa 134,1 kB con gzip (el máximo es 200); el chunk `es-CO` pesa 23,8 kB con gzip (no 68 kB). Las fuentes suman 23,6 kB (el máximo es 120). Este pendiente queda cerrado.
+- **Grafo:** `graphify update .` dejó 4938 nodos, 8691 aristas y 523 comunidades. Los documentos de hoy no entraron a la parte semántica; para eso hay que correr `/graphify --update`, y los 79 documentos que ya se extrajeron están en caché.
+- **Siguiente paso exacto:** sin cambios. Primero el commit, que espera el visto bueno del usuario. Después, la Etapa 4.1 y la verificación de PV-1 a PV-3, PV-5 y PV-11.
+- **Git:** sin commits.
+
 ### 2026-11-13 (UTC-05:00) — Claude Code (orquestador): interfaz levantada y corte de cobertura UBL y criptografía
 
 - **Interfaz:** servidor de desarrollo con datos simulados (`$env:VITE_DATADIAN_MOCKS='1'; pnpm --filter @telcobras/web dev`) en `http://localhost:5173/app/documents/invoices`. Se comprobó que responden el índice (200) y `mockServiceWorker.js` (200). El usuario revisó la interfaz y la aprobó.

@@ -138,7 +138,8 @@ describe('secuencia de eventos (2.6)', () => {
         expect(result, `${code} con [${accepted.join(', ')}]`).toBe(expected(code, accepted));
       }
     }
-  });
+    // Recorre todas las combinaciones contra la BD: ~5 s en local, más bajo carga.
+  }, 30_000);
 
   it('dos 030 pending para la misma factura fallan por la clave única', async () => {
     const doc = await invoice();

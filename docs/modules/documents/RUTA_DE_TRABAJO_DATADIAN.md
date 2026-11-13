@@ -28,6 +28,8 @@ Sin fechas: el PDF §29.2 prohíbe inventar cronogramas. Cada subetapa termina c
 - Pruebas: API 19 archivos y 147 de 147 (en secuencia), contracts 33 de 33, web 58 de 58.
 - El build de la web compila.
 - `drizzle-kit check` no encuentra diferencias.
+- `pnpm check:bundle` cumple: JS inicial de 134,1 kB con gzip (el máximo es 200).
+- La matriz de secuencia RADIAN tiene un timeout de 30 s porque bajo carga supera los 5 s por defecto.
 - Las desviaciones frente al diseño están en [ARQUITECTURA_DB_DATADIAN.md](ARQUITECTURA_DB_DATADIAN.md) §10.3.
 
 Para ver la interfaz: `$env:VITE_DATADIAN_MOCKS='1'; pnpm --filter @telcobras/web dev` y abrir `http://localhost:5173/app/documents/invoices`.
