@@ -18,5 +18,8 @@ export default defineConfig({
     environment: 'node',
     globalSetup: ['test/global-setup.ts'],
     env: { LOG_LEVEL: 'silent' },
+    // Los archivos comparten la misma base de PostgreSQL: en paralelo, documents.test.ts y otros superan
+    // a veces el límite de 5 s. Se corren uno tras otro (ver test/README.md).
+    fileParallelism: false,
   },
 });

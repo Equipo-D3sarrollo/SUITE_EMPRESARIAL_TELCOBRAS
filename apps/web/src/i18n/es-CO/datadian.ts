@@ -1,0 +1,758 @@
+import type {
+  CertificateCheck,
+  CertificateCheckStatus,
+  CertificateExpiryState,
+  DatadianErrorCode,
+  DeadlineState,
+  DianCertificateStatus,
+  DianReadinessItem,
+  DianSyncChannel,
+  DianSyncStatus,
+  DianSyncTrigger,
+  DisabledReason,
+  InvoiceValidationStatus,
+  RadianActionWarning,
+  RadianEventCode,
+  RadianEventStatus,
+  RadianStatus,
+  TelcoJobKind,
+  TelcoJobStatus,
+} from '@telcobras/contracts';
+
+/**
+ * Textos de DataDian (módulo 04), separados de es-CO.ts por tamaño (§8 de
+ * ARQUITECTURA_FRONTEND_DATADIAN.md). Se leen como `t.datadian.*`. Los tipos `Record<Enumerado, …>`
+ * hacen que un valor nuevo en contracts no compile hasta tener su texto.
+ */
+
+const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
+
+const radianStatuses: Record<RadianStatus, string> = {
+  none: 'Sin acuse',
+  acknowledged: 'Acuse registrado (030)',
+  goods_received: 'Bien recibido (032)',
+  claimed: 'Reclamada (031)',
+  accepted_express: 'Aceptada (033)',
+  accepted_tacit: 'Aceptación tácita (034)',
+};
+
+const eventCodes: Record<RadianEventCode, string> = {
+  '030': 'Acuse de recibo de la factura',
+  '031': 'Reclamo de la factura',
+  '032': 'Recibo del bien o prestación del servicio',
+  '033': 'Aceptación expresa',
+  '034': 'Aceptación tácita',
+};
+
+const eventButtons: Record<Exclude<RadianEventCode, '034'>, string> = {
+  '030': 'Acuse de recibo (030)',
+  '032': 'Recibo del bien o servicio (032)',
+  '033': 'Aceptación expresa (033)',
+  '031': 'Reclamo (031)',
+};
+
+const eventStatuses: Record<RadianEventStatus | 'sending', string> = {
+  pending: 'En cola',
+  sending: 'Enviando',
+  accepted: 'Registrado por la DIAN',
+  rejected: 'Rechazado por la DIAN',
+  failed: 'No llegó a la DIAN',
+};
+
+const validationStatuses: Record<InvoiceValidationStatus, string> = {
+  pending_xml: 'Sin XML',
+  pending_validation: 'XML por validar',
+  valid: 'XML validado',
+  invalid: 'XML inválido',
+};
+
+const deadlineStates: Record<DeadlineState, string> = {
+  none: 'Sin plazo',
+  open: 'Plazo abierto',
+  due_soon: 'Vence en menos de 24 h',
+  expired: 'Plazo vencido',
+};
+
+const channels: Record<DianSyncChannel, string> = {
+  rpa: 'Portal de la DIAN (RPA)',
+  imap: 'Buzón de correo (IMAP)',
+  manual: 'Carga manual',
+};
+
+const disabledReasons: Record<DisabledReason, string> = {
+  no_permission: 'Su rol no puede registrar eventos.',
+  event_in_progress: 'Hay un evento en curso; espere la respuesta de la DIAN.',
+  xml_not_valid: 'La factura aún no tiene el XML oficial validado.',
+  environment_mismatch: 'La factura es de otro ambiente de la DIAN.',
+  certificate_missing: 'Falta un certificado digital válido y activo (Configuración).',
+  software_missing: 'Falta el SoftwareID y el PIN para enviar eventos (Configuración).',
+  deadline_expired: 'Venció el plazo del reclamo.',
+  cash_invoice: 'Factura de contado: los eventos están bloqueados para este tipo de factura.',
+  terminal: 'La factura ya no admite eventos.',
+  requires_previous: 'Falta un evento previo registrado por la DIAN.',
+  blocked_by_other: 'Otro evento registrado lo impide.',
+};
+
+const warnings: Record<RadianActionWarning, string> = {
+  cash_invoice: 'Factura de contado: los eventos RADIAN pueden no ser obligatorios.',
+  rule_unverified: 'Regla pendiente de verificar con la norma.',
+  deadline_due_soon: 'El plazo vence en menos de 24 horas: decida aceptar (033) o reclamar (031).',
+  deadline_expired: 'Venció el plazo: la DIAN puede rechazar el reclamo.',
+};
+
+const errors: Record<DatadianErrorCode, string> = {
+  DD001: 'Falta un evento previo registrado por la DIAN. Se actualizó la factura.',
+  DD002: 'Otro evento registrado lo impide (por ejemplo, la aceptación tácita 034 del proveedor).',
+  DD003: 'La factura ya no admite eventos.',
+  DD007: 'La factura aún no tiene el XML oficial validado.',
+  DD008: 'La factura es de otro ambiente de la DIAN.',
+  DD009: 'Venció el plazo del reclamo.',
+  DD010: 'El certificado no es válido o es de otro NIT.',
+  API_EVENT_IN_PROGRESS: 'Ya hay un evento igual en curso. Se actualizó la factura.',
+  API_SOFTWARE_MISSING: 'Falta el SoftwareID y el PIN para enviar eventos.',
+  API_PRODUCTION_NOT_READY: 'La lista de chequeo de habilitación no está completa.',
+  API_NIT_TAKEN: 'Este NIT ya está registrado en la suite.',
+  API_DUPLICATE_CERTIFICATE: 'Este certificado ya se había subido.',
+  API_CERTIFICATE_ACTIVE: 'No se puede retirar el certificado activo.',
+  API_BAD_FILE: 'El archivo no es válido.',
+  API_DUPLICATE_MAILBOX: 'Ese buzón ya está configurado.',
+  API_SYNC_RUNNING: 'Ya hay una sincronización en curso para este canal.',
+  API_CHANNEL_DISABLED: 'El canal está desactivado en Configuración.',
+  API_CERTIFICATE_MISSING: 'Falta un certificado activo para sincronizar.',
+  API_JOB_NOT_DEAD: 'El trabajo ya no está detenido.',
+  API_JOB_NOT_QUEUED: 'El trabajo ya no está en cola.',
+  API_XML_MISSING: 'La factura todavía no tiene XML.',
+};
+
+const certificateStatuses: Record<DianCertificateStatus, string> = {
+  pending_validation: 'Validando',
+  valid: 'Válido',
+  invalid: 'Inválido',
+  retired: 'Retirado',
+};
+
+const certificateChecks: Record<CertificateCheck, string> = {
+  format: 'El archivo es un PKCS#12 y la contraseña lo abre',
+  validity: 'Vigente hoy (desde ≤ hoy < hasta)',
+  key_usage_critical: 'KeyUsage marcado como crítico',
+  key_usage_purposes: 'Firma digital y no repudio',
+  signature_algorithm: 'Firma SHA-2 con RSA (sha256, sha384 o sha512)',
+  chain: 'Cadena de certificación completa',
+  nit_match: 'El NIT del certificado es el de la organización',
+};
+
+const checkStatuses: Record<CertificateCheckStatus, string> = {
+  pending: 'Pendiente',
+  ok: 'Correcto',
+  failed: 'Falló',
+};
+
+const expiryStates: Record<CertificateExpiryState, string> = {
+  ok: 'Vigente',
+  due_soon: 'Vence pronto',
+  expired: 'Vencido',
+};
+
+const readinessItems: Record<DianReadinessItem, string> = {
+  certificate_active: 'Certificado válido y activo',
+  xml_query_ok: 'GetXmlByDocumentKey respondió sin error en habilitación',
+  status_query_ok: 'GetStatusEvent respondió sin error en habilitación',
+  test_event_registered: 'Un 030 de prueba quedó registrado en habilitación',
+  portal_access: 'Acceso al portal de habilitación con certificado (si el RPA está activo)',
+};
+
+const syncStatuses: Record<DianSyncStatus, string> = {
+  queued: 'En cola',
+  running: 'En curso',
+  succeeded: 'Terminada',
+  partial: 'Parcial',
+  failed: 'Falló',
+};
+
+const syncTriggers: Record<DianSyncTrigger, string> = {
+  schedule: 'Programada',
+  user: 'Usuario',
+  system: 'Sistema',
+};
+
+const jobKinds: Record<TelcoJobKind, string> = {
+  rpa_sync: 'Sincronización RPA',
+  imap_sync: 'Lectura de buzón IMAP',
+  xml_fetch: 'Descarga de XML',
+  xml_ingest: 'Ingesta de XML',
+  radian_event_send: 'Envío de evento RADIAN',
+  radian_status_query: 'Consulta de estado RADIAN',
+  certificate_check: 'Validación de certificado',
+  odoo_push: 'Envío a Odoo',
+};
+
+const jobStatuses: Record<TelcoJobStatus, string> = {
+  queued: 'En cola',
+  running: 'En curso',
+  succeeded: 'Terminado',
+  dead: 'Detenido',
+  cancelled: 'Cancelado',
+};
+
+export const datadian = {
+  mocks: {
+    badge: 'Datos simulados',
+  },
+  radianStatuses,
+  eventCodes,
+  eventButtons,
+  eventStatuses,
+  validationStatuses,
+  deadlineStates,
+  channels,
+  disabledReasons,
+  warnings,
+  errors,
+  genericError: (correlationId?: string) =>
+    correlationId
+      ? `No se pudo completar la acción. Código para soporte: ${correlationId}.`
+      : 'No se pudo completar la acción.',
+  inbox: {
+    caption: 'Facturas recibidas de la DIAN',
+    kpis: {
+      none: 'Sin acuse',
+      acknowledged: 'Por recibir el bien',
+      goodsReceived: 'Por decidir',
+      dueSoon: 'Vencen en menos de 24 h',
+      expired: 'Plazo vencido',
+      problems: 'Con problemas',
+      quickFilter: (label: string) => `Filtrar: ${label}`,
+    },
+    columns: {
+      nit: 'NIT proveedor',
+      supplier: 'Proveedor',
+      number: 'Número',
+      issueDate: 'Fecha de emisión',
+      total: 'Total',
+      radian: 'Estado RADIAN',
+      deadline: 'Plazo',
+      xml: 'XML',
+      source: 'Canal',
+    },
+    sending: (code: string) => `Enviando ${code}…`,
+    loadMore: 'Cargar más',
+    empty: 'No hay facturas en este rango',
+    emptyDescription: (from: string, to: string) =>
+      `No hay facturas recibidas entre ${from} y ${to}. Revise el rango o el estado de las sincronizaciones.`,
+    goToSync: 'Ver sincronizaciones',
+    noDianSettings: 'Configure el NIT y el certificado para empezar.',
+    goToSettings: 'Ir a Configuración',
+    error: 'No se pudo cargar la bandeja.',
+    dueSoonBanner: (count: number) =>
+      `${count} ${plural(count, 'factura vence', 'facturas vencen')} en menos de 24 horas.`,
+    showDueSoon: 'Ver cuáles',
+    help: {
+      title: 'Bandeja de recepción',
+      body: 'Elija una factura para ver su contenido, la línea de tiempo RADIAN y los eventos disponibles. Los filtros quedan en la dirección: puede compartir el enlace.',
+      flow: 'Camino: acuse (030) → recibo del bien (032) → aceptación (033) o reclamo (031).',
+    },
+  },
+  filters: {
+    label: 'Filtros',
+    range: 'Rango de emisión',
+    presets: {
+      currentMonth: 'Mes actual',
+      previousMonth: 'Mes anterior',
+      last30: 'Últimos 30 días',
+      custom: 'Personalizado',
+    },
+    from: 'Desde',
+    to: 'Hasta',
+    search: 'NIT o CUFE',
+    searchPlaceholder: 'NIT del proveedor o CUFE completo',
+    searchInvalid: 'Escriba un NIT o un CUFE completo.',
+    radianStatus: 'Estado RADIAN',
+    deadline: 'Plazo',
+    validation: 'XML',
+    payment: 'Forma de pago',
+    source: 'Canal',
+    any: 'Todos',
+    sortByDeadline: 'Ordenar por vencimiento',
+    clear: 'Limpiar filtros',
+    rangeTooLong: 'El rango no puede superar 366 días.',
+  },
+  paymentForms: { '1': 'Contado', '2': 'Crédito' } as Record<string, string>,
+  environments: { '1': 'Producción (1)', '2': 'Habilitación (2)' } as Record<string, string>,
+  viewer: {
+    back: 'Volver a la bandeja',
+    tabs: { content: 'Representación', xml: 'XML', pdf: 'PDF' },
+    tabsLabel: 'Vista del documento',
+    supplier: 'Proveedor',
+    buyer: 'Adquirente',
+    number: 'Número',
+    issueDate: 'Emisión',
+    dueDate: 'Vencimiento',
+    lines: 'Detalle',
+    lineCaption: 'Líneas de la factura',
+    line: {
+      no: '#',
+      description: 'Descripción',
+      quantity: 'Cantidad',
+      unitPrice: 'Valor unitario',
+      tax: 'IVA',
+      total: 'Total',
+    },
+    taxes: 'Impuestos',
+    withholdings: 'Retenciones',
+    totals: {
+      lineExtension: 'Subtotal',
+      taxExclusive: 'Base gravable',
+      taxInclusive: 'Total con impuestos',
+      allowances: 'Descuentos',
+      charges: 'Cargos',
+      payable: 'Total a pagar',
+    },
+    paymentForm: 'Forma de pago',
+    paymentMeans: 'Medio de pago',
+    dianValidation: 'Validación previa de la DIAN',
+    noDianValidation: 'Sin sello de validación previa.',
+    notes: 'Notas',
+    cufe: 'CUFE',
+    xmlPart: 'Parte del XML',
+    xmlParts: { attached: 'AttachedDocument', invoice: 'Factura', validation: 'Validación DIAN' },
+    copy: 'Copiar',
+    copied: 'Copiado',
+    download: 'Descargar',
+    sha256: (hash: string) => `SHA-256 del original: ${hash}`,
+    pdfTitle: (invoice: string) => `PDF de la factura ${invoice}`,
+    openPdf: 'Abrir en otra pestaña',
+    noPdf: 'Esta factura no tiene PDF guardado.',
+    xmlMissing:
+      'La factura todavía no tiene XML: el contenido aparece cuando Telco lo traiga de la DIAN.',
+    loadError: 'No se pudo cargar el documento.',
+    validationErrors: 'Problemas del XML',
+    validationCodes: {
+      buyer_mismatch: 'El adquirente del XML no es esta organización.',
+      cufe_mismatch: 'El CUFE del XML no coincide con el del listado.',
+      signature_invalid: 'La firma del XML no es válida.',
+      environment_mismatch: 'El XML es de otro ambiente de la DIAN.',
+    } as Record<string, string>,
+    snapshotTitle: 'El XML corrigió estos datos del listado',
+    snapshotField: (field: string, value: string) => `${field}: el listado decía «${value}»`,
+    snapshotFields: {
+      issuerName: 'Nombre del emisor',
+      issuerNit: 'NIT del emisor',
+      issueDate: 'Fecha de emisión',
+      total: 'Total',
+      iva: 'IVA',
+      folio: 'Folio',
+      prefix: 'Prefijo',
+    } as Record<string, string>,
+  },
+  timeline: {
+    title: 'Línea de tiempo RADIAN',
+    empty: 'Todavía no hay eventos para esta factura.',
+    readOnly: 'Solo lectura: su rol no puede registrar eventos.',
+    origin: { suite: 'Desde la suite', dian: 'Registrado en la DIAN' },
+    dates: {
+      createdAt: 'Pedido',
+      generatedAt: 'Generado',
+      sentAt: 'Enviado',
+      dianRegisteredAt: 'Registrado por la DIAN',
+    },
+    requestedBy: (name: string) => `Pedido por ${name}`,
+    claim: (code: string, concept: string) => `Concepto ${code}: ${concept}`,
+    note: 'Nota',
+    cude: 'CUDE',
+    dianCode: (code: string) => `Código DIAN ${code}`,
+    trace: 'Traza de la DIAN',
+    whatToDo: 'Qué hacer',
+    unknownRule: 'Revise el mensaje de la DIAN; si persiste, comparta el código con soporte.',
+    fictitious: 'Ejemplo ficticio de los mocks.',
+    attempts: (count: number) => `Ver intentos (${count})`,
+    attemptsTitle: 'Intentos de envío',
+    attempt: {
+      no: '#',
+      started: 'Inicio',
+      outcome: 'Resultado',
+      http: 'HTTP',
+      code: 'Código',
+      duration: 'Duración',
+    },
+    outcomes: {
+      accepted: 'Aceptado',
+      rejected: 'Rechazado',
+      already_processed: 'La DIAN ya tenía este evento; se tomó su registro',
+      transport_error: 'Error de red',
+      timeout: 'Sin respuesta a tiempo',
+      local_error: 'Error local',
+    } as Record<string, string>,
+    downloadRequest: 'Descargar XML enviado',
+    downloadResponse: 'Descargar respuesta de la DIAN',
+    keyData: 'Datos clave',
+    environment: 'Ambiente',
+    source: 'Canal de ingesta',
+  },
+  actions: {
+    title: 'Eventos RADIAN',
+    sending: (code: string) => `Enviando ${code} a la DIAN…`,
+    blocked: {
+      xml_not_valid: 'La factura aún no tiene el XML oficial validado: no admite eventos.',
+      environment_mismatch: 'La factura es de otro ambiente de la DIAN: no admite eventos.',
+    },
+    terminal: {
+      '031': (date: string) => `Reclamada el ${date}.`,
+      '033': (date: string) => `Aceptada expresamente el ${date}.`,
+      '034': (date: string) => `Aceptación tácita del proveedor el ${date}.`,
+      '030': (date: string) => `Cerrada el ${date}.`,
+      '032': (date: string) => `Cerrada el ${date}.`,
+      deadline_expired: 'Venció el plazo: el proveedor puede registrar la aceptación tácita (034).',
+    },
+    requested: (code: string, invoice: string) =>
+      `Se pidió el evento ${code} de la factura ${invoice}. Queda en la línea de tiempo hasta que la DIAN responda.`,
+  },
+  confirm: {
+    title: (code: string) => `Confirmar ${code}`,
+    effects: {
+      '030': 'Confirma que recibió la factura.',
+      '032':
+        'Confirma que recibió los bienes o el servicio y abre el plazo de 3 días hábiles para aceptar o reclamar.',
+      '033': 'Acepta la factura: se vuelve título valor y no admite notas crédito ni débito.',
+    },
+    irreversible: 'El evento tiene efectos legales y no se puede deshacer.',
+    summary: (supplier: string, invoice: string, total: string) =>
+      `${supplier} · factura ${invoice} · ${total}`,
+    submit: 'Enviar a la DIAN',
+    cancel: 'Cancelar',
+  },
+  claim: {
+    title: 'Reclamo (031)',
+    description: (invoice: string) => `Reclamo de la factura ${invoice} ante la DIAN.`,
+    effect: 'El reclamo detiene la conversión de la factura en título valor. No se puede deshacer.',
+    conceptLabel: 'Concepto del reclamo',
+    conceptRequired: 'Elija el concepto del reclamo.',
+    noteLabel: 'Nota (opcional)',
+    counter: (used: number, max: number) => `${used} / ${max} caracteres`,
+    submit: 'Enviar reclamo a la DIAN',
+    cancel: 'Cancelar',
+    dueSoon: (remaining: string) => `El plazo vence pronto: ${remaining}.`,
+    expired: 'El plazo ya venció: la DIAN puede rechazar el reclamo.',
+  },
+  // Conceptos del reclamo (catálogo type_rejections de APIDIAN) [POR VERIFICAR 19].
+  claimConcepts: {
+    '01': {
+      label: 'Documento con inconsistencias',
+      description: 'La factura tiene errores en sus datos, valores o impuestos.',
+    },
+    '02': {
+      label: 'Mercancía no entregada totalmente',
+      description: 'No se recibió la mercancía facturada.',
+    },
+    '03': {
+      label: 'Mercancía entregada parcialmente',
+      description: 'Se recibió solo una parte de lo facturado.',
+    },
+    '04': { label: 'Servicio no prestado', description: 'El servicio facturado no se prestó.' },
+  },
+  deadline: {
+    title: 'Plazo para aceptar o reclamar',
+    open: (days: number, date: string) =>
+      `${plural(days, 'Queda 1 día hábil', `Quedan ${days} días hábiles`)} · vence el ${date}`,
+    dueSoon: (date: string) => `Vence el ${date} · decida: aceptar (033) o reclamar (031)`,
+    expired: (date: string) =>
+      `Plazo vencido el ${date} · el proveedor puede registrar la aceptación tácita (034)`,
+    countdown: (hours: number, minutes: number) => `Faltan ${hours} h ${minutes} min`,
+    rule: (days: number, version: number | null) =>
+      `${days} días hábiles desde el registro del 032 en la DIAN${version ? ` (regla v${version})` : ''}`,
+    unverified: 'Regla pendiente de verificar con la norma.',
+    badge: {
+      open: (days: number) => plural(days, '1 día hábil', `${days} días hábiles`),
+      due_soon: 'Menos de 24 h',
+      expired: 'Vencido',
+    },
+  },
+  legacy: {
+    title: 'Contabilidad (Odoo)',
+    description: 'Decisión interna heredada; no es un evento ante la DIAN.',
+  },
+  settings: {
+    sections: {
+      label: 'Secciones',
+      dian: 'Datos DIAN',
+      certificate: 'Certificado digital',
+      software: 'Software y ambiente',
+      sync: 'Sincronización',
+      mailboxes: 'Buzones IMAP',
+      odoo: 'Odoo 19',
+    },
+    dian: {
+      nit: 'NIT (sin dígito de verificación)',
+      nitDv: 'DV',
+      nitInvalid: 'Escriba entre 5 y 15 dígitos.',
+      dvInvalid: 'Un dígito.',
+      dvMismatch: 'El dígito de verificación no corresponde al NIT.',
+      operationMode: 'Modo de operación',
+      operationModes: {
+        own_software: 'Software propio',
+        technology_provider: 'Proveedor tecnológico',
+      } as Record<string, string>,
+      operationModeNote:
+        'Define el rol de quien firma los eventos; depende de la decisión D-14 [por verificar].',
+      lookback: 'Ventana de sincronización (días)',
+      lookbackInvalid: 'Entre 1 y 92 días.',
+      save: 'Guardar',
+      saved: 'Datos DIAN guardados.',
+    },
+    certificate: {
+      active: 'Certificado activo',
+      none: 'No hay certificado activo.',
+      subject: 'Titular',
+      subjectNit: 'NIT del certificado',
+      issuer: 'Emisor',
+      serial: 'Serie',
+      algorithm: 'Algoritmo',
+      validity: 'Vigencia',
+      validityRange: (from: string, to: string) => `${from} a ${to}`,
+      daysToExpiry: (days: number) =>
+        days < 0 ? 'Vencido' : plural(days, 'Vence en 1 día', `Vence en ${days} días`),
+      renew: 'Renuévelo: la DIAN permite pedirlo hasta 3 meses antes.',
+      upload: 'Subir certificado',
+      file: 'Archivo .pfx o .p12',
+      password: 'Contraseña del certificado',
+      showPassword: 'Mostrar',
+      hidePassword: 'Ocultar',
+      precheckTitle: 'Antes de enviar',
+      prechecks: {
+        extension: 'Extensión .pfx o .p12',
+        size: 'Tamaño mayor que 0 y hasta 65 536 bytes',
+        password: 'Contraseña escrita',
+      },
+      precheckState: { ok: 'Cumple', failed: 'No cumple', pending: 'Pendiente' },
+      browserNote:
+        'El navegador no abre el certificado: el archivo y la contraseña viajan una sola vez por HTTPS y se guardan cifrados. Nunca vuelven a mostrarse.',
+      submit: 'Subir y validar',
+      telcoTitle: 'Validaciones de Telco',
+      validating: 'Validando el certificado…',
+      activate: 'Activar',
+      retire: 'Retirar',
+      retireConfirm: '¿Retirar este certificado? No se borra: queda en el historial.',
+      history: 'Historial de certificados',
+      historyCaption: 'Certificados subidos',
+      uploadedBy: (name: string) => `Subido por ${name}`,
+      statuses: certificateStatuses,
+      checks: certificateChecks,
+      checkStatuses,
+      expiryStates,
+      banner: {
+        due_soon: (days: number) =>
+          `El certificado digital vence en ${plural(days, '1 día', `${days} días`)}. Renuévelo para no interrumpir los eventos RADIAN.`,
+        expired: 'El certificado digital venció: los eventos RADIAN no se pueden enviar.',
+        missing: 'No hay certificado digital activo: los eventos RADIAN no se pueden enviar.',
+        action: 'Ir a Configuración',
+      },
+    },
+    software: {
+      softwareId: 'SoftwareID',
+      softwareIdInvalid: 'El SoftwareID tiene formato UUID.',
+      pin: 'PIN del software',
+      pinSet: 'PIN guardado',
+      pinMissing: 'Sin PIN',
+      replacePin: 'Reemplazar PIN',
+      pinNote: 'El PIN se escribe y no se vuelve a mostrar.',
+      testSetId: 'TestSetId (si la DIAN lo pide)',
+      environment: 'Ambiente',
+      environmentNote: 'Un CUFE de un ambiente no existe en el otro.',
+      toProduction: 'Pasar a producción',
+      readinessTitle: 'Lista de chequeo de habilitación',
+      readinessDescription:
+        'Para pasar a producción deben cumplirse todos los puntos. La API vuelve a comprobarlo.',
+      readinessItems,
+      readinessIncomplete: 'Faltan puntos de la lista: no se puede pasar a producción todavía.',
+      confirmProduction: 'Pasar a producción',
+      cancel: 'Cancelar',
+    },
+    sync: {
+      rpa: 'Portal de la DIAN (RPA)',
+      imap: 'Buzón de correo (IMAP)',
+      rpaLegal:
+        'El acceso automatizado al portal tiene una revisión legal abierta. La suite no resuelve captchas ni verificaciones humanas.',
+    },
+    mailboxes: {
+      empty: 'No hay buzones configurados.',
+      add: 'Agregar buzón',
+      edit: 'Editar',
+      host: 'Servidor',
+      port: 'Puerto',
+      tls: 'TLS',
+      username: 'Usuario',
+      authMethod: 'Autenticación',
+      authMethods: { password: 'Contraseña', oauth2: 'OAuth 2' } as Record<string, string>,
+      secret: 'Secreto',
+      secretSet: 'Secreto guardado; escriba uno nuevo solo para reemplazarlo.',
+      folder: 'Carpeta',
+      enabled: 'Activo',
+      disabled: 'Inactivo',
+      save: 'Guardar buzón',
+      cancel: 'Cancelar',
+      invalid: 'Revise los datos del buzón.',
+      saved: 'Buzón guardado.',
+      noDelete: 'Los buzones no se borran: se desactivan.',
+    },
+  },
+  sync: {
+    channelsTitle: 'Canales',
+    enabled: 'Activo',
+    disabled: 'Desactivado',
+    lastRun: 'Última ejecución',
+    nextRun: 'Próxima',
+    never: 'Nunca',
+    duration: (seconds: number) => `${seconds} s`,
+    counters: {
+      listed: 'Listados',
+      new: 'Nuevos',
+      existing: 'Existentes',
+      xml: 'XML descargados',
+      failed: 'Fallidos',
+    },
+    syncNow: 'Sincronizar ahora',
+    running: 'Sincronización en curso',
+    periodStart: 'Desde',
+    periodEnd: 'Hasta',
+    mailbox: 'Buzón',
+    requested: 'Sincronización pedida.',
+    emptyListing: 'El portal devolvió 0 documentos; puede haber cambiado su formato.',
+    humanVerification:
+      'El portal pidió una verificación humana. La suite no la evade: revise el acceso al portal.',
+    upload: {
+      title: 'Subir XML a mano',
+      description:
+        'Arrastre un .xml o .zip (máximo 5 MB). El XML subido solo sirve para descubrir el CUFE: el oficial lo trae Telco desde la DIAN.',
+      choose: 'Elegir archivo',
+      drop: 'Suelte el archivo aquí',
+      invalidType: 'Solo se aceptan archivos .xml o .zip.',
+      tooLarge: 'El archivo supera 5 MB.',
+      submit: 'Subir',
+      done: 'Archivo recibido: se procesa en la cola.',
+    },
+    history: {
+      title: 'Historial',
+      caption: 'Ejecuciones de sincronización',
+      channel: 'Canal',
+      trigger: 'Disparador',
+      status: 'Estado',
+      started: 'Inicio',
+      counters: 'Contadores',
+      empty: 'Todavía no hay sincronizaciones.',
+      detail: 'Ver errores',
+      errorsTitle: 'Errores por CUFE',
+      noErrors: 'Sin errores.',
+    },
+    statuses: syncStatuses,
+    triggers: syncTriggers,
+    jobs: {
+      title: 'Cola y errores',
+      caption: 'Trabajos de Telco',
+      kind: 'Tipo',
+      status: 'Estado',
+      attempts: 'Intentos',
+      lastError: 'Último error',
+      resource: 'Recurso',
+      actions: 'Acciones',
+      retry: 'Reintentar',
+      cancel: 'Cancelar',
+      empty: 'No hay trabajos detenidos ni en cola.',
+      retried: 'El trabajo volvió a la cola.',
+      cancelled: 'El trabajo quedó cancelado.',
+      kinds: jobKinds,
+      statuses: jobStatuses,
+      filter: 'Mostrar',
+      filters: { dead: 'Detenidos', queued: 'En cola' },
+    },
+    tabs: { channels: 'Sincronizaciones', jobs: 'Cola y errores' },
+    noPermission: 'Su rol puede ver el estado, pero no sincronizar ni operar la cola.',
+  },
+  zone4: {
+    description: 'Eventos RADIAN, certificado y cola de Telco',
+  },
+  // ---- Textos heredados (decisión interna y Odoo), se conservan hasta la Etapa 5 ----
+  kpis: {
+    imported: 'Pendientes',
+    draft: 'En borrador',
+    approved: 'Aprobadas',
+    rejected: 'Rechazadas',
+    odooFailed: 'Envíos a Odoo fallidos',
+    pendingTotal: 'Valor por aprobar',
+  },
+  statuses: {
+    imported: 'Pendiente',
+    draft: 'Borrador',
+    approved: 'Aprobada',
+    rejected: 'Rechazada',
+  },
+  odoo: {
+    pending: 'Enviando a Odoo',
+    sent: 'En Odoo',
+    failed: 'Falló el envío',
+    notConfigured:
+      'Para aprobar facturas configure primero la conexión con Odoo en DataDian › Configuración.',
+  },
+  legacyActions: {
+    approve: 'Aprobar',
+    draft: 'Borrador',
+    reject: 'Rechazar',
+    retry: 'Reintentar envío',
+    approveNeedsOdoo: 'Configure la conexión con Odoo antes de aprobar',
+    approved: (invoice: string) => `La factura ${invoice} quedó aprobada y en Odoo.`,
+    approvedWithError: (invoice: string) =>
+      `La factura ${invoice} quedó aprobada, pero no se pudo enviar a Odoo. Use «Reintentar envío».`,
+    drafted: (invoice: string) => `La factura ${invoice} quedó en borrador.`,
+    rejected: (invoice: string) => `La factura ${invoice} quedó rechazada.`,
+    error: 'No se pudo completar la acción.',
+  },
+  reject: {
+    title: 'Rechazar factura',
+    description: (invoice: string) =>
+      `Elija el motivo para la factura ${invoice}. Es una decisión interna: no envía el reclamo a la DIAN.`,
+    reasonLabel: 'Motivo',
+    reasonPlaceholder: 'Elija un motivo',
+    noteLabel: 'Nota (opcional)',
+    submit: 'Rechazar factura',
+    cancel: 'Cancelar',
+  },
+  rejectionCodes: {
+    '01': 'Documento con inconsistencias',
+    '02': 'Mercancía no entregada totalmente',
+    '03': 'Mercancía entregada parcialmente',
+    '04': 'Servicio no prestado',
+  },
+  detail: {
+    openPdf: 'Ver PDF',
+    noPdf: 'Esta factura no tiene PDF.',
+    odooTitle: 'Odoo',
+    odooMove: (id: number) => `Factura de proveedor #${id} en borrador`,
+    rejectionCode: 'Motivo',
+    note: 'Nota',
+    historyTitle: 'Auditoría',
+    historyEmpty: 'Sin movimientos todavía.',
+    historyFailed: 'falló',
+  },
+  history: {
+    'received_document.draft': 'Guardada en borrador',
+    'received_document.approve': 'Aprobada',
+    'received_document.reject': 'Rechazada',
+    'received_document.odoo_sent': 'Envío a Odoo',
+  } as Record<string, string>,
+  odooSettings: {
+    odooTitle: 'Conexión con Odoo',
+    odooDescription:
+      'DataDian crea en Odoo 19 la factura de proveedor en borrador, con la API JSON-2, y le adjunta el PDF cuando la factura lo tiene. La API key se guarda cifrada y nunca se vuelve a mostrar.',
+    configured: (url: string, database: string) => `Conectado a ${url} (base ${database}).`,
+    notConfigured: 'Todavía no hay conexión con Odoo.',
+    baseUrl: 'Dirección de Odoo',
+    baseUrlPlaceholder: 'https://empresa.odoo.com',
+    database: 'Base de datos',
+    apiKey: 'API key',
+    apiKeyDescription: 'Se crea en Odoo › Preferencias › Seguridad de la cuenta › Nueva API key.',
+    save: 'Probar y guardar',
+    test: 'Probar conexión',
+    saved: 'Conexión guardada. Odoo respondió correctamente.',
+    testOk: 'Odoo respondió correctamente.',
+    error: 'Odoo no aceptó la conexión.',
+    invalid: 'Revise la dirección, la base de datos y la API key.',
+  },
+};

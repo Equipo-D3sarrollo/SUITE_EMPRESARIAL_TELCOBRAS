@@ -11,10 +11,13 @@ type Page = LazyExoticComponent<ComponentType>;
 // Submódulos ya construidos, "módulo/submódulo". Se cargan bajo demanda: no entran en el bundle inicial.
 const PAGES: Partial<Record<string, Page>> = {
   'documents/invoices': lazy(() =>
-    import('@/features/datadian/invoices-page').then((m) => ({ default: m.InvoicesPage })),
+    import('@/features/datadian/inbox/inbox-page').then((m) => ({ default: m.InboxPage })),
+  ),
+  'documents/sync': lazy(() =>
+    import('@/features/datadian/sync/sync-page').then((m) => ({ default: m.SyncPage })),
   ),
   'documents/settings': lazy(() =>
-    import('@/features/datadian/settings-page').then((m) => ({ default: m.SettingsPage })),
+    import('@/features/datadian/settings/settings-page').then((m) => ({ default: m.SettingsPage })),
   ),
 };
 

@@ -30,6 +30,8 @@ allowBuilds:
   # Telemetría y comprobaciones opcionales: no hacen falta para funcionar.
   "@scarf/scarf": false
   protobufjs: false
+  # msw solo actualiza su worker en public/; el archivo ya está versionado.
+  msw: false
 
 peerDependencyRules:
   allowedVersions:

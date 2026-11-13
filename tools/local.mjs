@@ -119,8 +119,10 @@ const workerRole = spawnSync(
     ...COMPOSE,
     'exec',
     '-T',
+    // Sin valor: docker toma la variable del entorno del proceso y la contraseña no queda en la línea
+    // de comandos (visible en ps).
     '-e',
-    `APP_WORKER_PASSWORD=${env.APP_WORKER_PASSWORD}`,
+    'APP_WORKER_PASSWORD',
     'postgres',
     'psql',
     '-U',
@@ -133,6 +135,7 @@ const workerRole = spawnSync(
   ],
   {
     cwd: ROOT,
+    env: { ...process.env, APP_WORKER_PASSWORD: env.APP_WORKER_PASSWORD },
     input: readFileSync(join(ROOT, 'infra/compose/postgres/app-worker.sql')),
     stdio: ['pipe', 'ignore', 'inherit'],
   },

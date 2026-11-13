@@ -42,7 +42,7 @@ documento que corresponda y dejar constancia aquí.
 
 | Campo | Estado |
 |---|---|
-| Corte de este estado | 2026-11-12 16:05, hora de Colombia (UTC-05:00). Trabajo pausado por el usuario; se retoma el 13-nov |
+| Corte de este estado | 2026-11-13 10:10, hora de Colombia (UTC-05:00). **Etapa 2 completa en local (0010 a 0017) y Etapa 3 funcional con datos simulados (3.1 a 3.7). Siguiente: commit y Etapa 4.** Las filas de abajo son del corte del 12-nov y la entrada del 13-nov del registro las reemplaza |
 | Etapa | **Etapa 2 — Base de datos de DataDian, en curso.** Orden definitivo fijado por el usuario el 12-nov-2026: 1 Fundaciones (cerrada), 2 Base de datos de DataDian, 3 Frontend de DataDian, 4 Backend (Telco y API), 5 Integración con Odoo 19, 6 CRM y notificaciones; de la 7 a la 10, Integration Hub y LeadGen, Make, analítica y piloto, agentes |
 | Punto alcanzado | DataDian se reinició sobre el blueprint oficial (`docs/modules/documents/DataDian/`, ADR-014). Se retiró la vía descartada (scraping del portal, importación del Excel, carga manual del PDF, `tools/dian`) con la migración `0009`. Hay cuatro documentos de arquitectura (general, base de datos, frontend y backend) y la ruta `docs/modules/documents/RUTA_DE_TRABAJO_DATADIAN.md`. **Subetapas 2.1 (rol `app_worker`, convención `DD0xx`) y 2.2 (calendario de festivos y plazos, migración `0010`) implementadas y auditadas. La auditoría no encontró defectos de severidad alta; quedan correcciones de severidad media y baja sin aplicar (ver la entrada del 12-nov, 16:05)** |
 | Próximo foco | 1) Aplicar las correcciones de la auditoría de 2.1 y 2.2: M1, M2, B2, B3, B5, las pruebas inestables y `stages.ts`. 2) Implementar la **2.3** (migración `0011`: `dian_settings`, `dian_certificates`, `imap_mailboxes`). Antes de la 2.3 conviene decidir el sobre sellado del `.pfx` (decisión 6 del backend: hoy la API tendría la KEK) |
@@ -143,6 +143,81 @@ Copiar al principio de **Registro de intervenciones** y completar. Si un campo n
 ```
 
 ## Registro de intervenciones
+
+### 2026-11-13 (UTC-05:00) — Claude Code (orquestador): interfaz levantada y corte de cobertura UBL y criptografía
+
+- **Interfaz:** servidor de desarrollo con datos simulados (`$env:VITE_DATADIAN_MOCKS='1'; pnpm --filter @telcobras/web dev`) en `http://localhost:5173/app/documents/invoices`. Se comprobó que responden el índice (200) y `mockServiceWorker.js` (200). El usuario revisó la interfaz y la aprobó.
+- **Corte de cobertura, comprobado en el código con graphify y grep:**
+  - **No hay código** que lea, construya, firme ni envíe XML UBL. Tampoco calcula el CUDE ni descifra el `.pfx`: no hay XAdES, WS-Security, parser de AttachedDocument ni constructor de ApplicationResponse.
+  - **Sí existe:**
+    - los CHECK del CUFE y del CUDE (96 hexadecimales) en `0013` y `0014`;
+    - el SHA-256 único de los XML en `0012`;
+    - la inmutabilidad con XML;
+    - la secuencia y los plazos RADIAN en la BD;
+    - las columnas de secretos cifrados en `0011`;
+    - `apps/api/src/common/credentials-cipher.ts` (AES-256-GCM, hoy solo para la API key de Odoo);
+    - los contratos y el visor web.
+  - El detalle de lo que hay y lo que falta, por subetapa, está en `docs/modules/documents/RUTA_DE_TRABAJO_DATADIAN.md` §1.1 (actualizada con el estado del 13-nov).
+- **Cambios:** `RUTA_DE_TRABAJO_DATADIAN.md` §1 y §1.1, y esta bitácora. No se tocó código.
+- **Siguiente paso exacto:** commit; después la Etapa 4.1 (`CertificateVault`, CUDE y `XadesEpesSigner`) con certificados de prueba autogenerados. En paralelo, un agente de investigación verifica PV-1 a PV-3, PV-5 y PV-11 contra el anexo técnico T5.1, la Resolución 085 de 2022 y el WSDL.
+- **Git:** sin commits.
+
+### 2026-11-13 10:10 (UTC-05:00) — Claude Code (orquestador con subagentes): Etapa 2 completa y Etapa 3 funcional con datos simulados
+
+- **Objetivo:** implementar rápido la base de DataDian con su frontend. Por pedido del usuario, las pruebas se limitaron a las mínimas que demuestran lo clave; no se hicieron pruebas exhaustivas.
+- **Etapa 2 (base de datos): completa en local.**
+  - **Correcciones de la auditoría aplicadas:**
+    - M1: la contraseña de `app_worker` se entrega por el entorno.
+    - M2: listas literales de festivos de 2025, 2030 y 2035.
+    - B2: guarda de `pg_auth_members`.
+    - B5: inventario de privilegios de `app_user`.
+    - B3: documentado.
+    - `stages.ts` con la numeración vigente.
+  - Las pruebas de BD de la API corren en secuencia (`fileParallelism: false`); no se investigaron los timeouts en paralelo.
+  - **Migraciones `0011` a `0017`, cada una con su `.reverse.sql`, aplicadas con `pnpm db:migrate`:**
+    - `0011`: configuración DIAN, certificados (DD010 y DD005) y buzones IMAP;
+    - `0012`: archivos (solo inserción) y sincronizaciones;
+    - `0013`: `received_documents` v2, inmutable con XML, más `received_document_taxes`;
+    - `0014`: reglas y eventos RADIAN con secuencia en BD;
+    - `0015`: `telco_jobs` y backoff;
+    - `0016`: `odoo_document_links`;
+    - `0017`: vistas `security_invoker` y permisos `documents:events` y `documents:sync`.
+  - Contratos de BD en `packages/contracts/src/schemas/datadian-records.ts`. `importId` pasó a nulable en `received-document.ts`.
+  - Desviaciones: en `ARQUITECTURA_DB_DATADIAN.md` §10.3, filas 10 a 23.
+- **Etapa 3 (frontend): subetapas 3.1 a 3.7 funcionando con datos simulados (MSW).**
+  - **Contratos de API:** en `packages/contracts/src/datadian/` (esquemas, rutas E1–E32, errores y `deriveRadianActions`) y `openapi/datadian.openapi.json`.
+  - **Feature reconstruido** en `apps/web/src/features/datadian/` (api, inbox, invoice, actions, settings, sync, shared, mocks):
+    - bandeja con filtros;
+    - vista dividida con visor del XML y línea de tiempo RADIAN;
+    - botones según la máquina de estados, con confirmación y modal de reclamo;
+    - configuración del `.pfx`, DIAN e IMAP;
+    - sincronizaciones y cola;
+    - Zona 4.
+  - Se borraron las pantallas viejas. Los textos están en `apps/web/src/i18n/es-CO/datadian.ts`. Hay variantes de botón `info` y `accent` en `@telcobras/ui`.
+  - **Cómo verla:** `$env:VITE_DATADIAN_MOCKS='1'; pnpm --filter @telcobras/web dev` (perfil opcional con `VITE_DATADIAN_MOCK_PROFILE=owner|accountant|viewer`).
+- **Verificación (cifras reales reportadas por los agentes):**
+  - `pnpm -r typecheck`: verde.
+  - API: 19 archivos, 147/147, en secuencia.
+  - Contracts: 4 archivos, 33/33.
+  - Web: 10 archivos, 58/58 (incluye `sidebar.test.tsx`, ajustado a «Bandeja de recepción»).
+  - `pnpm --filter @telcobras/web build`: compila sin MSW en `dist/`.
+  - `drizzle-kit check`: «Everything's fine».
+  - `graphify update .`: 4935 nodos.
+  - No se ejecutaron la auditoría independiente de 2.3–2.9 ni los E2E.
+- **Graphify:** se extrajo la semántica de 79 documentos; queda en caché. Los bloques 3 y 5 (documento madre, PENDIENTES, plan, arquitectura de DataDian e informes DIAN) se detuvieron. El grafo no se sobrescribió con la versión semántica porque tenía menos nodos que el existente.
+- **Hallazgo del Instructivo RADIAN (PDF, 17 págs.):** describe la habilitación en RADIAN en modo directo (5 pasos, set de pruebas consecutivas, ISO 27001, SARLAFT/SAGRILAFT) o indirecto (aliado o mandatario). Es insumo directo para D-14. No trae los códigos 030 a 034.
+- **Pendientes:**
+  - auditoría independiente de 2.3–2.9;
+  - prueba de reversos en una base desechable de la CI;
+  - los 21 puntos por verificar, con prioridad en si el 031 exige el 032;
+  - SSE (4.6);
+  - la subetapa 3.8: E2E, axe, Lighthouse y pruebas de bandeja, visor, configuración y sincronizaciones;
+  - virtualización de la grilla;
+  - `pnpm check:bundle` (chunk `es-CO` de 68 KB);
+  - validar los CHECK `NOT VALID`;
+  - vistas en Drizzle con `.existing()`.
+- **Siguiente paso exacto:** commit de todo el trabajo y luego la Etapa 4 (backend Telco y API) desde la 4.1, el núcleo criptográfico.
+- **Git:** sin commits. Todo el trabajo desde el 12-nov está sin commitear.
 
 ### 2026-11-12 16:05 (UTC-05:00) — Claude Code (orquestador) — auditoría de 2.1/2.2 y pausa
 

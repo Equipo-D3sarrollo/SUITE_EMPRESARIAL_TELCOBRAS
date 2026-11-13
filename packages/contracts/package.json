@@ -19,7 +19,8 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "generate:api": "openapi-typescript openapi/openapi.json -o src/generated/api.ts"
+    "generate:api": "openapi-typescript openapi/openapi.json -o src/generated/api.ts",
+    "openapi:datadian": "tsc -p tsconfig.build.json && node scripts/openapi-datadian.mjs"
   },
   "dependencies": {
     "zod": "catalog:"

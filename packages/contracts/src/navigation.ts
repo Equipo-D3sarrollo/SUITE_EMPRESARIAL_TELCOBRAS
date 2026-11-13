@@ -55,8 +55,9 @@ export const NAVIGATION = [
     icon: 'file-text',
     permission: 'documents:view',
     submodules: [
-      // DataDian: tablero de facturas recibidas y configuración.
+      // DataDian: bandeja de recepción, sincronizaciones y configuración.
       { id: 'invoices', permission: 'documents:view' },
+      { id: 'sync', permission: 'documents:view' },
       { id: 'settings', permission: 'documents:configure' },
     ],
   },

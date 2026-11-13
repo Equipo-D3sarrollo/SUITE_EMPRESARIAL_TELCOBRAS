@@ -980,9 +980,9 @@ Las pruebas van en `apps/api/test/` con el patrón de `rls.test.ts`: dos organiz
 |---|---|
 | Vistas `security_invoker`, permisos `documents:events` y `documents:sync`, enumerados en `packages/contracts`, README de `migrations/` y de `schema/` actualizados, `graphify update .` | Las vistas devuelven solo filas de la organización activa y 0 filas sin contexto. `deadline_state` pasa de `open` a `due_soon` y a `expired` al mover el reloj de la prueba. Un certificado a 89 días sale `due_soon` y uno a 91, `ok`. `drizzle-kit check` no detecta diferencias entre los esquemas y las migraciones. Los reversos de `0010` a `0017` se aplican y se vuelven a aplicar en la CI |
 
-### 10.3 Desviaciones de la implementación (2.1 y 2.2)
+### 10.3 Desviaciones de la implementación (2.1 a 2.9)
 
-Lo que la implementación del 12-nov-2026 cambió o precisó frente al diseño. Las secciones citadas ya lo recogen.
+Lo que la implementación del 12 y del 13-nov-2026 cambió o precisó frente al diseño. Las filas 1 a 9 ya están recogidas en las secciones citadas; las 10 en adelante (13-nov-2026) solo están aquí.
 
 | # | Desviación | Dónde |
 |---|---|---|
@@ -995,8 +995,24 @@ Lo que la implementación del 12-nov-2026 cambió o precisó frente al diseño. 
 | 7 | Sin `APP_WORKER_PASSWORD`, `init.sql` crea `app_worker` como `NOLOGIN`; después corre `infra/compose/postgres/app-worker.sql`, idempotente, que usan `pnpm local` y la CI | §9.1 |
 | 8 | El reverso de la `0010` se prueba dentro de una transacción en las pruebas de la API. La prueba de aplicar, revertir y volver a aplicar en una base desechable de la CI (§10.1) queda para la 2.9 | §10.1 y 2.9 |
 | 9 | `drizzle-kit generate` falla si `meta/README.md` está dentro de `migrations/meta/`. Es un problema que ya existía; está en `PENDIENTES.md` | §10.1 |
+| 10 | **Regla v2 (`business_hours`):** cuando las horas restantes se agotan justo al final de un día hábil, `radian_deadline` devuelve las **00:00 del día siguiente** (hora local), no las 23:59:59.999 del mismo día. Es el mismo instante de fin de día expresado como inicio del siguiente; quien muestre la fecha debe tenerlo en cuenta. La regla v2 está inactiva (hallazgo B3 de la auditoría) | §7.4 |
+| 11 | La `0011` y `app-worker.sql` comprueban además `pg_auth_members`: `app_worker` no puede ser miembro de ningún rol (hallazgo B2; la `0010` no se editó porque ya estaba aplicada). La contraseña de `app_worker` ya no va en la línea de comandos de `docker exec` (`-e APP_WORKER_PASSWORD` sin valor, hallazgo M1) | §9.1 |
+| 12 | `dian_certificates`: el disparador `dian_certificates_guard` también fija las transiciones (`pending_validation → valid | invalid | retired`, `valid | invalid → retired`, si no `DD004`) y `app_user` solo puede retirar (validar es de Telco). Los metadatos congelados incluyen `validation_errors` y `validated_at` | §5.2 |
+| 13 | `dian_files`: además de no tener privilegio ni política de `UPDATE`/`DELETE`, un disparador por sentencia levanta `DD005` ante `UPDATE`, `DELETE` o `TRUNCATE`, también para `app_owner`. Deja pasar solo los borrados en cascada desde `organizations` (`pg_trigger_depth() > 1`) | §5.4 |
+| 14 | `received_documents.ingestion_source` **conserva** el default `'manual'`: el lote legado (`import_id`) sigue insertando sin ese campo hasta la contracción de la Etapa 4, y `documents.test.ts` debe pasar sin cambios. El `CHECK received_documents_legacy_source_check` (`import_id IS NULL OR ingestion_source = 'manual'`) impide usarlo con otra fuente. También queda `NOT VALID` el `CHECK` del NIT del emisor (las filas antiguas pueden traer el dígito de verificación) | §4.2 y §5.6 |
+| 15 | Orden de comprobación de `radian_events_sequence_guard`: `DD007`, `DD008`, **`DD002` (bloqueado) antes que `DD003` (terminal)**, `DD001`, `DD009`. Con el 034 aceptado, un 031 o un 033 falla con `DD002`; cualquier otro evento de la suite, con `DD003`. Pedir un código ya aceptado falla por el índice único (`23505`) | §7.1 y §7.3 |
+| 16 | `radian_events_update_guard`, al pasar un evento de la suite a `accepted`, bloquea la factura y falla con `DD002` si ya hay aceptado un evento que lo bloquea: así nunca quedan aceptados un 031 y un 033 pedidos a la vez. Un evento en estado final no admite ninguna actualización (`DD004`). La violación del orden temporal de `generated_at` usa `DD001` | §6.5 y §7.1 |
+| 17 | La caché `radian_status` no retrocede (un 030 observado después del 032 no la devuelve a `acknowledged`). `radian_recompute_deadlines(p_key)` devuelve cuántas facturas cambió y corre con la RLS del llamador: la migración que recalcule todas las organizaciones levanta `FORCE` como la `0005`. `radian_event_attempts.job_id` queda sin FK | §6.4, §6.5 y §7.4 |
+| 18 | `telco_jobs`: el disparador de transiciones también levanta `DD005` si cambian `id`, `organization_id`, `kind`, `payload`, `created_by` o `created_at`; `app_owner` no tiene restricción de transiciones (migraciones). `CHECK` adicionales: `backoff_max_seconds >= backoff_base_seconds > 0` y `recurrence_seconds > 0` | §7.6 y §9.2 |
+| 19 | `odoo_document_links` lleva además FK a `organizations` con `ON DELETE CASCADE` (sin ella, borrar una organización fallaría por la FK hacia `odoo_connections`). La copia de la `0016` toma las facturas con `odoo_move_id` y las deja en `state = 'created'` | §7.8 |
+| 20 | La `0017` es una migración personalizada (`drizzle-kit generate --custom`): no cambia tablas. Las vistas no se declaran en Drizzle | §10.1 |
+| 21 | El contrato heredado `receivedDocumentSchema.importId` pasa a nulable (`packages/contracts`). Los enumerados y las filas de las tablas nuevas están en `packages/contracts/src/schemas/datadian-records.ts` | §10.2 (2.5 y 2.9) |
+| 22 | Los reversos de la `0011` a la `0017` se prueban en las pruebas de la API (en orden inverso desde la última, dentro de una transacción que se deshace). La prueba en una base desechable de la CI sigue pendiente | §10.1 y 2.9 |
+| 23 | Pruebas de concurrencia reducidas por decisión del usuario (13-nov-2026): 3 rondas de 031 frente a 033 (no 50) y 4 conexiones con 60 trabajos (no 8 con 1 000). Las pruebas de la API corren sus archivos en secuencia (`fileParallelism: false`) | §10.2 (2.6 y 2.7) |
 
 **Verificación de la 2.1 y la 2.2 (12-nov-2026):** `0010_datadian_calendar.sql` aplicada en local; pruebas de la API 13 archivos y 94 de 94; `packages/contracts` 17 de 17; `pnpm typecheck` en verde; `drizzle-kit check`: "Everything's fine". Falta la auditoría de las dos subetapas.
+
+**Verificación de la 2.3 a la 2.9 (13-nov-2026):** migraciones `0011` a `0017` aplicadas en local con `pnpm db:migrate`; pruebas de la API en secuencia: 19 archivos y 147 de 147 (64,8 s), con `documents.test.ts` sin cambios y en verde (hoy tiene 13 pruebas, no las 21 que cita el criterio de la 2.5, escrito antes del retiro de la vía anterior); `packages/contracts` 33 de 33; `pnpm typecheck` en verde en los cuatro paquetes; `drizzle-kit check`: "Everything's fine" y `drizzle-kit generate` sin cambios pendientes; Biome sin hallazgos en los archivos tocados. Falta la auditoría independiente.
 
 ---
 

@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import type { ModuleNode } from '@telcobras/contracts';
 import { StatusBadge } from '@telcobras/ui';
 import { t } from '@/i18n/es-CO';
-import { CONNECTORS, connectorsUp } from '../zone4-status/connectors';
+import { countUp, useConnectors } from '../zone4-status/connectors';
 import { CommandSearch } from './command-search';
 import { Logo } from './logo';
 import { NotificationsButton } from './notifications-button';
@@ -10,10 +10,10 @@ import { OrganizationSwitcher } from './organization-switcher';
 import { ThemeMenu } from './theme-menu';
 import { UserMenu } from './user-menu';
 
-const allServicesUp = connectorsUp === CONNECTORS.length;
-
 /** Zona 0: barra superior de 56 px. */
 export function Topbar({ modules }: { modules: readonly ModuleNode[] }) {
+  const connectors = useConnectors();
+  const allServicesUp = countUp(connectors) === connectors.length;
   return (
     <header className="relative z-30 flex h-14 shrink-0 items-center gap-4 border-tb-gris/40 border-b bg-tb-superficie px-4">
       <div className="flex w-56 shrink-0 items-center gap-2">

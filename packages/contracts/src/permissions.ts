@@ -8,6 +8,9 @@ export const PERMISSIONS = [
   'documents:view',
   'documents:decide',
   'documents:configure',
+  // DataDian, Etapa 3: pedir eventos RADIAN (030, 032, 033, 031) y operar sincronizaciones y cola.
+  'documents:events',
+  'documents:sync',
   'integrations:view',
   'automation:view',
   'ai:view',

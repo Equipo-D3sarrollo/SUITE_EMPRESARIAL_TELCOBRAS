@@ -1,3 +1,4 @@
+export * from './datadian/index.js';
 export * from './datadian-database.js';
 export * from './modules.js';
 export * from './navigation.js';

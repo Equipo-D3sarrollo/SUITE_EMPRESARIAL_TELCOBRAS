@@ -52,6 +52,8 @@ export const SEED_ROLE_PERMISSIONS: Readonly<Record<SeedRoleKey, readonly Permis
     'dashboard:view',
     'documents:view',
     'documents:decide',
+    'documents:events',
+    'documents:sync',
     'integrations:view',
     'analytics:view',
     'help:view',

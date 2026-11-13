@@ -9,7 +9,7 @@ import {
 } from '@telcobras/ui';
 import { Activity, ChevronUp } from 'lucide-react';
 import { t } from '@/i18n/es-CO';
-import { averageLatencyMs, CONNECTORS, type ConnectorStatus, connectorsUp } from './connectors';
+import { averageLatency, type ConnectorStatus, countUp, useConnectors } from './connectors';
 
 const dotColor: Record<ConnectorStatus, string> = {
   ok: 'bg-tb-verde',
@@ -19,6 +19,7 @@ const dotColor: Record<ConnectorStatus, string> = {
 
 /** Zona 4: barra fija de 48 px; al hacer clic despliega el detalle por conector (ADR-007). */
 export function StatusBar() {
+  const connectors = useConnectors();
   return (
     <footer className="relative z-20 h-12 shrink-0 border-tb-gris/40 border-t bg-tb-superficie">
       <Popover>
@@ -26,13 +27,14 @@ export function StatusBar() {
           <Activity aria-hidden="true" className="size-4 shrink-0 text-tb-azul" />
           <span className="font-medium">{t.shell.status.title}</span>
           <span className="tabular-nums">
-            {t.shell.status.latency}: <span className="font-semibold">{averageLatencyMs} ms</span>
+            {t.shell.status.latency}:{' '}
+            <span className="font-semibold">{averageLatency(connectors)} ms</span>
           </span>
           <span className="tabular-nums">
-            {t.shell.status.connectorsUp(connectorsUp, CONNECTORS.length)}
+            {t.shell.status.connectorsUp(countUp(connectors), connectors.length)}
           </span>
           <span className="flex min-w-0 flex-1 items-center gap-4 overflow-hidden">
-            {CONNECTORS.map((connector) => (
+            {connectors.map((connector) => (
               <span key={connector.id} className="flex items-center gap-1.5 whitespace-nowrap">
                 <span
                   aria-hidden="true"
@@ -59,7 +61,7 @@ export function StatusBar() {
             <Badge>{t.common.simulatedData}</Badge>
           </div>
           <ul className="grid grid-cols-5 gap-3">
-            {CONNECTORS.map((connector) => (
+            {connectors.map((connector) => (
               <li key={connector.id}>
                 <Card className="flex h-full flex-col gap-1.5 p-3 shadow-none">
                   <div className="flex items-start justify-between gap-2">

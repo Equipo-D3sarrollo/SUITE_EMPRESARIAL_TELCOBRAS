@@ -25,8 +25,11 @@ type RejectDialogProps = {
   onConfirm: (rejectionCode: RejectionCode, note: string | undefined) => void;
 };
 
-/** Rechazo con el motivo de reclamo de la DIAN (01 a 04), que es obligatorio, y una nota opcional. */
-export function RejectDialog({ invoice, pending, onClose, onConfirm }: RejectDialogProps) {
+/**
+ * Rechazo interno heredado (decisión de la suite, no evento ante la DIAN) con motivo obligatorio y nota
+ * opcional. El reclamo 031 ante la DIAN es ctions/claim-dialog.tsx.
+ */
+export function LegacyRejectDialog({ invoice, pending, onClose, onConfirm }: RejectDialogProps) {
   const [code, setCode] = useState<RejectionCode | ''>('');
   const [note, setNote] = useState('');
 

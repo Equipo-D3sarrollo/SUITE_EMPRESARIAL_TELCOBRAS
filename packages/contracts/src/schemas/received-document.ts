@@ -85,7 +85,8 @@ export type ReceivedDocumentFields = z.infer<typeof receivedDocumentFieldsSchema
 
 export const receivedDocumentSchema = receivedDocumentFieldsSchema.extend({
   id: z.uuid(),
-  importId: z.uuid(),
+  /** Lote legado. Nulo en las facturas que entran por una sincronización (migración 0013). */
+  importId: z.uuid().nullable(),
   status: z.enum(RECEIVED_DOCUMENT_STATUSES),
   decidedBy: z.uuid().nullable(),
   decidedAt: z.iso.datetime().nullable(),

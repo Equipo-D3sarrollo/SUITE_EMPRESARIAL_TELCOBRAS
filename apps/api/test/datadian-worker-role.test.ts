@@ -19,9 +19,119 @@ afterAll(async () => {
  * le otorgue algo lo agrega aquí (§9.3); cualquier otro privilegio, en cualquier tabla, hace fallar la prueba.
  */
 const WORKER_TABLE_GRANTS: Record<string, string[]> = {
+  audit_logs: ['SELECT', 'INSERT'],
   co_holiday_years: ['SELECT'],
   co_holidays: ['SELECT'],
+  dian_certificate_status: ['SELECT'],
+  dian_certificates: ['SELECT'],
+  dian_files: ['SELECT', 'INSERT'],
+  dian_settings: ['SELECT'],
+  dian_sync_runs: ['SELECT', 'INSERT'],
+  imap_mailboxes: ['SELECT'],
+  odoo_connections: ['SELECT'],
+  odoo_document_links: ['SELECT', 'INSERT'],
+  organizations: ['SELECT'],
   radian_deadline_rules: ['SELECT'],
+  radian_event_attempts: ['SELECT', 'INSERT'],
+  radian_event_rules: ['SELECT'],
+  radian_events: ['SELECT', 'INSERT'],
+  received_document_taxes: ['SELECT', 'INSERT'],
+  received_documents: ['SELECT', 'INSERT'],
+  received_documents_radian: ['SELECT'],
+  telco_jobs: ['SELECT', 'INSERT', 'DELETE'],
+};
+
+/** Privilegios por columna de app_worker ("tabla.privilegio" -> columnas), además de los de tabla. */
+const WORKER_COLUMN_GRANTS: Record<string, string[]> = {
+  'dian_certificates.UPDATE': [
+    'chain_ok',
+    'issuer_dn',
+    'key_usage_ok',
+    'not_after',
+    'not_before',
+    'serial_number',
+    'signature_algorithm',
+    'status',
+    'subject_dn',
+    'subject_nit',
+    'updated_at',
+    'validated_at',
+    'validation_errors',
+  ],
+  'dian_sync_runs.UPDATE': [
+    'details',
+    'error_message',
+    'existing_count',
+    'failed_count',
+    'finished_at',
+    'job_id',
+    'listed_count',
+    'listing_file_id',
+    'new_count',
+    'started_at',
+    'status',
+    'updated_at',
+    'xml_downloaded_count',
+  ],
+  'imap_mailboxes.UPDATE': ['last_uid', 'uid_validity', 'updated_at'],
+  'odoo_document_links.UPDATE': ['attachment_id', 'last_error', 'move_id', 'state', 'updated_at'],
+  'radian_events.UPDATE': [
+    'attempts',
+    'certificate_id',
+    'cude',
+    'dian_registered_at',
+    'dian_status_code',
+    'error_message',
+    'error_trace',
+    'generated_at',
+    'request_file_id',
+    'response_file_id',
+    'sent_at',
+    'status',
+    'updated_at',
+  ],
+  'received_documents.UPDATE': [
+    'attached_document_file_id',
+    'buyer_nit',
+    'currency',
+    'dian_validated_at',
+    'document_type',
+    'due_date',
+    'folio',
+    'inc',
+    'issue_date',
+    'issued_at',
+    'issuer_name',
+    'issuer_nit',
+    'iva',
+    'payment_form',
+    'payment_means_code',
+    'prefix',
+    'profile_execution_id',
+    'received_at',
+    'subtotal',
+    'sync_run_id',
+    'tax_total',
+    'total',
+    'ubl_type_code',
+    'updated_at',
+    'validated_at',
+    'validation_errors',
+    'validation_status',
+  ],
+  'telco_jobs.UPDATE': [
+    'attempts',
+    'finished_at',
+    'last_error',
+    'last_error_at',
+    'lease_expires_at',
+    'lease_owner',
+    'leased_at',
+    'result',
+    'run_at',
+    'status',
+    'updated_at',
+  ],
 };
 
 // Constante de la prueba, sin entrada externa: se escribe como literal de arreglo.
@@ -86,6 +196,17 @@ describe('rol app_worker (2.1)', () => {
         and has_any_column_privilege('app_worker', c.oid, 'SELECT, INSERT, UPDATE, REFERENCES')
       order by c.relname`);
     expect(columns.map((row) => row.relname)).toEqual(Object.keys(WORKER_TABLE_GRANTS).sort());
+    // Y los privilegios otorgados columna por columna son exactamente los del inventario.
+    const { rows: grants } = await owner.execute<{ grant: string; columns: string[] }>(sql`
+      select c.relname || '.' || x.privilege_type as grant, array_agg(a.attname::text order by a.attname) as columns
+      from pg_attribute a
+      join pg_class c on c.oid = a.attrelid join pg_namespace n on n.oid = c.relnamespace
+      cross join lateral aclexplode(a.attacl) x
+      where n.nspname = 'app' and x.grantee = 'app_worker'::regrole
+      group by 1 order by 1`);
+    expect(Object.fromEntries(grants.map((row) => [row.grant, row.columns]))).toEqual(
+      WORKER_COLUMN_GRANTS,
+    );
   });
 
   it('sin privilegios no lee ninguna tabla de negocio (42501)', async () => {
@@ -94,7 +215,7 @@ describe('rol app_worker (2.1)', () => {
       where n.nspname = 'app' and c.relkind = 'r' order by c.relname`);
     const business = rows.map((row) => row.relname).filter((name) => !WORKER_TABLE_GRANTS[name]);
     expect(business).toEqual(
-      expect.arrayContaining(['organizations', 'received_documents', 'audit_logs', 'users']),
+      expect.arrayContaining(['users', 'memberships', 'roles', 'received_document_imports']),
     );
     for (const table of business) {
       const error = await pgErrorOf(

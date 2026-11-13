@@ -22,9 +22,10 @@ runs:
     - name: Roles de PostgreSQL (app_owner, app_user, app_worker)
       shell: bash
       # init.sql ya creó los tres roles; el script de operación corre igual para probar que es idempotente.
+      # -e sin valor: docker toma APP_WORKER_PASSWORD del entorno (GITHUB_ENV) y no queda en la línea de comandos.
       run: |
         compose="docker compose -f infra/compose/docker-compose.yml"
-        $compose exec -T -e "APP_WORKER_PASSWORD=$APP_WORKER_PASSWORD" postgres \
+        $compose exec -T -e APP_WORKER_PASSWORD postgres \
           psql -U postgres -d telcobras -f - < infra/compose/postgres/app-worker.sql
         roles=$($compose exec -T postgres psql -U postgres -d telcobras -tAc \
           "select count(*) from pg_roles where rolname in ('app_owner', 'app_user', 'app_worker')

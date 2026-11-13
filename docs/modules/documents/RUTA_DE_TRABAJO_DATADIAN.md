@@ -12,18 +12,58 @@ Sin fechas: el PDF §29.2 prohíbe inventar cronogramas. Cada subetapa termina c
 
 ---
 
-## 1. Estado actual (12-nov-2026)
+## 1. Estado actual (13-nov-2026)
 
 | Etapa | Estado |
 |---|---|
 | 1. Fundaciones | Cerrada el 10-nov-2026 (ADR-013). Sus criterios no verificados están en [`PENDIENTES.md`](../../PENDIENTES.md) §3 |
-| **2. Base de datos de DataDian** | **En curso.** **2.1 y 2.2 implementadas y en auditoría**: rol `app_worker`, convención `DD0xx`, calendario de festivos y plazos (migración `0010`, aplicada en local). Siguiente: **2.3**. De la 2.3 a la 2.9, pendientes |
-| 3. Frontend de DataDian | Pendiente. Diseño propuesto; espera el cierre de la Etapa 2 |
-| 4. Backend: Telco y API | Pendiente. Diseño propuesto |
+| **2. Base de datos de DataDian** | **Implementada en local (2.1 a 2.9, migraciones `0010` a `0017`).** La 2.1 y la 2.2 están auditadas; de la 2.3 a la 2.9 falta la auditoría independiente |
+| **3. Frontend de DataDian** | **Funcional con datos simulados (MSW), subetapas 3.1 a 3.7.** Falta la 3.8 (E2E, accesibilidad y Lighthouse) |
+| 4. Backend: Telco y API | Pendiente. Diseño propuesto. **Aquí está todo el UBL y la criptografía** (ver §1.1) |
 | 5. Integración con Odoo 19 | Pendiente. Especificación propuesta; disparador por confirmar |
 | 6. CRM y notificaciones | Pendiente. Especificación aprobada (E2-1 a E2-13) |
 
-**Verificación de la 2.1 y la 2.2:** pruebas de la API 13 archivos y 94 de 94; `packages/contracts` 17 de 17; `pnpm typecheck` en verde; `drizzle-kit check` sin diferencias. Las desviaciones frente al diseño están en [ARQUITECTURA_DB_DATADIAN.md](ARQUITECTURA_DB_DATADIAN.md) §10.3.
+**Verificación al 13-nov:**
+- `pnpm -r typecheck` en verde.
+- Pruebas: API 19 archivos y 147 de 147 (en secuencia), contracts 33 de 33, web 58 de 58.
+- El build de la web compila.
+- `drizzle-kit check` no encuentra diferencias.
+- Las desviaciones frente al diseño están en [ARQUITECTURA_DB_DATADIAN.md](ARQUITECTURA_DB_DATADIAN.md) §10.3.
+
+Para ver la interfaz: `$env:VITE_DATADIAN_MOCKS='1'; pnpm --filter @telcobras/web dev` y abrir `http://localhost:5173/app/documents/invoices`.
+
+### 1.1 Cobertura del estándar UBL 2.1 y de la criptografía (corte del 13-nov-2026)
+
+Hoy **no existe código que lea, construya, firme ni envíe XML UBL**, ni que calcule el CUDE o descifre un `.pfx`. Todo eso es la Etapa 4. Las Etapas 2 y 3 dejaron lista la estructura que lo recibe y lo muestra.
+
+**Lo que ya existe**
+
+| Tema | Dónde | Detalle |
+|---|---|---|
+| Formato del CUFE (SHA-384, 96 hexadecimales) | `0013` | `CHECK cufe ~ '^[0-9a-f]{96}$'` (`NOT VALID` para facturas antiguas, PV-9) |
+| Formato del CUDE de los eventos | `0014` | `CHECK cude ~ '^[0-9a-f]{96}$'`. Un evento `accepted` exige CUDE y `dian_registered_at` |
+| Integridad de los archivos XML | `0012` | `dian_files.sha256` (64 hexadecimales) es único por organización. Los archivos son de solo inserción |
+| Inmutabilidad de la factura con XML | `0013` | Un disparador congela los datos de origen; los cambios quedan en `pre_xml_snapshot` |
+| Secuencia RADIAN 030 → 032 → 033 / 031, 034 y plazos | `0010`, `0014` | Disparadores, reglas sembradas, `radian_deadline` con festivos de Colombia |
+| Columnas para los secretos | `0011` | `pfx_data_key`, `password` y `software_pin` en `jsonb` cifrado; solo los lee `app_worker` |
+| Cifrado AES-256-GCM | `apps/api/src/common/credentials-cipher.ts` | Existe y hoy se usa para la API key de Odoo. **Aún no se usa para el `.pfx`** |
+| Contratos y visor | `packages/contracts/src/datadian/` y el visor web | Esquemas de evento y certificado. El visor del XML calcula el SHA-256 para mostrarlo |
+
+**Lo que falta (Etapa 4)**
+
+| Pieza | Subetapa | Contenido |
+|---|---|---|
+| `CertificateVault` | 4.1 | Lectura del PKCS#12 en memoria; validaciones previas ONAC (SHA-2, KeyUsage crítico, digitalSignature y nonRepudiation), vigencia, NIT y NTP; sobre de cifrado del `.pfx` |
+| Cálculo del CUDE (SHA-384) | 4.1 | Fórmula pendiente de confirmar en el anexo técnico T5.1 (PV-2), con vectores de prueba |
+| `XadesEpesSigner` | 4.1 | XAdES-EPES enveloped: 3 referencias, política v2 con hash calculado del PDF oficial, `SignerRole`, URIs `rsa-sha256/384/512` (PV-9) y una sola firma |
+| `SoapWsSecurityClient` | 4.2 | SOAP 1.2 con `wsa:Action`, `wsa:To` firmado, `Timestamp`, `BinarySecurityToken` y exc-c14n `PrefixList="wsa soap wcf"` |
+| Empaque Base64 → ZIP → XML | 4.2 / 4.3 | Para `GetXmlByDocumentKey` y para el envío de eventos |
+| Parser de AttachedDocument | 4.3 | Extraer la factura firmada y el `ApplicationResponse` de la DIAN; forma de pago, impuestos y CUFE; verificar la firma del emisor |
+| Constructor de ApplicationResponse UBL 2.1 | 4.4 | Namespaces, `UBLExtensions` (¿`DianExtensions`? PV-11), `ProfileExecutionID`, código del evento (`CustomizationID` o `ResponseCode`, PV-3), `SenderParty`/`ReceiverParty`, `DocumentReference` al CUFE |
+| Envío y lectura de la respuesta | 4.4 / 4.5 | `SendEventUpdateStatus` (PV-1), parseo de 02/04 y de los errores, State Tracker con `GetStatusEvent` |
+| Validación contra el XSD | 4.4 | Antes de enviar, para evitar rechazos |
+
+Bloqueos para probar contra la DIAN real: el certificado `.pfx` de pruebas, D-14 (habilitación directa o indirecta; ver el Instructivo RADIAN) y la confirmación de los puntos PV-1 a PV-3, PV-5 y PV-11 contra el anexo técnico vigente.
 
 **Pendiente operativo:** antes de aplicar la `0010` en cualquier entorno existente hay que correr `infra/compose/postgres/app-worker.sql` con `APP_WORKER_PASSWORD` ([`PENDIENTES.md`](../../PENDIENTES.md) §7.2).
 

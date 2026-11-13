@@ -115,6 +115,86 @@ describe('festivos de Colombia (co_holidays_compute y semilla)', () => {
     }
   });
 
+  // Listas fijas de un oráculo independiente de la función de la 0010 (Pascua por el algoritmo de Knuth,
+  // contrastada con las tablas eclesiásticas publicadas): la semilla no se valida solo contra quien la generó.
+  const ORACLE: Record<number, string[]> = {
+    2025: [
+      '2025-01-01',
+      '2025-01-06',
+      '2025-03-24',
+      '2025-04-17',
+      '2025-04-18',
+      '2025-05-01',
+      '2025-06-02',
+      '2025-06-23',
+      '2025-06-30',
+      '2025-07-20',
+      '2025-08-07',
+      '2025-08-18',
+      '2025-10-13',
+      '2025-11-03',
+      '2025-11-17',
+      '2025-12-08',
+      '2025-12-25',
+    ],
+    2030: [
+      '2030-01-01',
+      '2030-01-07',
+      '2030-03-25',
+      '2030-04-18',
+      '2030-04-19',
+      '2030-05-01',
+      '2030-06-03',
+      '2030-06-24',
+      '2030-07-01',
+      '2030-07-20',
+      '2030-08-07',
+      '2030-08-19',
+      '2030-10-14',
+      '2030-11-04',
+      '2030-11-11',
+      '2030-12-08',
+      '2030-12-25',
+    ],
+    2035: [
+      '2035-01-01',
+      '2035-01-08',
+      '2035-03-19',
+      '2035-03-22',
+      '2035-03-23',
+      '2035-05-01',
+      '2035-05-07',
+      '2035-05-28',
+      '2035-06-04',
+      '2035-07-02',
+      '2035-07-20',
+      '2035-08-07',
+      '2035-08-20',
+      '2035-10-15',
+      '2035-11-05',
+      '2035-11-12',
+      '2035-12-08',
+      '2035-12-25',
+    ],
+  };
+
+  it('la semilla de 2025, 2030 y 2035 coincide con listas fijas de un oráculo independiente', async () => {
+    for (const [year, expected] of Object.entries(ORACLE)) {
+      const seeded = await rowsOf<{ day: string }>(
+        app,
+        sql`select day::text from app.co_holidays
+            where extract(year from day) = ${Number(year)} order by day`,
+      );
+      expect(
+        seeded.map((row) => row.day),
+        year,
+      ).toEqual(expected);
+    }
+    expect([ORACLE[2025]?.length, ORACLE[2030]?.length, ORACLE[2035]?.length]).toEqual([
+      17, 17, 18,
+    ]);
+  });
+
   it('dos festivos el mismo día quedan en una sola fila con los dos nombres', async () => {
     const rows = await rowsOf<{ day: string; name: string; rule: string }>(
       app,
@@ -314,6 +394,34 @@ describe('privilegios de las tablas y funciones globales', () => {
     });
   }
 
+  it('app_user y app_worker tienen exactamente SELECT sobre las tablas globales', async () => {
+    const rows = await rowsOf<{ relname: string; role: string; privileges: string[] }>(
+      owner,
+      sql`select c.relname, r.role,
+            array(select p from unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE',
+                                             'REFERENCES', 'TRIGGER']) as p
+                  where has_table_privilege(r.role, c.oid, p)) as privileges
+          from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          cross join (values ('app_user'), ('app_worker')) as r (role)
+          where n.nspname = 'app'
+            and c.relname in ('co_holidays', 'co_holiday_years', 'radian_deadline_rules')
+          order by c.relname, r.role`,
+    );
+    expect(rows).toHaveLength(6);
+    for (const row of rows)
+      expect(row.privileges, `${row.role} ${row.relname}`).toEqual(['SELECT']);
+    // Ni privilegios por columna de escritura.
+    const [columns] = await rowsOf<{ writable: boolean }>(
+      owner,
+      sql`select bool_or(has_any_column_privilege(r.role, c.oid, 'INSERT, UPDATE, REFERENCES')) as writable
+          from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          cross join (values ('app_user'), ('app_worker')) as r (role)
+          where n.nspname = 'app'
+            and c.relname in ('co_holidays', 'co_holiday_years', 'radian_deadline_rules')`,
+    );
+    expect(columns?.writable).toBe(false);
+  });
+
   it('app_user y app_worker solo ejecutan is_business_day y radian_deadline', async () => {
     const rows = await rowsOf<{ proname: string; app_user: boolean; app_worker: boolean }>(
       owner,
@@ -323,12 +431,26 @@ describe('privilegios de las tablas y funciones globales', () => {
           from pg_proc p join pg_namespace n on n.oid = p.pronamespace
           where n.nspname = 'app' order by p.proname`,
     );
-    expect(rows).toEqual([
+    const calendar = [
+      'co_easter_sunday',
+      'co_holidays_compute',
+      'is_business_day',
+      'radian_deadline',
+    ];
+    expect(rows.filter((row) => calendar.includes(row.proname))).toEqual([
       { proname: 'co_easter_sunday', app_user: false, app_worker: false },
       { proname: 'co_holidays_compute', app_user: false, app_worker: false },
       { proname: 'is_business_day', app_user: true, app_worker: true },
       { proname: 'radian_deadline', app_user: true, app_worker: true },
     ]);
+    // Inventario de todo el esquema: las demás funciones (disparadores, recálculo) quedan para app_owner.
+    // telco_backoff (0015) es la única otra que ejecutan los roles de la aplicación (§9.3).
+    const executable = rows
+      .filter((row) => row.app_user || row.app_worker)
+      .map((row) => row.proname);
+    expect(executable.filter((name) => !calendar.includes(name))).toEqual(
+      rows.some((row) => row.proname === 'telco_backoff') ? ['telco_backoff'] : [],
+    );
     expect(
       (await pgErrorOf(app.execute(sql`select * from app.co_holidays_compute(2026)`))).code,
     ).toBe('42501');
